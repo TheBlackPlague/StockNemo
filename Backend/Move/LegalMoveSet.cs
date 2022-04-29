@@ -63,15 +63,11 @@ namespace Backend.Move
             Board = board;
 
             foreach ((int, int) piece in Board.All(color)) {
-                try {
-                    LegalMoveSet moveSet = new(board, piece);
-                    foreach ((int, int) move in moveSet.Get()) {
-                        if (Moves.Contains(move)) continue;
+                LegalMoveSet moveSet = new(board, piece);
+                foreach ((int, int) move in moveSet.Get()) {
+                    if (Moves.Contains(move)) continue;
 
-                        Moves.Add(move);
-                    }
-                } catch (InvalidMoveLookupException e) {
-                    Console.WriteLine(e.Message + ", Color: " + color);
+                    Moves.Add(move);
                 }
             }
         }

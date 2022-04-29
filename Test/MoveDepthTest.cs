@@ -70,25 +70,20 @@ namespace Test
             int count = 0;
             
             foreach ((int, int) piece in board.All(color)) {
-                try {
-                    LegalMoveSet moveSet = new(board, piece);
-                    if (depth > 1) {
-                        foreach ((int, int) move in moveSet.Get()) {
-                            int previousCount = count;
-                            DataBoard nextBoard = board.Clone();
-                            nextBoard.SecureMove(piece, move);
-                            count += MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
+                LegalMoveSet moveSet = new(board, piece);
+                if (depth > 1) {
+                    foreach ((int, int) move in moveSet.Get()) {
+                        int previousCount = count;
+                        DataBoard nextBoard = board.Clone();
+                        nextBoard.SecureMove(piece, move);
+                        count += MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
 
-                            if (depth != selectedDepth) continue;
+                        if (depth != selectedDepth) continue;
                             
-                            string fullMove = Util.TupleToChessString(piece) + Util.TupleToChessString(move);
-                            Console.WriteLine(fullMove.ToLower() + ": " + (count - previousCount));
-                        }
-                    } else count += moveSet.Count();
-                } catch (InvalidMoveLookupException e) {
-                    Console.WriteLine(e.Message + ", Color: " + color);
-                    break;
-                }
+                        string fullMove = Util.TupleToChessString(piece) + Util.TupleToChessString(move);
+                        Console.WriteLine(fullMove.ToLower() + ": " + (count - previousCount));
+                    }
+                } else count += moveSet.Count();
             }
             
             return count;
