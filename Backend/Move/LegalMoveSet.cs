@@ -11,9 +11,7 @@ namespace Backend.Move
     public class LegalMoveSet
     {
 
-        private const int MAX_MOVE_COUNT = 27;
-
-        private readonly List<(int, int)> Moves = new(MAX_MOVE_COUNT);
+        private readonly List<(int, int)> Moves = new();
         
         private readonly DataBoard Board;
         private readonly (int, int) From;
@@ -282,7 +280,7 @@ namespace Backend.Move
                 // (int h, int v) = Board.KingLoc(color);
                 
                 if (!bitBoard[h, v]) verifiedMoves.Add(move);
-                // Board.Move(move, From);
+                // Board.Move(move, From, true);
             }
 
             Moves.Clear();
