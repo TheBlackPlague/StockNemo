@@ -6,6 +6,11 @@ namespace Backend
     public static class Util
     {
 
+        public static (Piece, PieceColor, MovedState) EmptyPieceState()
+        {
+            return (Piece.Empty, PieceColor.None, MovedState.Unmoved);
+        }
+
         public static PieceColor OppositeColor(PieceColor color)
         {
             return color == PieceColor.White ? PieceColor.Black : PieceColor.White;
