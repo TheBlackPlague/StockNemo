@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Backend.Exception;
 using Backend.Move;
 using BetterConsoles.Core;
@@ -21,7 +19,7 @@ namespace Backend.Board
         public const int UBOUND = 8; // Board Upper Bound
         public const int LBOUND = -1; // Board Lower Bound
 
-        private readonly (Piece, PieceColor, MovedState)[,] Map = new (Piece, PieceColor, MovedState)[UBOUND, UBOUND];
+        private readonly (Piece, PieceColor, MovedState)[,] Map = new(Piece, PieceColor, MovedState)[UBOUND, UBOUND];
         
         private readonly Log Log = new();
 
@@ -65,7 +63,8 @@ namespace Backend.Board
         {
             DataBoard board = new();
 
-            for (int h = 0; h < UBOUND; h++) for (int v = 0; v < UBOUND; v++) board.Map[h, v] = Map[h, v];
+            // for (int h = 0; h < UBOUND; h++) for (int v = 0; v < UBOUND; v++) board.Map[h, v] = Map[h, v];
+            Array.Copy(Map, board.Map, 64);
 
             board.WhiteKing = WhiteKing;
             board.BlackKing = BlackKing;
@@ -125,7 +124,7 @@ namespace Backend.Board
             return BitBoard(color)[kingLoc.Item1, kingLoc.Item2] ? MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
         }
 
-        internal void Move((int, int) from, (int, int) to)
+        public void Move((int, int) from, (int, int) to)
         {
             (int hF, int vF) = from;
             (int hT, int vT) = to;
@@ -137,9 +136,12 @@ namespace Backend.Board
             if (colorF == colorT) 
                 throw InvalidMoveAttemptException.FromBoard(this, Log, "Cannot move to same color.");
 
-            // Move the piece
-            Map[hT, vT] = (pieceF, colorF, MovedState.Moved);
-            Map[hF, vF] = (Piece.Empty, PieceColor.None, MovedState.Unmoved);
+            // Generate updated piece state.
+            (Piece, PieceColor, MovedState) pieceState = (pieceF, colorF, MovedState.Moved);
+
+            // Update map.
+            Map[hT, vT] = pieceState;
+            Map[hF, vF] = Util.EmptyPieceState();
             
             // Log the move
             Log.WriteToLog(from, to);
