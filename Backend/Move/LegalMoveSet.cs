@@ -277,8 +277,12 @@ namespace Backend.Move
                 board.Move(From, move);
                 bool[,] bitBoard = board.BitBoard(oppositeColor);
                 (int h, int v) = board.KingLoc(color);
+                // Board.Move(From, move);
+                // bool[,] bitBoard = Board.BitBoard(oppositeColor);
+                // (int h, int v) = Board.KingLoc(color);
                 
                 if (!bitBoard[h, v]) verifiedMoves.Add(move);
+                // Board.Move(move, From);
             }
 
             Moves.Clear();
