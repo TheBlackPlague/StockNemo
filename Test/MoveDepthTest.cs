@@ -85,10 +85,13 @@ namespace Test
                 if (depth > 1) {
                     foreach ((int, int) move in moveSet.Get()) {
                         int previousCount = count;
+                        // board.Move(piece, move);
                         DataBoard nextBoard = board.Clone();
-                        nextBoard.SecureMove(piece, move);
+                        nextBoard.Move(piece, move);
                         count += MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
-
+                        // count += MoveGeneration(board, depth - 1, Util.OppositeColor(color));
+                        // board.Move(move, piece);
+                        
                         if (depth != SelectedDepth) continue;
                         
                         LogNodeCount(piece, move, count - previousCount);
