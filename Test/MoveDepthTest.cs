@@ -21,7 +21,7 @@ namespace Test
         private readonly DataBoard Board = new();
 
         private int SelectedDepth = -1;
-        
+
         private static void LogNodeCount((int, int) piece, (int, int) move, int nodeC)
         {
             string fullMove = Util.TupleToChessString(piece) + Util.TupleToChessString(move);
@@ -31,6 +31,15 @@ namespace Test
         private static void LogNodeCount((int, int) piece, int nodeC)
         {
             Console.WriteLine(Util.TupleToChessString(piece).ToLower() + ": " + nodeC);
+        }
+
+        public MoveDepthTest()
+        {
+            // Involve JIT.
+            SelectedDepth = 0;
+            MoveGeneration(Board, 0, verbose: false);
+            SelectedDepth = 1;
+            MoveGeneration(Board, 1, verbose: false);
         }
         
         public (int, int) Depth0()
@@ -75,7 +84,7 @@ namespace Test
             return (D6, MoveGeneration(Board, 6));
         }
         
-        private int MoveGeneration(DataBoard board, int depth, PieceColor color = PieceColor.White)
+        private int MoveGeneration(DataBoard board, int depth, PieceColor color = PieceColor.White, bool verbose = true)
         {
             if (depth == 0) return 1;
             int count = 0;
@@ -90,18 +99,18 @@ namespace Test
                         nextBoard.Move(piece, move);
                         count += MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
                         // count += MoveGeneration(board, depth - 1, Util.OppositeColor(color));
-                        // board.Move(move, piece);
+                        // board.Move(move, piece, true);
                         
                         if (depth != SelectedDepth) continue;
                         
-                        LogNodeCount(piece, move, count - previousCount);
+                        if (verbose) LogNodeCount(piece, move, count - previousCount);
                     }
                 } else count += moveSet.Count();
 
                 if (depth != 1) continue;
                 if (depth != SelectedDepth) continue;
                 
-                LogNodeCount(piece, moveSet.Count());
+                if (verbose) LogNodeCount(piece, moveSet.Count());
             }
             
             return count;
