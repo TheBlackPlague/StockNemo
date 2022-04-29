@@ -113,6 +113,9 @@ namespace Backend.Board
             if (!moves.Contains(to)) return MoveAttempt.Fail;
 
             Move(from, to);
+            
+            // Log the move.
+            Log.WriteToLog(from, to);
 
             PieceColor color = Map[to.Item1, to.Item2].Item2;
             PieceColor oppositeColor = Util.OppositeColor(color);
@@ -124,7 +127,7 @@ namespace Backend.Board
             return BitBoard(color)[kingLoc.Item1, kingLoc.Item2] ? MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
         }
 
-        public void Move((int, int) from, (int, int) to)
+        public void Move((int, int) from, (int, int) to, bool revert = false)
         {
             (int hF, int vF) = from;
             (int hT, int vT) = to;
@@ -138,13 +141,11 @@ namespace Backend.Board
 
             // Generate updated piece state.
             (Piece, PieceColor, MovedState) pieceState = (pieceF, colorF, MovedState.Moved);
+            if (revert) pieceState.Item3 = MovedState.Unmoved;
 
             // Update map.
             Map[hT, vT] = pieceState;
             Map[hF, vF] = Util.EmptyPieceState();
-            
-            // Log the move
-            Log.WriteToLog(from, to);
 
             if (pieceF != Piece.King) return;
             
