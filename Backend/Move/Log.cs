@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using BetterConsoles.Tables;
 using BetterConsoles.Tables.Builders;
 using BetterConsoles.Tables.Configuration;
@@ -28,6 +29,17 @@ namespace Backend.Move
         public int Count()
         {
             return MoveLog.Count;
+        }
+
+        public override string ToString()
+        {
+            StringBuilder builder = new();
+            int i = 1;
+            foreach ((int, int)[] move in MoveLog) {
+                builder.Append(i++ + ": " + Util.TupleToChessString(move[0]) + Util.TupleToChessString(move[1]));
+            }
+
+            return builder.ToString();
         }
 
         public Table DrawLogCli(int drawLimit = 3)

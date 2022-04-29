@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using Backend.Board;
 using Backend.Exception;
@@ -45,7 +47,10 @@ namespace Backend.Move
                     break;
                 case Piece.Empty:
                 default:
-                    throw new InvalidMoveLookupException("Cannot generate move for empty piece.");
+                    throw InvalidMoveLookupException.FromBoard(
+                        board, 
+                        "Cannot generate move for empty piece: " + Util.TupleToChessString(from)
+                    );
             }
             
             if (!verify) return;
@@ -57,15 +62,18 @@ namespace Backend.Move
         {
             Board = board;
 
-            Parallel.ForEach(Board.All(color), piece =>
-            {
-                LegalMoveSet moveSet = new(board, piece);
-                foreach ((int, int) move in moveSet.Get()) {
-                    if (Moves.Contains(move)) continue;
-                    
-                    Moves.Add(move);
+            foreach ((int, int) piece in Board.All(color)) {
+                try {
+                    LegalMoveSet moveSet = new(board, piece);
+                    foreach ((int, int) move in moveSet.Get()) {
+                        if (Moves.Contains(move)) continue;
+
+                        Moves.Add(move);
+                    }
+                } catch (InvalidMoveLookupException e) {
+                    Console.WriteLine(e.Message + ", Color: " + color);
                 }
-            });
+            }
         }
 
         public (int, int)[] Get()
@@ -268,15 +276,14 @@ namespace Backend.Move
             PieceColor oppositeColor = Util.OppositeColor(color);
             
             List<(int, int)> verifiedMoves = new(27);
-            Parallel.ForEach(Moves, move =>
-            {
+            foreach ((int, int) move in Moves) {
                 DataBoard board = Board.Clone();
                 board.Move(From, move);
                 bool[,] bitBoard = board.BitBoard(oppositeColor);
                 (int h, int v) = board.KingLoc(color);
-
+                
                 if (!bitBoard[h, v]) verifiedMoves.Add(move);
-            });
+            }
 
             Moves.Clear();
             foreach ((int, int) move in verifiedMoves) {

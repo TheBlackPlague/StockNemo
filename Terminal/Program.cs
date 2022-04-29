@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using Backend;
 using Backend.Board;
+using Test;
 using Version = Backend.Version;
 
 namespace Terminal
@@ -12,9 +14,10 @@ namespace Terminal
 
         private static readonly DataBoard Board = new();
 
-        private static void Main()
+        private static void Main(string[] args)
         {
-            OperationLoop();
+            if (args.Length > 0 && args[0] == "perft") RunPerft();
+            else OperationLoop();
         }
 
         private static void OperationLoop()
@@ -106,6 +109,76 @@ namespace Terminal
             Console.Clear();
             OutputTitle();
             Console.WriteLine(Board.ToString());
+        }
+
+        private static void RunPerft()
+        {
+            Console.WriteLine("Running PERFT tests: ");
+
+            MoveDepthTest test = new();
+            
+            Console.WriteLine("Running Depth 0: ");
+            Stopwatch watch = new();
+            watch.Start();
+            (int, int) result = test.Depth0();
+            watch.Stop();
+            Console.WriteLine("Depth 0 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
+            Console.WriteLine("Depth 0 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
+            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            Console.WriteLine("Running Depth 1: ");
+            watch = new Stopwatch();
+            watch.Start();
+            result = test.Depth1();
+            watch.Stop();
+            Console.WriteLine("Depth 1 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
+            Console.WriteLine("Depth 1 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
+            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            Console.WriteLine("Running Depth 2: ");
+            watch = new Stopwatch();
+            watch.Start();
+            result = test.Depth2();
+            watch.Stop();
+            Console.WriteLine("Depth 2 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
+            Console.WriteLine("Depth 2 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
+            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+
+            Console.WriteLine("Running Depth 3: ");
+            watch = new Stopwatch();
+            watch.Start();
+            result = test.Depth3();
+            watch.Stop();
+            Console.WriteLine("Depth 3 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
+            Console.WriteLine("Depth 3 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
+            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            Console.WriteLine("Running Depth 4: ");
+            watch = new Stopwatch();
+            watch.Start();
+            result = test.Depth4();
+            watch.Stop();
+            Console.WriteLine("Depth 4 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
+            Console.WriteLine("Depth 4 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
+            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            Console.WriteLine("Running Depth 5: ");
+            watch = new Stopwatch();
+            watch.Start();
+            result = test.Depth5();
+            watch.Stop();
+            Console.WriteLine("Depth 5 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
+            Console.WriteLine("Depth 5 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
+            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            Console.WriteLine("Running Depth 6: ");
+            watch = new Stopwatch();
+            watch.Start();
+            result = test.Depth6();
+            watch.Stop();
+            Console.WriteLine("Depth 6 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
+            Console.WriteLine("Depth 6 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
+            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
         }
 
     }

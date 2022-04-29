@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Backend.Exception;
@@ -20,10 +21,6 @@ namespace Backend.Board
         public const int UBOUND = 8; // Board Upper Bound
         public const int LBOUND = -1; // Board Lower Bound
 
-        public const int MOVE_SUCCESS = 0;
-        public const int MOVE_FAIL = 1;
-        public const int MOVE_CHECKMATE = 2;
-        
         private readonly (Piece, PieceColor, MovedState)[,] Map = new (Piece, PieceColor, MovedState)[UBOUND, UBOUND];
         
         private readonly Log Log = new();
@@ -64,12 +61,14 @@ namespace Backend.Board
             }
         }
 
-        public DataBoard Clone(bool parallel = true)
+        public DataBoard Clone()
         {
             DataBoard board = new();
-            if (parallel) Parallel.For(0, UBOUND, h => 
-                Parallel.For(0, UBOUND, v => board.Map[h, v] = Map[h, v]));
-            else for (int h = 0; h < UBOUND; h++) for (int v = 0; v < UBOUND; v++) board.Map[h, v] = Map[h, v];
+
+            for (int h = 0; h < UBOUND; h++) for (int v = 0; v < UBOUND; v++) board.Map[h, v] = Map[h, v];
+
+            board.WhiteKing = WhiteKing;
+            board.BlackKing = BlackKing;
 
             return board;
         }
@@ -87,13 +86,13 @@ namespace Backend.Board
         // ReSharper disable once ReturnTypeCanBeEnumerable.Global
         public (int, int)[] All(PieceColor color)
         {
-            (int, int)[] all = new (int, int)[16];
-            int i = 0;
+            List<(int, int)> all = new(16);
             for (int h = 0; h < UBOUND; h++) for (int v = 0; v < UBOUND; v++)
-                if (Map[h, v].Item2 == color)
-                    all[i++] = (h, v);
+                if (Map[h, v].Item2 == color) {
+                    all.Add((h, v));
+                }
 
-            return all;
+            return all.ToArray();
         }
 
         public (int, int) KingLoc(PieceColor color)
@@ -135,7 +134,8 @@ namespace Backend.Board
             (_, PieceColor colorT, _) = Map[hT, vT];
             
             // Can't move same color
-            if (colorF == colorT) return;
+            if (colorF == colorT) 
+                throw InvalidMoveAttemptException.FromBoard(this, Log, "Cannot move to same color.");
 
             // Move the piece
             Map[hT, vT] = (pieceF, colorF, MovedState.Moved);
