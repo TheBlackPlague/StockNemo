@@ -269,7 +269,7 @@ namespace Backend.Move
         {
             PieceColor oppositeColor = Util.OppositeColor(color);
             
-            List<(int, int)> verifiedMoves = new(27);
+            List<(int, int)> verifiedMoves = new(Moves.Count);
             foreach ((int, int) move in Moves) {
                 DataBoard board = Board.Clone();
                 board.Move(From, move);
