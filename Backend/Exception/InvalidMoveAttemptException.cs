@@ -12,7 +12,7 @@ namespace Backend.Exception
 
         public static InvalidMoveAttemptException FromBoard(DataBoard board, Log moveLog, string? message)
         {
-            InvalidMoveAttemptException e = new(board + moveLog.ToString() + message);
+            InvalidMoveAttemptException e = new("\n"+ board + moveLog + message);
             return e;
         }
 
