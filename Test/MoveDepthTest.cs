@@ -20,47 +20,58 @@ namespace Test
         
         private readonly DataBoard Board = new();
 
-        private int selectedDepth = -1;
+        private int SelectedDepth = -1;
+        
+        private static void LogNodeCount((int, int) piece, (int, int) move, int nodeC)
+        {
+            string fullMove = Util.TupleToChessString(piece) + Util.TupleToChessString(move);
+            Console.WriteLine(fullMove.ToLower() + ": " + nodeC);
+        }
+        
+        private static void LogNodeCount((int, int) piece, int nodeC)
+        {
+            Console.WriteLine(Util.TupleToChessString(piece).ToLower() + ": " + nodeC);
+        }
         
         public (int, int) Depth0()
         {
-            selectedDepth = 0;
+            SelectedDepth = 0;
             return (D0, MoveGeneration(Board, 0));
         }
         
         public (int, int) Depth1()
         {
-            selectedDepth = 1;
+            SelectedDepth = 1;
             return (D1, MoveGeneration(Board, 1));
         }
         
         public (int, int) Depth2()
         {
-            selectedDepth = 2;
+            SelectedDepth = 2;
             return (D2, MoveGeneration(Board, 2));
         }
 
         public (int, int) Depth3()
         {
-            selectedDepth = 3;
+            SelectedDepth = 3;
             return (D3, MoveGeneration(Board, 3));
         }
 
         public (int, int) Depth4()
         {
-            selectedDepth = 4;
+            SelectedDepth = 4;
             return (D4, MoveGeneration(Board, 4));
         }
         
         public (int, int) Depth5()
         {
-            selectedDepth = 5;
+            SelectedDepth = 5;
             return (D5, MoveGeneration(Board, 5));
         }
         
         public (int, int) Depth6()
         {
-            selectedDepth = 6;
+            SelectedDepth = 6;
             return (D6, MoveGeneration(Board, 6));
         }
         
@@ -78,12 +89,16 @@ namespace Test
                         nextBoard.SecureMove(piece, move);
                         count += MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
 
-                        if (depth != selectedDepth) continue;
-                            
-                        string fullMove = Util.TupleToChessString(piece) + Util.TupleToChessString(move);
-                        Console.WriteLine(fullMove.ToLower() + ": " + (count - previousCount));
+                        if (depth != SelectedDepth) continue;
+                        
+                        LogNodeCount(piece, move, count - previousCount);
                     }
                 } else count += moveSet.Count();
+
+                if (depth != 1) continue;
+                if (depth != SelectedDepth) continue;
+                
+                LogNodeCount(piece, moveSet.Count());
             }
             
             return count;
