@@ -97,7 +97,7 @@ namespace Terminal
 
         private static void OutputTitle()
         {
-            Console.WriteLine("ChessEmulator v" + Version.Get());
+            Console.WriteLine("StockNemo v" + Version.Get());
             Console.WriteLine("Copyright (c) Shaheryar Sohail. All rights reserved.");
             Console.WriteLine("┌───────────────────┐");
             Console.WriteLine("│  Chess Board CLI  │");
