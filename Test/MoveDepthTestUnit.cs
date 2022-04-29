@@ -1,5 +1,4 @@
-﻿#nullable enable
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace Test
 {

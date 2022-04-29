@@ -1,7 +1,6 @@
 ﻿using System;
 using Backend;
 using Backend.Board;
-using Backend.Exception;
 using Backend.Move;
 
 namespace Test
@@ -20,7 +19,7 @@ namespace Test
         
         private readonly DataBoard Board = new();
 
-        private int SelectedDepth = -1;
+        private int SelectedDepth;
 
         private static void LogNodeCount((int, int) piece, (int, int) move, int nodeC)
         {
