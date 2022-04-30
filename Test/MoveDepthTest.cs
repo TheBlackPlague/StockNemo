@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Backend;
 using Backend.Board;
 using Backend.Move;
@@ -88,29 +90,32 @@ namespace Test
             if (depth == 0) return 1;
             int count = 0;
             
-            foreach ((int, int) piece in board.All(color)) {
+            Parallel.ForEach(board.All(color), piece =>
+            {
                 LegalMoveSet moveSet = new(board, piece);
                 if (depth > 1) {
                     foreach ((int, int) move in moveSet.Get()) {
-                        int previousCount = count;
                         // board.Move(piece, move);
                         DataBoard nextBoard = board.Clone();
                         nextBoard.Move(piece, move);
-                        count += MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
-                        // count += MoveGeneration(board, depth - 1, Util.OppositeColor(color));
+                        int generatedCount = MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
+                        Interlocked.Add(
+                            ref count, 
+                            generatedCount
+                        );
                         // board.Move(move, piece, true);
-                        
+                    
                         if (depth != SelectedDepth) continue;
                         
-                        if (verbose) LogNodeCount(piece, move, count - previousCount);
+                        if (verbose) LogNodeCount(piece, move, generatedCount);
                     }
-                } else count += moveSet.Count();
+                } else Interlocked.Add(ref count, moveSet.Count());
 
-                if (depth != 1) continue;
-                if (depth != SelectedDepth) continue;
-                
+                if (depth != 1) return;
+                if (depth != SelectedDepth) return;
+
                 if (verbose) LogNodeCount(piece, moveSet.Count());
-            }
+            });
             
             return count;
         }
