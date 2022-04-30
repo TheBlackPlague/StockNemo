@@ -8,7 +8,7 @@ namespace Backend.Move
     public class LegalMoveSet
     {
 
-        private readonly List<(int, int)> Moves = new();
+        private List<(int, int)> Moves = new();
         
         private readonly DataBoard Board;
         private readonly (int, int) From;
@@ -280,10 +280,7 @@ namespace Backend.Move
                 // Board.Move(move, From, true);
             }
 
-            Moves.Clear();
-            foreach ((int, int) move in verifiedMoves) {
-                Moves.Add(move);
-            }
+            Moves = verifiedMoves;
         }
 
     }
