@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Backend.Board;
 using Backend.Exception;
 
@@ -22,8 +23,7 @@ namespace Backend.Move
             // Generate Pseudo-Legal Moves
             switch (piece) {
                 case Piece.Pawn:
-                    if (verify) LegalPawnMoveSet(color);
-                    else LegalPawnMoveSet(color, true);
+                    LegalPawnMoveSet(color, !verify);
                     break;
                 case Piece.Rook:
                     LegalRookMoveSet(color);
@@ -77,15 +77,15 @@ namespace Backend.Move
             return Moves.Count;
         }
 
-        private void LegalPawnMoveSet(PieceColor color, bool attackAllOnly = false)
+        private void LegalPawnMoveSet(PieceColor color, bool checkMovesOnly = false)
         {
             (int h, int v) = From;
 
             int normalMoveC = Board.At(From).Item3 == MovedState.Moved ? 1 : 2;
 
             if (color == PieceColor.White) {
-                // Normal
-                if (!attackAllOnly)
+                if (!checkMovesOnly) {
+                    // Normal
                     for (int vI = v + 1; vI < DataBoard.UBOUND; vI++) {
                         if (normalMoveC == 0) break;
 
@@ -96,6 +96,19 @@ namespace Backend.Move
 
                         normalMoveC--;
                     }
+                    
+                    // En Passant
+                    (int, int)? enPassantTarget = Board.GetEnPassantTarget();
+                    if (enPassantTarget.HasValue) {
+                        (int epH, int epV) = enPassantTarget.Value;
+                        (int, int) blackPiece = (epH, epV - 1);
+                        if (Math.Abs(blackPiece.Item1 - h) < 2 && blackPiece.Item2 == From.Item2) {
+                            (Piece assumedPiece, PieceColor assumedColor, _) = Board.At(blackPiece);
+                            if (assumedPiece == Piece.Pawn && assumedColor == PieceColor.Black) 
+                                Moves.Add(enPassantTarget.Value);
+                        }
+                    }
+                }
                 
                 // Attack Move
                 for (int hI = h - 1; hI < h + 2; hI++) {
@@ -108,11 +121,9 @@ namespace Backend.Move
                     (_, PieceColor otherColor, _) = Board.At(move);
                     if (color != otherColor) Moves.Add(move);
                 }
-                
-                // En Passant
             } else {
                 // Normal
-                if (!attackAllOnly)
+                if (!checkMovesOnly) {
                     for (int vI = v - 1; vI > -1; vI--) {
                         if (normalMoveC == 0) break;
 
@@ -123,6 +134,19 @@ namespace Backend.Move
 
                         normalMoveC--;
                     }
+                    
+                    // En Passant
+                    (int, int)? enPassantTarget = Board.GetEnPassantTarget();
+                    if (enPassantTarget.HasValue) {
+                        (int epH, int epV) = enPassantTarget.Value;
+                        (int, int) whitePiece = (epH, epV + 1);
+                        if (Math.Abs(whitePiece.Item1 - h) < 2 && whitePiece.Item2 == From.Item2) {
+                            (Piece assumedPiece, PieceColor assumedColor, _) = Board.At(whitePiece);
+                            if (assumedPiece == Piece.Pawn && assumedColor == PieceColor.White) 
+                                Moves.Add(enPassantTarget.Value);
+                        }
+                    }
+                }
                 
                 // Attack Move
                 for (int hI = h - 1; hI < h + 2; hI++) {
@@ -135,8 +159,6 @@ namespace Backend.Move
                     (_, PieceColor otherColor, _) = Board.At(move);
                     if (color != otherColor) Moves.Add(move);
                 }
-                
-                // En Passant
             }
         }
 

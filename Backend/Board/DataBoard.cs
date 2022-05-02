@@ -25,6 +25,7 @@ namespace Backend.Board
 
         private (int, int) WhiteKing;
         private (int, int) BlackKing;
+        private (int, int)? EnPassantTarget;
 
         private (int, int)[] HighlightedMoves = Array.Empty<(int, int)>();
 
@@ -69,12 +70,19 @@ namespace Backend.Board
             board.WhiteKing = WhiteKing;
             board.BlackKing = BlackKing;
 
+            board.EnPassantTarget = EnPassantTarget;
+
             return board;
         }
 
         public int MoveCount()
         {
             return Log.Count();
+        }
+
+        public (int, int)? GetEnPassantTarget()
+        {
+            return EnPassantTarget;
         }
 
         public (Piece, PieceColor, MovedState) At((int, int) loc)
@@ -139,11 +147,21 @@ namespace Backend.Board
             if (colorF == colorT) 
                 throw InvalidMoveAttemptException.FromBoard(this, Log, "Cannot move to same color.");
 
-            // Generate updated piece state.
+            // Generate updated piece state
             (Piece, PieceColor, MovedState) pieceState = (pieceF, colorF, MovedState.Moved);
             if (revert) pieceState.Item3 = MovedState.Unmoved;
+            
+            // En Passant Capture
+            if (EnPassantTarget.HasValue && to == EnPassantTarget.Value && pieceF == Piece.Pawn) {
+                int vA = colorF == PieceColor.White ? vT - 1 : vT + 1;
+                Map[hT, vA] = Util.EmptyPieceState();
+            }
 
-            // Update map.
+            if (pieceF == Piece.Pawn && Math.Abs(vT - vF) == 2) {
+                EnPassantTarget = colorF == PieceColor.Black ? (hF, vT + 1) : (hF, vT - 1);
+            } else EnPassantTarget = null;
+
+            // Update map
             Map[hT, vT] = pieceState;
             Map[hF, vF] = Util.EmptyPieceState();
 
