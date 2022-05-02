@@ -1,4 +1,5 @@
-﻿using Backend.Board;
+﻿using System.IO;
+using Backend.Board;
 
 namespace Backend
 {
@@ -28,6 +29,9 @@ namespace Backend
 
         public static (int, int) ChessStringToTuple(string chsStr)
         {
+            int rank = int.Parse(chsStr[1].ToString()) - 1;
+            if (chsStr[0] > 72 || chsStr[0] < 65 || rank is < 0 or > 7) 
+                throw new InvalidDataException("Cannot convert position " + chsStr.ToLower() + " to tuple.");
             return (chsStr[0] - 65, int.Parse(chsStr[1].ToString()) - 1);
         }
 

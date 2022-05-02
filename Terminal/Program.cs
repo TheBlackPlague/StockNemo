@@ -25,16 +25,25 @@ namespace Terminal
             while (true) {
                 Draw();
                 
+                (int, int) from;
+                (int, int) to;
+                
                 FromSelection:
-                Console.Write("Select piece to move: ");
+                Console.Write("Select piece to move (or enter full move in AN): ");
                 string toMove = Console.ReadLine()?.ToUpper();
-
+                
                 if (toMove?.Length != 2) {
+                    if (toMove?.Length == 4) {
+                        from = Util.ChessStringToTuple(toMove[..2]);
+                        to = Util.ChessStringToTuple(toMove[2..]);
+                        goto Move;
+                    }
+                    
                     Console.WriteLine("Please enter the file and rank.");
                     goto FromSelection;
                 }
 
-                (int, int) from = Util.ChessStringToTuple(toMove);
+                from = Util.ChessStringToTuple(toMove);
                 
                 if (Board.EmptyAt(from)) {
                     Console.WriteLine("Cannot be moving empty space.");
@@ -52,6 +61,7 @@ namespace Terminal
                 
                 Board.HighlightMoves(from);
                 Draw();
+                Console.WriteLine("Highlighting moves for: " + toMove.ToLower() + "\n");
                 
                 ToSelection:
                 Console.Write("Choose a move from the highlighted legal moves: ");
@@ -67,8 +77,9 @@ namespace Terminal
                     goto ToSelection;
                 }
 
-                (int, int) to = Util.ChessStringToTuple(moveTo);
+                to = Util.ChessStringToTuple(moveTo);
                 
+                Move:
                 MoveAttempt result = Board.SecureMove(from, to);
                 if (result == MoveAttempt.Fail) {
                     Console.WriteLine("Illegal move selected.");
