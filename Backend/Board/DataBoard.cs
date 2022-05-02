@@ -247,7 +247,11 @@ namespace Backend.Board
                         _ => Color.Gray
                     };
 
-                    if (HighlightedMoves.Contains((h, v))) uiColor = piece == Piece.Empty ? Color.Yellow : Color.Red;
+                    if (HighlightedMoves.Contains((h, v))) {
+                        uiColor = piece == Piece.Empty ? Color.Yellow : Color.Red;
+                        if (piece == Piece.Empty && EnPassantTarget.HasValue && (h, v) == EnPassantTarget.Value) 
+                            uiColor = Color.Red; 
+                    }
 
                     // Set piece value for file
                     cells[h + 1] = new TableCell(
