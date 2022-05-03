@@ -112,7 +112,7 @@ namespace Backend.Move
                 
                 // Attack Move
                 for (int hI = h - 1; hI < h + 2; hI++) {
-                    if (hI is < 0 or > 7 || hI == h) continue;
+                    if (hI is < 0 or > 7 || hI == h || v + 1 > 7) continue;
 
                     (int, int) move = (hI, v + 1);
                     
@@ -150,7 +150,7 @@ namespace Backend.Move
                 
                 // Attack Move
                 for (int hI = h - 1; hI < h + 2; hI++) {
-                    if (hI is < 0 or > 7 || hI == h) continue;
+                    if (hI is < 0 or > 7 || hI == h || v - 1 < 0) continue;
 
                     (int, int) move = (hI, v - 1);
                     
