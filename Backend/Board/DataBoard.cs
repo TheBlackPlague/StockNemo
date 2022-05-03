@@ -22,7 +22,7 @@ namespace Backend.Board
         public const int UBOUND = 8; // Board Upper Bound
         public const int LBOUND = -1; // Board Lower Bound
 
-        private readonly (Piece, PieceColor, MovedState)[,] Map = new(Piece, PieceColor, MovedState)[UBOUND, UBOUND];
+        private readonly (Piece, PieceColor)[,] Map = new(Piece, PieceColor)[UBOUND, UBOUND];
         private readonly List<(int, int)> White = new(16);
         private readonly List<(int, int)> Black = new(16);
         private readonly List<(int, int)>[] Colored = new List<(int, int)>[2]; 
@@ -87,7 +87,7 @@ namespace Backend.Board
                     };
                     PieceColor color = char.IsUpper(p) ? PieceColor.White : PieceColor.Black;
 
-                    Map[h, v] = (piece, color, MovedState.Unmoved);
+                    Map[h, v] = (piece, color);
 
                     (int, int) position;
                     switch (color) {
@@ -165,7 +165,7 @@ namespace Backend.Board
             return EnPassantTarget;
         }
 
-        public (Piece, PieceColor, MovedState) At((int, int) loc)
+        public (Piece, PieceColor) At((int, int) loc)
         {
             if (loc.Item1 is < 0 or >= UBOUND || loc.Item2 is < 0 or >= UBOUND)
                 throw new InvalidOperationException("Cannot locate: " + loc + ".");
@@ -212,7 +212,7 @@ namespace Backend.Board
             return AttackBitBoard(color)[kingLoc.Item1, kingLoc.Item2] ? MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
         }
 
-        public void Move((int, int) from, (int, int) to, bool revert = false)
+        public void Move((int, int) from, (int, int) to)
         {
             (int hF, int vF) = from;
             (int hT, int vT) = to;
@@ -220,16 +220,15 @@ namespace Backend.Board
             if (hT is < 0 or >= UBOUND || vT is < 0 or >= UBOUND)
                 throw new InvalidOperationException("Cannot move to " + Util.TupleToChessString(to) + ".");
 
-            (Piece pieceF, PieceColor colorF, _) = Map[hF, vF];
-            (_, PieceColor colorT, _) = Map[hT, vT];
+            (Piece pieceF, PieceColor colorF) = Map[hF, vF];
+            (_, PieceColor colorT) = Map[hT, vT];
 
             // Can't move same color
             if (colorF == colorT) 
                 throw InvalidMoveAttemptException.FromBoard(this, Log, "Cannot move to same color.");
 
             // Generate updated piece state
-            (Piece, PieceColor, MovedState) pieceState = (pieceF, colorF, MovedState.Moved);
-            if (revert) pieceState.Item3 = MovedState.Unmoved;
+            (Piece, PieceColor) pieceState = (pieceF, colorF);
             
             // En Passant Capture
             if (EnPassantTarget.HasValue && to == EnPassantTarget.Value && pieceF == Piece.Pawn) {
@@ -309,7 +308,7 @@ namespace Backend.Board
                     // Set rank column value
                     cells[0] = new TableCell((v + 1).ToString());
 
-                    (Piece piece, PieceColor color, _) = Map[h, v];
+                    (Piece piece, PieceColor color) = Map[h, v];
                     string pieceRepresentation = piece switch
                     {
                         Piece.Empty => "   ",

@@ -7,9 +7,9 @@ namespace Backend
     public static class Util
     {
 
-        public static (Piece, PieceColor, MovedState) EmptyPieceState()
+        public static (Piece, PieceColor) EmptyPieceState()
         {
-            return (Piece.Empty, PieceColor.None, MovedState.Unmoved);
+            return (Piece.Empty, PieceColor.None);
         }
 
         public static PieceColor OppositeColor(PieceColor color)

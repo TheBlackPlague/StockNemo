@@ -18,7 +18,7 @@ namespace Backend.Move
         {
             Board = board;
             From = from;
-            (Piece piece, PieceColor color, _) = Board.At(from);
+            (Piece piece, PieceColor color) = Board.At(from);
             
             // Generate Pseudo-Legal Moves
             switch (piece) {
@@ -102,7 +102,7 @@ namespace Backend.Move
                         (int epH, int epV) = enPassantTarget.Value;
                         (int, int) blackPiece = (epH, epV - 1);
                         if (Math.Abs(blackPiece.Item1 - h) < 2 && blackPiece.Item2 == From.Item2) {
-                            (Piece assumedPiece, PieceColor assumedColor, _) = Board.At(blackPiece);
+                            (Piece assumedPiece, PieceColor assumedColor) = Board.At(blackPiece);
                             if (assumedPiece == Piece.Pawn && assumedColor == PieceColor.Black) 
                                 Moves.Add(enPassantTarget.Value);
                         }
@@ -117,7 +117,7 @@ namespace Backend.Move
                     
                     if (Board.EmptyAt(move)) continue;
                     
-                    (_, PieceColor otherColor, _) = Board.At(move);
+                    (_, PieceColor otherColor) = Board.At(move);
                     if (color != otherColor) Moves.Add(move);
                 }
             } else {
@@ -141,7 +141,7 @@ namespace Backend.Move
                         (int epH, int epV) = enPassantTarget.Value;
                         (int, int) whitePiece = (epH, epV + 1);
                         if (Math.Abs(whitePiece.Item1 - h) < 2 && whitePiece.Item2 == From.Item2) {
-                            (Piece assumedPiece, PieceColor assumedColor, _) = Board.At(whitePiece);
+                            (Piece assumedPiece, PieceColor assumedColor) = Board.At(whitePiece);
                             if (assumedPiece == Piece.Pawn && assumedColor == PieceColor.White) 
                                 Moves.Add(enPassantTarget.Value);
                         }
@@ -156,7 +156,7 @@ namespace Backend.Move
                     
                     if (Board.EmptyAt(move)) continue;
                     
-                    (_, PieceColor otherColor, _) = Board.At(move);
+                    (_, PieceColor otherColor) = Board.At(move);
                     if (color != otherColor) Moves.Add(move);
                 }
             }
