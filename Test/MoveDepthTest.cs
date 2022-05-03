@@ -19,7 +19,7 @@ namespace Test
         private const int D5 = 4865609;
         private const int D6 = 119060324;
         
-        private readonly DataBoard Board = new();
+        private readonly DataBoard Board = DataBoard.Default();
 
         private int SelectedDepth;
 
@@ -36,6 +36,9 @@ namespace Test
 
         public MoveDepthTest()
         {
+            // Draw the board being tested.
+            Console.WriteLine(Board.ToString());
+            
             // Involve JIT.
             SelectedDepth = 0;
             MoveGeneration(Board, 0, verbose: false);
@@ -90,31 +93,38 @@ namespace Test
             if (depth == 0) return 1;
             int count = 0;
             
+            if (depth == SelectedDepth) color = board.IsWhiteTurn() ? PieceColor.White : PieceColor.Black;
+
+            if (depth == 1) {
+                foreach ((int, int) piece in board.All(color)) {
+                    LegalMoveSet moveSet = new(board, piece);
+                    count += moveSet.Count();
+                    if (depth != SelectedDepth) continue;
+                    
+                    if (verbose) LogNodeCount(piece, moveSet.Count());
+                }
+
+                return count;
+            }
+            
             Parallel.ForEach(board.All(color), piece =>
             {
                 LegalMoveSet moveSet = new(board, piece);
-                if (depth > 1) {
-                    foreach ((int, int) move in moveSet.Get()) {
-                        // board.Move(piece, move);
-                        DataBoard nextBoard = board.Clone();
-                        nextBoard.Move(piece, move);
-                        int generatedCount = MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
-                        Interlocked.Add(
-                            ref count, 
-                            generatedCount
-                        );
-                        // board.Move(move, piece, true);
-                    
-                        if (depth != SelectedDepth) continue;
-                        
-                        if (verbose) LogNodeCount(piece, move, generatedCount);
-                    }
-                } else Interlocked.Add(ref count, moveSet.Count());
 
-                if (depth != 1) return;
-                if (depth != SelectedDepth) return;
+                foreach ((int, int) move in moveSet.Get()) {
+                    DataBoard nextBoard = board.Clone();
+                    nextBoard.Move(piece, move);
+                    int generatedCount = MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
+                    Interlocked.Add(
+                        ref count,
+                        generatedCount
+                    );
+                    // board.Move(move, piece, true);
 
-                if (verbose) LogNodeCount(piece, moveSet.Count());
+                    if (depth != SelectedDepth) continue;
+
+                    if (verbose) LogNodeCount(piece, move, generatedCount);
+                }
             });
             
             return count;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using Backend.Exception;
 using Backend.Move;
@@ -16,59 +17,133 @@ namespace Backend.Board
     public class DataBoard
     {
 
+        private const string DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
         public const int UBOUND = 8; // Board Upper Bound
         public const int LBOUND = -1; // Board Lower Bound
 
         private readonly (Piece, PieceColor, MovedState)[,] Map = new(Piece, PieceColor, MovedState)[UBOUND, UBOUND];
-        
+        private readonly List<(int, int)> White = new(16);
+        private readonly List<(int, int)> Black = new(16);
+        private readonly List<(int, int)>[] Colored = new List<(int, int)>[2]; 
+
         private readonly Log Log = new();
+
+        private bool WhiteTurn = true;
+
+        private bool WhiteKCastle = true;
+        private bool WhiteQCastle = true;
+        private bool BlackKCastle = true;
+        private bool BlackQCastle = true;
 
         private (int, int) WhiteKing;
         private (int, int) BlackKing;
         private (int, int)? EnPassantTarget;
 
         private (int, int)[] HighlightedMoves = Array.Empty<(int, int)>();
-
-        public DataBoard()
+        
+        public static DataBoard Default()
         {
-            for (int h = 0; h < UBOUND; h++)
+            return FromFen(DEFAULT_FEN);
+        }
+
+        public static DataBoard FromFen(string fen)
+        {
+            string[] parts = fen.Split(" ");
+            return new DataBoard(parts[0], parts[1], parts[2], parts[3]);
+        }
+
+        private DataBoard() {}
+
+        private DataBoard(string boardData, string turnData, string castlingData, string enPassantTargetData)
+        {
+            string[] expandedBoardData = boardData.Split("/").Reverse().ToArray();
+            if (expandedBoardData.Length != UBOUND) 
+                throw new InvalidDataException("Wrong board data provided: " + boardData);
+            
             for (int v = 0; v < UBOUND; v++) {
-                Piece piece = v switch
-                {
-                    1 or 6 => Piece.Pawn,
-                    0 or 7 when h is 0 or 7 => Piece.Rook,
-                    0 or 7 when h is 1 or 6 => Piece.Knight,
-                    0 or 7 when h is 2 or 5 => Piece.Bishop,
-                    0 or 7 when h is 3 => Piece.Queen,
-                    0 or 7 when h is 4 => Piece.King,
-                    _ => Piece.Empty
-                };
-                PieceColor color = v switch
-                {
-                    <= 1 => PieceColor.White,
-                    >= 6 => PieceColor.Black,
-                    _ => PieceColor.None
-                };
+                string rankData = expandedBoardData[v];
+                int h = 0;
+                foreach (char p in rankData) {
+                    if (char.IsNumber(p)) {
+                        int emptyC = int.Parse(p.ToString());
+                        for (int hI = h; hI < h + emptyC; hI++) {
+                            Map[hI, v] = Util.EmptyPieceState();
+                        }
 
-                Map[h, v] = (piece, color, MovedState.Unmoved);
+                        h += emptyC;
+                        continue;
+                    }
+                    
+                    Piece piece = p switch
+                    {
+                        'p' or 'P' => Piece.Pawn,
+                        'r' or 'R' => Piece.Rook,
+                        'n' or 'N' => Piece.Knight,
+                        'b' or 'B' => Piece.Bishop,
+                        'q' or 'Q' => Piece.Queen,
+                        'k' or 'K' => Piece.King,
+                        _ => throw new InvalidDataException("Piece " + p + " isn't recognized.")
+                    };
+                    PieceColor color = char.IsUpper(p) ? PieceColor.White : PieceColor.Black;
 
-                if (piece != Piece.King) continue;
-                
-                // Save king positions for fast fetching
-                if (color == PieceColor.White) WhiteKing = (h, v);
-                else BlackKing = (h, v);
+                    Map[h, v] = (piece, color, MovedState.Unmoved);
+
+                    (int, int) position;
+                    switch (color) {
+                        case PieceColor.White:
+                            position = (h, v);
+                            White.Add(position);
+                            if (piece == Piece.King) WhiteKing = (h, v);
+                            break;
+                        case PieceColor.Black:
+                            position = (h, v);
+                            Black.Add(position);
+                            if (piece == Piece.King) BlackKing = (h, v);
+                            break;
+                        case PieceColor.None:
+                        default:
+                            throw new InvalidOperationException("Unreachable statement reached.");
+                    }
+                    
+                    h++;
+                }
             }
+
+            Colored[(int)PieceColor.White] = White;
+            Colored[(int)PieceColor.Black] = Black;
+
+            WhiteTurn = turnData[0] == 'w';
+
+            WhiteKCastle = castlingData.Contains("K");
+            WhiteQCastle = castlingData.Contains("Q");
+            BlackKCastle = castlingData.Contains("k");
+            BlackQCastle = castlingData.Contains("q");
+
+            if (enPassantTargetData.Length == 2) {
+                EnPassantTarget = Util.ChessStringToTuple(enPassantTargetData.ToUpper());
+            } else EnPassantTarget = null;
         }
 
         public DataBoard Clone()
         {
             DataBoard board = new();
 
-            // for (int h = 0; h < UBOUND; h++) for (int v = 0; v < UBOUND; v++) board.Map[h, v] = Map[h, v];
             Array.Copy(Map, board.Map, 64);
-
+            
+            board.White.AddRange(White);
+            board.Black.AddRange(Black);
+            board.Colored[(int)PieceColor.White] = board.White;
+            board.Colored[(int)PieceColor.Black] = board.Black;
+            
             board.WhiteKing = WhiteKing;
             board.BlackKing = BlackKing;
+
+            board.WhiteTurn = WhiteTurn;
+            board.WhiteKCastle = WhiteKCastle;
+            board.WhiteQCastle = WhiteQCastle;
+            board.BlackKCastle = BlackKCastle;
+            board.BlackQCastle = BlackQCastle;
 
             board.EnPassantTarget = EnPassantTarget;
 
@@ -80,6 +155,11 @@ namespace Backend.Board
             return Log.Count();
         }
 
+        public bool IsWhiteTurn()
+        {
+            return WhiteTurn;
+        }
+
         public (int, int)? GetEnPassantTarget()
         {
             return EnPassantTarget;
@@ -87,19 +167,14 @@ namespace Backend.Board
 
         public (Piece, PieceColor, MovedState) At((int, int) loc)
         {
+            if (loc.Item1 is < 0 or >= UBOUND || loc.Item2 is < 0 or >= UBOUND)
+                throw new InvalidOperationException("Cannot locate: " + loc + ".");
             return Map[loc.Item1, loc.Item2];
         }
-
-        // ReSharper disable once ReturnTypeCanBeEnumerable.Global
+        
         public (int, int)[] All(PieceColor color)
         {
-            List<(int, int)> all = new(16);
-            for (int h = 0; h < UBOUND; h++) for (int v = 0; v < UBOUND; v++)
-                if (Map[h, v].Item2 == color) {
-                    all.Add((h, v));
-                }
-
-            return all.ToArray();
+            return color == PieceColor.None ? Array.Empty<(int, int)>() : Colored[(int)color].ToArray();
         }
 
         public (int, int) KingLoc(PieceColor color)
@@ -109,6 +184,8 @@ namespace Backend.Board
 
         public bool EmptyAt((int, int) loc)
         {
+            if (loc.Item1 is < 0 or >= UBOUND || loc.Item2 is < 0 or >= UBOUND)
+                throw new InvalidOperationException("Cannot locate: " + loc + ".");
             return Map[loc.Item1, loc.Item2].Item1 == Piece.Empty;
         }
 
@@ -132,7 +209,7 @@ namespace Backend.Board
             if (opposingMoves.Count() == 0) return MoveAttempt.Checkmate;
 
             (int, int) kingLoc = KingLoc(oppositeColor);
-            return BitBoard(color)[kingLoc.Item1, kingLoc.Item2] ? MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
+            return AttackBitBoard(color)[kingLoc.Item1, kingLoc.Item2] ? MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
         }
 
         public void Move((int, int) from, (int, int) to, bool revert = false)
@@ -140,9 +217,12 @@ namespace Backend.Board
             (int hF, int vF) = from;
             (int hT, int vT) = to;
 
+            if (hT is < 0 or >= UBOUND || vT is < 0 or >= UBOUND)
+                throw new InvalidOperationException("Cannot move to " + Util.TupleToChessString(to) + ".");
+
             (Piece pieceF, PieceColor colorF, _) = Map[hF, vF];
             (_, PieceColor colorT, _) = Map[hT, vT];
-            
+
             // Can't move same color
             if (colorF == colorT) 
                 throw InvalidMoveAttemptException.FromBoard(this, Log, "Cannot move to same color.");
@@ -155,6 +235,7 @@ namespace Backend.Board
             if (EnPassantTarget.HasValue && to == EnPassantTarget.Value && pieceF == Piece.Pawn) {
                 int vA = colorF == PieceColor.White ? vT - 1 : vT + 1;
                 Map[hT, vA] = Util.EmptyPieceState();
+                Colored[(int)Util.OppositeColor(colorF)].Remove((hT, vA));
             }
 
             if (pieceF == Piece.Pawn && Math.Abs(vT - vF) == 2) {
@@ -164,7 +245,15 @@ namespace Backend.Board
             // Update map
             Map[hT, vT] = pieceState;
             Map[hF, vF] = Util.EmptyPieceState();
+            if (colorT is PieceColor.White or PieceColor.Black) {
+                Colored[(int)colorT].Remove(to);
+            }
 
+            Colored[(int)colorF].Remove(from);
+            Colored[(int)colorF].Add(to);
+            
+            WhiteTurn = !WhiteTurn;
+            
             if (pieceF != Piece.King) return;
             
             // Save king positions for fast fetching
@@ -172,28 +261,16 @@ namespace Backend.Board
             else BlackKing = to;
         }
         
-        public bool[,] BitBoard(PieceColor color)
+        public bool[,] AttackBitBoard(PieceColor color)
         {
             bool[,] bitBoard = new bool[UBOUND, UBOUND];
 
-            List<(int, int)> fromPieces = new(16);
-            
-            for (int h = 0; h < UBOUND; h++)
-            for (int v = 0; v < UBOUND; v++) {
-                // Add all pieces of the color
-                if (Map[h, v].Item2 == color) fromPieces.Add((h, v));
-                
-                // Fill up Bitboard with default in same loop
-                bitBoard[h, v] = false;
-            }
-            
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
-            foreach ((int, int) from in fromPieces) {
+            foreach ((int, int) from in Colored[(int)color]) {
                 // Set verification off to avoid infinite recursion
                 LegalMoveSet moveSet = new(this, from, false);
-                (int, int)[] moves = moveSet.Get();
 
-                foreach ((int h, int v) in moves) {
+                foreach ((int h, int v) in moveSet.Get()) {
                     // Mark as valid for all true moves
                     bitBoard[h, v] = true;
                 }

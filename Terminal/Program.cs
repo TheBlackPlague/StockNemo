@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Backend;
 using Backend.Board;
@@ -12,12 +13,23 @@ namespace Terminal
     internal static class Program
     {
 
-        private static readonly DataBoard Board = new();
+        private static DataBoard Board;
 
         private static void Main(string[] args)
         {
-            if (args.Length > 0 && args[0] == "perft") RunPerft();
-            else OperationLoop();
+            switch (args.Length) {
+                case > 0 when args[0] == "perft":
+                    RunPerft();
+                    return;
+                case > 0 when args[0] == "fen":
+                    Board = DataBoard.FromFen(args[1]);
+                    break;
+                default:
+                    Board = DataBoard.Default();
+                    break;
+            }
+
+            OperationLoop();
         }
 
         private static void OperationLoop()
@@ -36,6 +48,8 @@ namespace Terminal
                     if (toMove?.Length == 4) {
                         from = Util.ChessStringToTuple(toMove[..2]);
                         to = Util.ChessStringToTuple(toMove[2..]);
+                        
+                        if (!VerifyTurn(from)) goto FromSelection;
                         goto Move;
                     }
                     
@@ -50,15 +64,8 @@ namespace Terminal
                     goto FromSelection;
                 }
 
-                if (Board.MoveCount() % 2 == 0 && Board.At(from).Item2 == PieceColor.Black) {
-                    Console.WriteLine("It's White Turn.");
-                    goto FromSelection;
-                }
-                if (Board.MoveCount() % 2 == 1 && Board.At(from).Item2 == PieceColor.White) {
-                    Console.WriteLine("It's Black Turn.");
-                    goto FromSelection;
-                }
-                
+                if (!VerifyTurn(from)) goto FromSelection;
+
                 Board.HighlightMoves(from);
                 Draw();
                 Console.WriteLine("Highlighting moves for: " + toMove.ToLower() + "\n");
@@ -122,6 +129,22 @@ namespace Terminal
             Console.WriteLine(Board.ToString());
         }
 
+        private static bool VerifyTurn((int, int) from)
+        {
+            if (Board.IsWhiteTurn() && Board.At(from).Item2 == PieceColor.Black) {
+                Console.WriteLine("It's White Turn.");
+                return false;
+            }
+            // ReSharper disable once InvertIf
+            if (!Board.IsWhiteTurn() && Board.At(from).Item2 == PieceColor.White) {
+                Console.WriteLine("It's Black Turn.");
+                return false;
+            }
+
+            return true;
+        }
+
+        [SuppressMessage("ReSharper", "UseStringInterpolation")]
         private static void RunPerft()
         {
             Console.WriteLine("Running PERFT tests: ");
@@ -133,63 +156,64 @@ namespace Terminal
             watch.Start();
             (int, int) result = test.Depth0();
             watch.Stop();
-            Console.WriteLine("Depth 0 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
-            Console.WriteLine("Depth 0 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
-            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            string output = "Searched " + result.Item2.ToString("N0") + " nodes (" + 
+                            watch.ElapsedMilliseconds + " ms).";
+            Console.WriteLine(output);
             
             Console.WriteLine("Running Depth 1: ");
             watch = new Stopwatch();
             watch.Start();
             result = test.Depth1();
             watch.Stop();
-            Console.WriteLine("Depth 1 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
-            Console.WriteLine("Depth 1 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
-            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+            Console.WriteLine(output);
             
             Console.WriteLine("Running Depth 2: ");
             watch = new Stopwatch();
             watch.Start();
             result = test.Depth2();
             watch.Stop();
-            Console.WriteLine("Depth 2 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
-            Console.WriteLine("Depth 2 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
-            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+            Console.WriteLine(output);
 
             Console.WriteLine("Running Depth 3: ");
             watch = new Stopwatch();
             watch.Start();
             result = test.Depth3();
             watch.Stop();
-            Console.WriteLine("Depth 3 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
-            Console.WriteLine("Depth 3 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
-            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+            Console.WriteLine(output);
             
             Console.WriteLine("Running Depth 4: ");
             watch = new Stopwatch();
             watch.Start();
             result = test.Depth4();
             watch.Stop();
-            Console.WriteLine("Depth 4 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
-            Console.WriteLine("Depth 4 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
-            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+            Console.WriteLine(output);
             
             Console.WriteLine("Running Depth 5: ");
             watch = new Stopwatch();
             watch.Start();
             result = test.Depth5();
             watch.Stop();
-            Console.WriteLine("Depth 5 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
-            Console.WriteLine("Depth 5 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
-            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+            Console.WriteLine(output);
             
             Console.WriteLine("Running Depth 6: ");
             watch = new Stopwatch();
             watch.Start();
             result = test.Depth6();
             watch.Stop();
-            Console.WriteLine("Depth 6 took " + watch.Elapsed.TotalMilliseconds + " ms to complete.");
-            Console.WriteLine("Depth 6 " + (result.Item1 == result.Item2 ? "succeeded" : "failed"));
-            Console.WriteLine("Expected nodes: " + result.Item1 + ", found nodes: " + result.Item2);
+            
+            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+            Console.WriteLine(output);
         }
 
     }

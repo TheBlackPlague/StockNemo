@@ -292,7 +292,7 @@ namespace Backend.Move
             foreach ((int, int) move in Moves) {
                 DataBoard board = Board.Clone();
                 board.Move(From, move);
-                bool[,] bitBoard = board.BitBoard(oppositeColor);
+                bool[,] bitBoard = board.AttackBitBoard(oppositeColor);
                 (int h, int v) = board.KingLoc(color);
                 // Board.Move(From, move);
                 // bool[,] bitBoard = Board.BitBoard(oppositeColor);
