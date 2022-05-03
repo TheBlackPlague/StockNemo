@@ -81,9 +81,8 @@ namespace Backend.Move
         {
             (int h, int v) = From;
 
-            int normalMoveC = Board.At(From).Item3 == MovedState.Moved ? 1 : 2;
-
             if (color == PieceColor.White) {
+                int normalMoveC = v == 1 ? 2 : 1;
                 if (!checkMovesOnly) {
                     // Normal
                     for (int vI = v + 1; vI < DataBoard.UBOUND; vI++) {
@@ -122,8 +121,9 @@ namespace Backend.Move
                     if (color != otherColor) Moves.Add(move);
                 }
             } else {
-                // Normal
+                int normalMoveC = v == 6 ? 2 : 1;
                 if (!checkMovesOnly) {
+                    // Normal
                     for (int vI = v - 1; vI > -1; vI--) {
                         if (normalMoveC == 0) break;
 
