@@ -12,7 +12,7 @@ namespace Backend.Exception
 
         public static InvalidMoveLookupException FromBoard(DataBoard board, string? message)
         {
-            InvalidMoveLookupException e = new(board + message);
+            InvalidMoveLookupException e = new("\n" + board + message);
             return e;
         }
 
