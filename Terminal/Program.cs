@@ -154,7 +154,7 @@ namespace Terminal
             Console.WriteLine("Running Depth 0: ");
             Stopwatch watch = new();
             watch.Start();
-            (int, int) result = test.Depth0();
+            (ulong, ulong) result = test.Depth0();
             watch.Stop();
             
             string output = "Searched " + result.Item2.ToString("N0") + " nodes (" + 
