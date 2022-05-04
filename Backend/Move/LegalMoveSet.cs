@@ -14,6 +14,11 @@ namespace Backend.Move
         private readonly DataBoard Board;
         private readonly (int, int) From;
 
+        private bool KCastle;
+        private bool QCastle;
+        private bool KCastleOverride;
+        private bool QCastleOverride;
+
         public LegalMoveSet(DataBoard board, (int, int) from, bool verify = true)
         {
             Board = board;
@@ -259,6 +264,7 @@ namespace Backend.Move
         {
             (int h, int v) = From;
 
+            // Regular Move
             for (int hI = h - 1; hI < h + 2; hI++) {
                 if (hI is < 0 or > 7) continue;
                 for (int vI = v - 1; vI < v + 2; vI++) {
@@ -268,6 +274,30 @@ namespace Backend.Move
                     (int, int) move = (hI, vI);
 
                     AddMove(move, color);
+                }
+            }
+            
+            // Castling
+            (bool q, bool k) = Board.CastlingRight(color);
+            if (q) {
+                (int, int) move = (h - 2, v);
+                (int, int) secondaryMove = (h - 1, v);
+                (int, int) passWay = (h - 3, v);
+                // ReSharper disable once InvertIf
+                if (Board.EmptyAt(move) && Board.EmptyAt(secondaryMove) && Board.EmptyAt(passWay)) {
+                    Moves.Add(move);
+                    QCastle = true;
+                }
+            }
+
+            // ReSharper disable once InvertIf
+            if (k) {
+                (int, int) move = (h + 2, v);
+                (int, int) secondaryMove = (h + 1, v);
+                // ReSharper disable once InvertIf
+                if (Board.EmptyAt(move) && Board.EmptyAt(secondaryMove)) {
+                    Moves.Add(move);
+                    KCastle = true;
                 }
             }
         }
@@ -288,6 +318,8 @@ namespace Backend.Move
         {
             PieceColor oppositeColor = Util.OppositeColor(color);
             
+            int kV = color == PieceColor.White ? 0 : 7;
+            
             List<(int, int)> verifiedMoves = new(Moves.Count);
             foreach ((int, int) move in Moves) {
                 DataBoard board = Board.Clone();
@@ -297,6 +329,14 @@ namespace Backend.Move
                 // Board.Move(From, move);
                 // bool[,] bitBoard = Board.BitBoard(oppositeColor);
                 // (int h, int v) = Board.KingLoc(color);
+
+                if ((KCastle || QCastle) && From == (4, kV)) {
+                    if (QCastle && bitBoard[3, kV]) QCastleOverride = true;
+                    if (KCastle && bitBoard[5, kV]) KCastleOverride = true;
+                }
+
+                if (QCastleOverride && move == (2, kV)) continue;
+                if (KCastleOverride && move == (6, kV)) continue;
                 
                 if (!bitBoard[h, v]) verifiedMoves.Add(move);
                 // Board.Move(move, From, true);

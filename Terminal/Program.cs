@@ -45,14 +45,29 @@ namespace Terminal
                 string toMove = Console.ReadLine()?.ToUpper();
                 
                 if (toMove?.Length != 2) {
-                    if (toMove?.Length == 4) {
-                        from = Util.ChessStringToTuple(toMove[..2]);
-                        to = Util.ChessStringToTuple(toMove[2..]);
+                    switch (toMove?.Length) {
+                        case 3:
+                        {
+                            if (toMove.Equals("ALL")) {
+                                PieceColor color = Board.IsWhiteTurn() ? PieceColor.White : PieceColor.Black;
+                                Board.HighlightMoves(color);
+                                Draw();
+                                Console.WriteLine("Highlighting moves for: " + color + "\n");
+                                goto FromSelection;
+                            }
+
+                            break;
+                        }
+                        case 4:
+                        {
+                            from = Util.ChessStringToTuple(toMove[..2]);
+                            to = Util.ChessStringToTuple(toMove[2..]);
                         
-                        if (!VerifyTurn(from)) goto FromSelection;
-                        goto Move;
+                            if (!VerifyTurn(from)) goto FromSelection;
+                            goto Move;
+                        }
                     }
-                    
+
                     Console.WriteLine("Please enter the file and rank.");
                     goto FromSelection;
                 }

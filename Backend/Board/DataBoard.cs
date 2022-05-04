@@ -18,6 +18,7 @@ namespace Backend.Board
     {
 
         private const string DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        private const string FEN_SPR = "/";
 
         public const int UBOUND = 8; // Board Upper Bound
         public const int LBOUND = -1; // Board Lower Bound
@@ -57,7 +58,7 @@ namespace Backend.Board
 
         private DataBoard(string boardData, string turnData, string castlingData, string enPassantTargetData)
         {
-            string[] expandedBoardData = boardData.Split("/").Reverse().ToArray();
+            string[] expandedBoardData = boardData.Split(FEN_SPR).Reverse().ToArray();
             if (expandedBoardData.Length != UBOUND) 
                 throw new InvalidDataException("Wrong board data provided: " + boardData);
             
@@ -165,6 +166,11 @@ namespace Backend.Board
             return EnPassantTarget;
         }
 
+        public (bool, bool) CastlingRight(PieceColor color)
+        {
+            return color == PieceColor.White ? (WhiteQCastle, WhiteKCastle) : (BlackQCastle, BlackKCastle);
+        }
+
         public (Piece, PieceColor) At((int, int) loc)
         {
             if (loc.Item1 is < 0 or >= UBOUND || loc.Item2 is < 0 or >= UBOUND)
@@ -221,7 +227,7 @@ namespace Backend.Board
                 throw new InvalidOperationException("Cannot move to " + Util.TupleToChessString(to) + ".");
 
             (Piece pieceF, PieceColor colorF) = Map[hF, vF];
-            (_, PieceColor colorT) = Map[hT, vT];
+            (Piece pieceT, PieceColor colorT) = Map[hT, vT];
 
             // Can't move same color
             if (colorF == colorT) 
@@ -251,13 +257,86 @@ namespace Backend.Board
             Colored[(int)colorF].Remove(from);
             Colored[(int)colorF].Add(to);
             
+            if (pieceF == Piece.King && Math.Abs(hT - hF) == 2) {
+                if (hT > hF) { // King side
+                    (Piece, PieceColor) rook = Map[7, vF];
+                    Map[hT - 1, vF] = rook;
+                    Map[7, vF] = Util.EmptyPieceState();
+
+                    Colored[(int)colorF].Remove((7, vF));
+                    Colored[(int)colorF].Add((hT - 1, vF));
+                } else { // Queen Side
+                    (Piece, PieceColor) rook = Map[0, vF];
+                    Map[hT + 1, vF] = rook;
+                    Map[0, vF] = Util.EmptyPieceState();
+                    
+                    Colored[(int)colorF].Remove((0, vF));
+                    Colored[(int)colorF].Add((hT + 1, vF));
+                }
+            }
+            
             WhiteTurn = !WhiteTurn;
+
+            // Castling rights update on rook move
+            if (pieceF == Piece.Rook) {
+                switch (colorF) {
+                    case PieceColor.White:
+                        switch (hF) {
+                            case 0:
+                                WhiteQCastle = false;
+                                break;
+                            case 7:
+                                WhiteKCastle = false;
+                                break;
+                        }
+
+                        break;
+                    case PieceColor.Black:
+                        switch (hF) {
+                            case 0:
+                                BlackQCastle = false;
+                                break;
+                            case 7:
+                                BlackKCastle = false;
+                                break;
+                        }
+
+                        break;
+                    case PieceColor.None:
+                    default:
+                        throw new InvalidOperationException("Rook cannot have no color.");
+                }
+            }
+            
+            // Castling right update on rook captured
+            if (pieceT == Piece.Rook) {
+                switch (colorT) {
+                    case PieceColor.White:
+                        if (hT == 7) WhiteKCastle = false;
+                        else WhiteQCastle = false;
+                        break;
+                    case PieceColor.Black:
+                        if (hT == 7) BlackKCastle = false;
+                        else BlackQCastle = false;
+                        break;
+                    case PieceColor.None:
+                    default:
+                        throw new InvalidOperationException("Rook cannot have no color.");
+                }
+            }
             
             if (pieceF != Piece.King) return;
             
-            // Save king positions for fast fetching
-            if (colorF == PieceColor.White) WhiteKing = to;
-            else BlackKing = to;
+            // Save king positions for fast fetching & update castling rights
+            if (colorF == PieceColor.White) {
+                WhiteKing = to;
+                WhiteKCastle = false;
+                WhiteQCastle = false;
+            } else {
+                BlackKing = to;
+                BlackKCastle = false;
+                BlackQCastle = false;
+            }
         }
         
         public bool[,] AttackBitBoard(PieceColor color)
@@ -281,6 +360,14 @@ namespace Backend.Board
         public void HighlightMoves((int, int) from)
         {
             LegalMoveSet set = new(this, from);
+            HighlightedMoves = set.Get();
+        }
+        
+        public void HighlightMoves(PieceColor color)
+        {
+            if (color == PieceColor.None) 
+                throw new InvalidOperationException("Cannot highlight moves for no color.");
+            LegalMoveSet set = new(this, color);
             HighlightedMoves = set.Get();
         }
 
