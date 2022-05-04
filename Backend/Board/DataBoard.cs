@@ -286,7 +286,9 @@ namespace Backend.Board
 
         public override string ToString()
         {
-            return DrawBoardCli().ToString().Trim(' ');
+            string board = DrawBoardCli().ToString().Trim(' ');
+            string fen = "FEN: " + GenerateFen() + "\n";
+            return board + fen;
         }
 
         private Table DrawBoardCli()
@@ -351,6 +353,67 @@ namespace Backend.Board
             HighlightedMoves = Array.Empty<(int, int)>();
 
             return table;
+        }
+
+        private string GenerateFen()
+        {
+            string[] expandedBoardData = new string[UBOUND];
+            for (int v = 0; v < UBOUND; v++) {
+                string rankData = "";
+                for (int h = 0; h < UBOUND; h++) {
+                    (Piece, PieceColor) state = Map[h, v];
+                    if (state.Item1 == Piece.Empty) {
+                        int c = 1;
+                        for (int i = h + 1; i < UBOUND; i++) {
+                            if (Map[i, v].Item1 == Piece.Empty) c++;
+                            else break;
+                        }
+
+                        rankData += c.ToString();
+                        h += c - 1;
+                        continue;
+                    }
+
+                    if (state.Item2 == PieceColor.White) {
+                        string input = state.Item1.ToString()[0].ToString();
+                        if (state.Item1 == Piece.Knight) input = "N";
+
+                        rankData += input;
+                    } else {
+                        string input = state.Item1.ToString()[0].ToString().ToLower();
+                        if (state.Item1 == Piece.Knight) input = "n";
+
+                        rankData += input;
+                    }
+                }
+
+                expandedBoardData[v] = rankData;
+            }
+
+            string boardData = string.Join(FEN_SPR, expandedBoardData.Reverse());
+
+            string turnData = WhiteTurn ? "w" : "b";
+
+            string castlingRight = "";
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (!WhiteKCastle && !WhiteQCastle && !BlackKCastle && !BlackQCastle) {
+                castlingRight = "-";
+                goto EnPassantFill;
+            }
+            
+            if (WhiteKCastle) castlingRight += "K";
+            if (WhiteQCastle) castlingRight += "Q";
+            if (BlackKCastle) castlingRight += "k";
+            if (BlackQCastle) castlingRight += "q";
+
+            EnPassantFill:
+            string enPassantTarget = "-";
+            if (EnPassantTarget.HasValue) {
+                enPassantTarget = Util.TupleToChessString(EnPassantTarget.Value).ToLower();
+            }
+
+            string[] fenData = { boardData, turnData, castlingRight, enPassantTarget };
+            return string.Join(" ", fenData);
         }
 
     }
