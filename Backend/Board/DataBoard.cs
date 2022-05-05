@@ -26,7 +26,7 @@ namespace Backend.Board
         private readonly (Piece, PieceColor)[,] Map = new(Piece, PieceColor)[UBOUND, UBOUND];
         private readonly List<(int, int)> White = new(16);
         private readonly List<(int, int)> Black = new(16);
-        private readonly List<(int, int)>[] Colored = new List<(int, int)>[2]; 
+        private readonly List<(int, int)>[] Colored = new List<(int, int)>[2];
 
         private readonly Log Log = new();
 
@@ -215,7 +215,8 @@ namespace Backend.Board
             if (opposingMoves.Count() == 0) return MoveAttempt.Checkmate;
 
             (int, int) kingLoc = KingLoc(oppositeColor);
-            return AttackBitBoard(color)[kingLoc.Item1, kingLoc.Item2] ? MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
+            return AttackBitBoard(color)[kingLoc.Item1, kingLoc.Item2] ? 
+                MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
         }
 
         public void Move((int, int) from, (int, int) to)
@@ -324,24 +325,25 @@ namespace Backend.Board
                         throw new InvalidOperationException("Rook cannot have no color.");
                 }
             }
-            
-            if (pieceF != Piece.King) return;
-            
-            // Save king positions for fast fetching & update castling rights
-            if (colorF == PieceColor.White) {
-                WhiteKing = to;
-                WhiteKCastle = false;
-                WhiteQCastle = false;
-            } else {
-                BlackKing = to;
-                BlackKCastle = false;
-                BlackQCastle = false;
+
+            // ReSharper disable once InvertIf
+            if (pieceF == Piece.King) {
+                // Save king positions for fast fetching & update castling rights
+                if (colorF == PieceColor.White) {
+                    WhiteKing = to;
+                    WhiteKCastle = false;
+                    WhiteQCastle = false;
+                } else {
+                    BlackKing = to;
+                    BlackKCastle = false;
+                    BlackQCastle = false;
+                }
             }
         }
         
-        public bool[,] AttackBitBoard(PieceColor color)
+        public BitBoard AttackBitBoard(PieceColor color)
         {
-            bool[,] bitBoard = new bool[UBOUND, UBOUND];
+            BitBoard bitBoard = new(BitBoard.Default);
 
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach ((int, int) from in Colored[(int)color]) {
