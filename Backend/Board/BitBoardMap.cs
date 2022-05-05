@@ -13,33 +13,33 @@ namespace Backend.Board
 
         // White
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard WPB;
+        private BitBoard WPB;
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard WRB;
+        private BitBoard WRB;
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard WNB;
+        private BitBoard WNB;
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard WBB;
+        private BitBoard WBB;
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard WQB;
+        private BitBoard WQB;
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard WKB;
+        private BitBoard WKB;
         
         // Black
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard BPB;
+        private BitBoard BPB;
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard BRB;
+        private BitBoard BRB;
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard BNB;
+        private BitBoard BNB;
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard BBB;
+        private BitBoard BBB;
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard BQB;
+        private BitBoard BQB;
         // ReSharper disable once InconsistentNaming
-        private readonly BitBoard BKB;
+        private BitBoard BKB;
         
-        private static void Move(BitBoard board, (int, int) from, (int, int) to)
+        private static void Move(ref BitBoard board, (int, int) from, (int, int) to)
         {
             if (!board[from.Item1, from.Item2]) 
                 throw new InvalidDataException("No piece was found at: " + from);
@@ -66,18 +66,18 @@ namespace Backend.Board
 
         public BitBoardMap(string boardFen)
         {
-            WPB = BitBoard.Default.Clone();
-            WRB = BitBoard.Default.Clone();
-            WNB = BitBoard.Default.Clone();
-            WBB = BitBoard.Default.Clone();
-            WQB = BitBoard.Default.Clone();
-            WKB = BitBoard.Default.Clone();
-            BPB = BitBoard.Default.Clone();
-            BRB = BitBoard.Default.Clone();
-            BNB = BitBoard.Default.Clone();
-            BBB = BitBoard.Default.Clone();
-            BQB = BitBoard.Default.Clone();
-            BKB = BitBoard.Default.Clone();
+            WPB = new BitBoard(BitBoard.Default);
+            WRB = new BitBoard(BitBoard.Default);
+            WNB = new BitBoard(BitBoard.Default);
+            WBB = new BitBoard(BitBoard.Default);
+            WQB = new BitBoard(BitBoard.Default);
+            WKB = new BitBoard(BitBoard.Default);
+            BPB = new BitBoard(BitBoard.Default);
+            BRB = new BitBoard(BitBoard.Default);
+            BNB = new BitBoard(BitBoard.Default);
+            BBB = new BitBoard(BitBoard.Default);
+            BQB = new BitBoard(BitBoard.Default);
+            BKB = new BitBoard(BitBoard.Default);
             
             string[] expandedBoardData = boardFen.Split(FEN_SPR).Reverse().ToArray();
             if (expandedBoardData.Length != BitDataBoard.UBOUND) 
@@ -208,20 +208,20 @@ namespace Backend.Board
         public void Move((int, int) from, (int, int) to)
         {
             // White
-            if (WPB[from.Item1, from.Item2]) Move(WPB, from, to);
-            if (WRB[from.Item1, from.Item2]) Move(WRB, from, to);
-            if (WNB[from.Item1, from.Item2]) Move(WNB, from, to);
-            if (WBB[from.Item1, from.Item2]) Move(WBB, from, to);
-            if (WQB[from.Item1, from.Item2]) Move(WQB, from, to);
-            if (WKB[from.Item1, from.Item2]) Move(WKB, from, to);
+            if (WPB[from.Item1, from.Item2]) Move(ref WPB, from, to);
+            if (WRB[from.Item1, from.Item2]) Move(ref WRB, from, to);
+            if (WNB[from.Item1, from.Item2]) Move(ref WNB, from, to);
+            if (WBB[from.Item1, from.Item2]) Move(ref WBB, from, to);
+            if (WQB[from.Item1, from.Item2]) Move(ref WQB, from, to);
+            if (WKB[from.Item1, from.Item2]) Move(ref WKB, from, to);
             
             // Black
-            if (BPB[from.Item1, from.Item2]) Move(BPB, from, to);
-            if (BRB[from.Item1, from.Item2]) Move(BRB, from, to);
-            if (BNB[from.Item1, from.Item2]) Move(BNB, from, to);
-            if (BBB[from.Item1, from.Item2]) Move(BBB, from, to);
-            if (BQB[from.Item1, from.Item2]) Move(BQB, from, to);
-            if (BKB[from.Item1, from.Item2]) Move(BKB, from, to);
+            if (BPB[from.Item1, from.Item2]) Move(ref BPB, from, to);
+            if (BRB[from.Item1, from.Item2]) Move(ref BRB, from, to);
+            if (BNB[from.Item1, from.Item2]) Move(ref BNB, from, to);
+            if (BBB[from.Item1, from.Item2]) Move(ref BBB, from, to);
+            if (BQB[from.Item1, from.Item2]) Move(ref BQB, from, to);
+            if (BKB[from.Item1, from.Item2]) Move(ref BKB, from, to);
         }
 
         public void Empty(int h, int v)

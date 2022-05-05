@@ -3,7 +3,7 @@
 namespace Backend.Board
 {
 
-    public class BitBoard
+    public struct BitBoard
     {
 
         public static readonly BitBoard Default = new(ulong.MinValue);
