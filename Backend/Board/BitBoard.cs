@@ -21,7 +21,7 @@ namespace Backend.Board
             Internal = from.Internal;
         }
 
-        private BitBoard(ulong from)
+        public BitBoard(ulong from)
         {
             Internal = from;
         }
@@ -44,6 +44,11 @@ namespace Backend.Board
         public BitBoard And(BitBoard second)
         {
             return new BitBoard(Internal | second.Internal);
+        }
+
+        public bool Equals(BitBoard second)
+        {
+            return Internal == second.Internal;
         }
 
     }
