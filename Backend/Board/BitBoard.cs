@@ -3,10 +3,10 @@
 namespace Backend.Board
 {
 
-    public struct BitBoard
+    public class BitBoard
     {
 
-        public static readonly BitBoard Default = new();
+        public static readonly BitBoard Default = new(ulong.MinValue);
 
         private ulong Internal;
         
@@ -46,9 +46,24 @@ namespace Backend.Board
             return new BitBoard(Internal | second.Internal);
         }
 
+        public BitBoard Flip()
+        {
+            return new BitBoard(~Internal);
+        }
+
+        public bool True()
+        {
+            return Internal != 0UL;
+        }
+
         public bool Equals(BitBoard second)
         {
             return Internal == second.Internal;
+        }
+
+        public BitBoard Clone()
+        {
+            return new BitBoard(this);
         }
 
     }
