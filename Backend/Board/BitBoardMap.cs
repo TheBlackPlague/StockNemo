@@ -141,45 +141,6 @@ namespace Backend.Board
             }
         }
 
-        public BitBoard Get(PieceColor color)
-        {
-            return color switch
-            {
-                PieceColor.White => WPB | WRB | WNB | WBB | WQB | WKB,
-                PieceColor.Black => BPB | BRB | BNB | BBB | BQB | BKB,
-                PieceColor.None => ~(Get(PieceColor.White) | Get(PieceColor.Black)),
-                _ => throw new InvalidOperationException("Must provide a valid PieceColor.")
-            };
-        }
-
-        public BitBoard Get(Piece piece, PieceColor color)
-        {
-            return color switch
-            {
-                PieceColor.White => piece switch
-                {
-                    Piece.Pawn => WPB,
-                    Piece.Rook => WRB,
-                    Piece.Knight => WNB,
-                    Piece.Bishop => WBB,
-                    Piece.Queen => WQB,
-                    Piece.King => WKB,
-                    Piece.Empty or _ => throw new InvalidOperationException("Must provide a piece type.")
-                },
-                PieceColor.Black => piece switch
-                {
-                    Piece.Pawn => BPB,
-                    Piece.Rook => BRB,
-                    Piece.Knight => BNB,
-                    Piece.Bishop => BBB,
-                    Piece.Queen => BQB,
-                    Piece.King => BKB,
-                    Piece.Empty or _ => throw new InvalidOperationException("Must provide a piece type.")
-                },
-                _ or PieceColor.None => throw new InvalidOperationException("Must provide a color.")
-            };
-        }
-
         [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
         public (Piece, PieceColor) this[int h, int v]
         {
@@ -202,6 +163,51 @@ namespace Backend.Board
                 if (BKB[h, v]) return (Piece.King, PieceColor.Black);
 
                 return (Piece.Empty, PieceColor.None);
+            }
+        }
+
+        public BitBoard this[PieceColor color]
+        {
+            get
+            {
+                return color switch
+                {
+                    PieceColor.White => WPB | WRB | WNB | WBB | WQB | WKB,
+                    PieceColor.Black => BPB | BRB | BNB | BBB | BQB | BKB,
+                    PieceColor.None => ~(this[PieceColor.White] | this[PieceColor.Black]),
+                    _ => throw new InvalidOperationException("Must provide a valid PieceColor.")
+                };
+            }
+        }
+
+        public BitBoard this[Piece piece, PieceColor color]
+        {
+            get
+            {
+                return color switch
+                {
+                    PieceColor.White => piece switch
+                    {
+                        Piece.Pawn => WPB,
+                        Piece.Rook => WRB,
+                        Piece.Knight => WNB,
+                        Piece.Bishop => WBB,
+                        Piece.Queen => WQB,
+                        Piece.King => WKB,
+                        Piece.Empty or _ => throw new InvalidOperationException("Must provide a piece type.")
+                    },
+                    PieceColor.Black => piece switch
+                    {
+                        Piece.Pawn => BPB,
+                        Piece.Rook => BRB,
+                        Piece.Knight => BNB,
+                        Piece.Bishop => BBB,
+                        Piece.Queen => BQB,
+                        Piece.King => BKB,
+                        Piece.Empty or _ => throw new InvalidOperationException("Must provide a piece type.")
+                    },
+                    _ or PieceColor.None => throw new InvalidOperationException("Must provide a color.")
+                };
             }
         }
 
