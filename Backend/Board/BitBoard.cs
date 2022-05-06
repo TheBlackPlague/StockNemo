@@ -25,6 +25,16 @@ namespace Backend.Board
             return new BitBoard(~bitBoard.Internal);
         }
 
+        public static BitBoard operator >>(BitBoard bitBoard, int by)
+        {
+            return new BitBoard(bitBoard.Internal >> by);
+        }
+        
+        public static BitBoard operator <<(BitBoard bitBoard, int by)
+        {
+            return new BitBoard(bitBoard.Internal << by);
+        }
+
         public static bool operator ==(BitBoard left, BitBoard right)
         {
             return left.Internal == right.Internal;
@@ -48,6 +58,14 @@ namespace Backend.Board
         public static implicit operator BitBoard(ulong from)
         {
             return new BitBoard(from);
+        }
+
+        public static implicit operator BitBoard((int, int) from)
+        {
+            return new BitBoard(Default)
+            {
+                [from.Item1, from.Item2] = true 
+            };
         }
         
         private static int OneD(int h, int v)
