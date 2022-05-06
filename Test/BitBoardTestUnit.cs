@@ -82,7 +82,7 @@ namespace Test
                 }
             }
 
-            BitBoard final = whiteBoard.Or(blackBoard);
+            BitBoard final = whiteBoard | blackBoard;
 
             bool success = true;
             for (int h = 0; h < 8; h++)

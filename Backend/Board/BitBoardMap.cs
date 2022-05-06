@@ -145,9 +145,9 @@ namespace Backend.Board
         {
             return color switch
             {
-                PieceColor.White => WPB.Or(WRB).Or(WNB).Or(WBB).Or(WQB).Or(WKB),
-                PieceColor.Black => BPB.Or(BRB).Or(BNB).Or(BBB).Or(BQB).Or(BKB),
-                PieceColor.None => Get(PieceColor.White).Or(Get(PieceColor.Black)).Flip(),
+                PieceColor.White => WPB | WRB | WNB | WBB | WQB | WKB,
+                PieceColor.Black => BPB | BRB | BNB | BBB | BQB | BKB,
+                PieceColor.None => ~(Get(PieceColor.White) | Get(PieceColor.Black)),
                 _ => throw new InvalidOperationException("Must provide a valid PieceColor.")
             };
         }
@@ -250,9 +250,9 @@ namespace Backend.Board
 
         public bool Equals(BitBoardMap map)
         {
-            return WPB.Equals(map.WPB) && WRB.Equals(map.WRB) && WNB.Equals(map.WNB) && WBB.Equals(map.WBB) &&
-                   WQB.Equals(map.WQB) && WKB.Equals(map.WKB) && BPB.Equals(map.BPB) && BRB.Equals(map.BRB) &&
-                   BNB.Equals(map.BNB) && BBB.Equals(map.BBB) && BQB.Equals(map.BQB) && BKB.Equals(map.BKB);
+            return WPB == map.WPB && WRB == map.WRB && WNB == map.WNB && WBB == map.WBB && 
+                   WQB == map.WQB && WKB == map.WKB && BPB == map.BPB && BRB == map.BRB && 
+                   BNB == map.BNB && BBB == map.BBB && BQB == map.BQB && BKB == map.BKB;
         }
 
     }

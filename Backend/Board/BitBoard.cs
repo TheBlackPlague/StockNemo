@@ -9,6 +9,46 @@ namespace Backend.Board
         public static readonly BitBoard Default = new(ulong.MinValue);
 
         private ulong Internal;
+
+        public static BitBoard operator |(BitBoard left, BitBoard right)
+        {
+            return new BitBoard(left.Internal | right.Internal);
+        }
+        
+        public static BitBoard operator &(BitBoard left, BitBoard right)
+        {
+            return new BitBoard(left.Internal & right.Internal);
+        }
+        
+        public static BitBoard operator ~(BitBoard bitBoard)
+        {
+            return new BitBoard(~bitBoard.Internal);
+        }
+
+        public static bool operator ==(BitBoard left, BitBoard right)
+        {
+            return left.Internal == right.Internal;
+        }
+        
+        public static bool operator !=(BitBoard left, BitBoard right)
+        {
+            return left.Internal != right.Internal;
+        }
+
+        public static implicit operator bool(BitBoard bitBoard)
+        {
+            return bitBoard.Internal != 0UL;
+        }
+        
+        public static implicit operator ulong(BitBoard bitBoard)
+        {
+            return bitBoard.Internal;
+        }
+
+        public static implicit operator BitBoard(ulong from)
+        {
+            return new BitBoard(from);
+        }
         
         private static int OneD(int h, int v)
         {
@@ -21,7 +61,7 @@ namespace Backend.Board
             Internal = from.Internal;
         }
 
-        public BitBoard(ulong from)
+        private BitBoard(ulong from)
         {
             Internal = from;
         }
@@ -36,34 +76,24 @@ namespace Backend.Board
             }
         }
 
-        public BitBoard Or(BitBoard second)
+        public override bool Equals(object obj)
         {
-            return new BitBoard(Internal | second.Internal);
+            return obj is BitBoard other && Equals(other);
         }
 
-        public BitBoard And(BitBoard second)
+        public override int GetHashCode()
         {
-            return new BitBoard(Internal & second.Internal);
-        }
-
-        public BitBoard Flip()
-        {
-            return new BitBoard(~Internal);
-        }
-
-        public bool True()
-        {
-            return Internal != 0UL;
-        }
-
-        public bool Equals(BitBoard second)
-        {
-            return Internal == second.Internal;
+            return Internal.GetHashCode();
         }
 
         public BitBoard Clone()
         {
             return new BitBoard(this);
+        }
+        
+        private bool Equals(BitBoard other)
+        {
+            return Internal == other.Internal;
         }
 
     }
