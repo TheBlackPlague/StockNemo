@@ -41,11 +41,15 @@ namespace Backend.Board
         
         private static void Move(ref BitBoard board, (int, int) from, (int, int) to)
         {
-            if (!board[from.Item1, from.Item2]) 
-                throw new InvalidDataException("No piece was found at: " + from);
-
             board[from.Item1, from.Item2] = false;
             board[to.Item1, to.Item2] = true;
+        }
+        
+        private static void Move(ref BitBoard fromBoard, ref BitBoard toBoard, (int, int) from, (int, int) to)
+        {
+            fromBoard[from.Item1, from.Item2] = false;
+            toBoard[to.Item1, to.Item2] = false;
+            fromBoard[to.Item1, to.Item2] = true;
         }
 
         private BitBoardMap(BitBoardMap map)
@@ -213,40 +217,71 @@ namespace Backend.Board
 
         public void Move((int, int) from, (int, int) to)
         {
-            // White
-            if (WPB[from.Item1, from.Item2]) Move(ref WPB, from, to);
-            if (WRB[from.Item1, from.Item2]) Move(ref WRB, from, to);
-            if (WNB[from.Item1, from.Item2]) Move(ref WNB, from, to);
-            if (WBB[from.Item1, from.Item2]) Move(ref WBB, from, to);
-            if (WQB[from.Item1, from.Item2]) Move(ref WQB, from, to);
-            if (WKB[from.Item1, from.Item2]) Move(ref WKB, from, to);
+            ref BitBoard fromBoard = ref WPB;
+            ref BitBoard toBoard = ref WPB;
+            bool toBoardSet = false;
             
-            // Black
-            if (BPB[from.Item1, from.Item2]) Move(ref BPB, from, to);
-            if (BRB[from.Item1, from.Item2]) Move(ref BRB, from, to);
-            if (BNB[from.Item1, from.Item2]) Move(ref BNB, from, to);
-            if (BBB[from.Item1, from.Item2]) Move(ref BBB, from, to);
-            if (BQB[from.Item1, from.Item2]) Move(ref BQB, from, to);
-            if (BKB[from.Item1, from.Item2]) Move(ref BKB, from, to);
+            if (this[PieceColor.White][from.Item1, from.Item2]) {
+                // White
+                if (WPB[from.Item1, from.Item2]) fromBoard = ref WPB;
+                if (WRB[from.Item1, from.Item2]) fromBoard = ref WRB;
+                if (WNB[from.Item1, from.Item2]) fromBoard = ref WNB;
+                if (WBB[from.Item1, from.Item2]) fromBoard = ref WBB;
+                if (WQB[from.Item1, from.Item2]) fromBoard = ref WQB;
+                if (WKB[from.Item1, from.Item2]) fromBoard = ref WKB;
+            } else if (this[PieceColor.Black][from.Item1, from.Item2]) {
+                // Black
+                if (BPB[from.Item1, from.Item2]) fromBoard = ref BPB;
+                if (BRB[from.Item1, from.Item2]) fromBoard = ref BRB;
+                if (BNB[from.Item1, from.Item2]) fromBoard = ref BNB;
+                if (BBB[from.Item1, from.Item2]) fromBoard = ref BBB;
+                if (BQB[from.Item1, from.Item2]) fromBoard = ref BQB;
+                if (BKB[from.Item1, from.Item2]) fromBoard = ref BKB;
+            } else throw new InvalidOperationException("Cannot move empty piece.");
+            
+            if (this[PieceColor.White][to.Item1, to.Item2]) {
+                toBoardSet = true;
+                // White
+                if (WRB[to.Item1, to.Item2]) toBoard = ref WRB;
+                if (WNB[to.Item1, to.Item2]) toBoard = ref WNB;
+                if (WPB[to.Item1, to.Item2]) toBoard = ref WPB;
+                if (WBB[to.Item1, to.Item2]) toBoard = ref WBB;
+                if (WQB[to.Item1, to.Item2]) toBoard = ref WQB;
+                if (WKB[to.Item1, to.Item2]) toBoard = ref WKB;
+            } else if (this[PieceColor.Black][to.Item1, to.Item2]) {
+                toBoardSet = true;
+                // Black
+                if (BPB[to.Item1, to.Item2]) toBoard = ref BPB;
+                if (BRB[to.Item1, to.Item2]) toBoard = ref BRB;
+                if (BNB[to.Item1, to.Item2]) toBoard = ref BNB;
+                if (BBB[to.Item1, to.Item2]) toBoard = ref BBB;
+                if (BQB[to.Item1, to.Item2]) toBoard = ref BQB;
+                if (BKB[to.Item1, to.Item2]) toBoard = ref BKB;
+            }
+            
+            if (toBoardSet) Move(ref fromBoard, ref toBoard, from, to);
+            else Move(ref fromBoard, from, to);
         }
 
         public void Empty(int h, int v)
         {
-            // White
-            if (WPB[h, v]) WPB[h, v] = false;
-            if (WRB[h, v]) WRB[h, v] = false;
-            if (WNB[h, v]) WNB[h, v] = false;
-            if (WBB[h, v]) WBB[h, v] = false;
-            if (WQB[h, v]) WQB[h, v] = false;
-            if (WKB[h, v]) WKB[h, v] = false;
-            
-            // Black
-            if (BPB[h, v]) BPB[h, v] = false;
-            if (BRB[h, v]) BRB[h, v] = false;
-            if (BNB[h, v]) BNB[h, v] = false;
-            if (BBB[h, v]) BBB[h, v] = false;
-            if (BQB[h, v]) BQB[h, v] = false;
-            if (BKB[h, v]) BKB[h, v] = false;
+            if (this[PieceColor.White][h, v]) {
+                // White
+                if (WPB[h, v]) WPB[h, v] = false;
+                if (WRB[h, v]) WRB[h, v] = false;
+                if (WNB[h, v]) WNB[h, v] = false;
+                if (WBB[h, v]) WBB[h, v] = false;
+                if (WQB[h, v]) WQB[h, v] = false;
+                if (WKB[h, v]) WKB[h, v] = false;
+            } else if (this[PieceColor.Black][h, v]) {
+                // Black
+                if (BPB[h, v]) BPB[h, v] = false;
+                if (BRB[h, v]) BRB[h, v] = false;
+                if (BNB[h, v]) BNB[h, v] = false;
+                if (BBB[h, v]) BBB[h, v] = false;
+                if (BQB[h, v]) BQB[h, v] = false;
+                if (BKB[h, v]) BKB[h, v] = false;
+            } else throw new InvalidOperationException("Attempting to set already empty piece empty.");
         }
 
         public BitBoardMap Clone()

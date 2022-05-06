@@ -46,6 +46,18 @@ namespace Test
         }
         
         [Test]
+        public void MoveWhitePawnInEnemy()
+        {
+            BitBoardMap useMap = Map.Clone();
+            
+            useMap.Move((0, 1), (0, 6));
+
+            bool success = (Piece.Pawn, PieceColor.White) == useMap[0, 6] &&
+                           useMap[Piece.Pawn, PieceColor.Black].Count() == 7;
+            Assert.IsTrue(success);
+        }
+        
+        [Test]
         public void RemoveWhitePawn()
         {
             BitBoardMap useMap = Map.Clone();
