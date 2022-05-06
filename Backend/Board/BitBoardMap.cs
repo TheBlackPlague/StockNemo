@@ -70,18 +70,18 @@ namespace Backend.Board
 
         public BitBoardMap(string boardFen)
         {
-            WPB = new BitBoard(BitBoard.Default);
-            WRB = new BitBoard(BitBoard.Default);
-            WNB = new BitBoard(BitBoard.Default);
-            WBB = new BitBoard(BitBoard.Default);
-            WQB = new BitBoard(BitBoard.Default);
-            WKB = new BitBoard(BitBoard.Default);
-            BPB = new BitBoard(BitBoard.Default);
-            BRB = new BitBoard(BitBoard.Default);
-            BNB = new BitBoard(BitBoard.Default);
-            BBB = new BitBoard(BitBoard.Default);
-            BQB = new BitBoard(BitBoard.Default);
-            BKB = new BitBoard(BitBoard.Default);
+            WPB = BitBoard.Default;
+            WRB = BitBoard.Default;
+            WNB = BitBoard.Default;
+            WBB = BitBoard.Default;
+            WQB = BitBoard.Default;
+            WKB = BitBoard.Default;
+            BPB = BitBoard.Default;
+            BRB = BitBoard.Default;
+            BNB = BitBoard.Default;
+            BBB = BitBoard.Default;
+            BQB = BitBoard.Default;
+            BKB = BitBoard.Default;
             
             string[] expandedBoardData = boardFen.Split(FEN_SPR).Reverse().ToArray();
             if (expandedBoardData.Length != BitDataBoard.UBOUND) 
