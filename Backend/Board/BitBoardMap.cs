@@ -146,21 +146,21 @@ namespace Backend.Board
         {
             get
             {
-                // White
-                if (WPB[h, v]) return (Piece.Pawn, PieceColor.White);
-                if (WRB[h, v]) return (Piece.Rook, PieceColor.White);
-                if (WNB[h, v]) return (Piece.Knight, PieceColor.White);
-                if (WBB[h, v]) return (Piece.Bishop, PieceColor.White);
-                if (WQB[h, v]) return (Piece.Queen, PieceColor.White);
-                if (WKB[h, v]) return (Piece.King, PieceColor.White);
-            
-                // Black
-                if (BPB[h, v]) return (Piece.Pawn, PieceColor.Black);
-                if (BRB[h, v]) return (Piece.Rook, PieceColor.Black);
-                if (BNB[h, v]) return (Piece.Knight, PieceColor.Black);
-                if (BBB[h, v]) return (Piece.Bishop, PieceColor.Black);
-                if (BQB[h, v]) return (Piece.Queen, PieceColor.Black);
-                if (BKB[h, v]) return (Piece.King, PieceColor.Black);
+                if (this[PieceColor.White][h, v]) {
+                    if (WPB[h, v]) return (Piece.Pawn, PieceColor.White);
+                    if (WRB[h, v]) return (Piece.Rook, PieceColor.White);
+                    if (WNB[h, v]) return (Piece.Knight, PieceColor.White);
+                    if (WBB[h, v]) return (Piece.Bishop, PieceColor.White);
+                    if (WQB[h, v]) return (Piece.Queen, PieceColor.White);
+                    if (WKB[h, v]) return (Piece.King, PieceColor.White);
+                } else if (this[PieceColor.Black][h, v]) {
+                    if (BPB[h, v]) return (Piece.Pawn, PieceColor.Black);
+                    if (BRB[h, v]) return (Piece.Rook, PieceColor.Black);
+                    if (BNB[h, v]) return (Piece.Knight, PieceColor.Black);
+                    if (BBB[h, v]) return (Piece.Bishop, PieceColor.Black);
+                    if (BQB[h, v]) return (Piece.Queen, PieceColor.Black);
+                    if (BKB[h, v]) return (Piece.King, PieceColor.Black);
+                }
 
                 return (Piece.Empty, PieceColor.None);
             }
