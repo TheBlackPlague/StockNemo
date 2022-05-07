@@ -276,10 +276,6 @@ namespace Backend.Move
             GenerateRookMasks();
             GenerateBishopMasks();
             
-            Console.WriteLine("Rook Magic at (0, 2) (A3): \n" + RookMagic[2, 0].Item1);
-            Console.WriteLine("Rook Mask at (0, 2) (A3): \n" + ~RookMagic[2, 0].Item2);
-            Console.WriteLine("Rook Offset at (0, 2) (A3): \n" + RookMagic[2, 0].Item3);
-            
             GenerateSlidingMoves(ref SlidingMoves, ref RookMagic, ROOK_BITS, new []
             {
                 (1, 0),
