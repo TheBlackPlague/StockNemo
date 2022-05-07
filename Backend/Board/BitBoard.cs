@@ -7,8 +7,54 @@ namespace Backend.Board
     {
 
         public static readonly BitBoard Default = new(ulong.MinValue);
+        public static readonly BitBoard[] Hs = {
+            0x101010101010101,
+            0x202020202020202,
+            0x404040404040404,
+            0x808080808080808,
+            0x1010101010101010,
+            0x2020202020202020,
+            0x4040404040404040,
+            0x8080808080808080
+        };
+        public static readonly BitBoard[] Vs = {
+            0xFF, 
+            0xFF00, 
+            0xFF0000, 
+            0xFF000000,
+            0xFF00000000,
+            0xFF0000000000,
+            0xFF000000000000,
+            0xFF00000000000000
+        };
+        public static readonly BitBoard Edged = Hs[0] | Hs[7] | Vs[0] | Vs[7];
 
         private ulong Internal;
+
+        public static BitBoard operator +(BitBoard left, BitBoard right)
+        {
+            return new BitBoard(left.Internal + right.Internal);
+        }
+        
+        public static BitBoard operator -(BitBoard left, BitBoard right)
+        {
+            return new BitBoard(left.Internal - right.Internal);
+        }
+        
+        public static BitBoard operator *(BitBoard left, BitBoard right)
+        {
+            return new BitBoard(left.Internal * right.Internal);
+        }
+
+        public static BitBoard operator /(BitBoard left, BitBoard right)
+        {
+            return new BitBoard(left.Internal / right.Internal);
+        }
+
+        public static BitBoard operator %(BitBoard to, ulong by)
+        {
+            return new BitBoard(to.Internal % by);
+        }
 
         public static BitBoard operator |(BitBoard left, BitBoard right)
         {
@@ -70,7 +116,8 @@ namespace Backend.Board
         
         private static int OneD(int h, int v)
         {
-            if (h > 7 || v > 7) throw new InvalidOperationException("Invalid index: " + (h, v));
+            if (h is > 7 or < 0 || v is > 7 or < 0) 
+                throw new InvalidOperationException("Invalid index: " + (h, v));
             return v * 8 + h;
         }
         
@@ -119,7 +166,22 @@ namespace Backend.Board
         {
             return new BitBoard(this);
         }
-        
+
+        public override string ToString()
+        {
+            string final = "";
+            for (int v = 7; v > BitDataBoard.LBOUND; v--) {
+                string bitString = "";
+                for (int h = 0; h < BitDataBoard.UBOUND; h++) {
+                    bitString += (this[h, v] ? 1 : "*") + " ";
+                }
+
+                final += bitString + "\n";
+            }
+
+            return final;
+        }
+
         private bool Equals(BitBoard other)
         {
             return Internal == other.Internal;

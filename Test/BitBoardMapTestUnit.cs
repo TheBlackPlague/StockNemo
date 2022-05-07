@@ -65,6 +65,15 @@ namespace Test
             useMap.Empty(0, 1);
             Assert.AreEqual((Piece.Empty, PieceColor.None), useMap[0, 1]);
         }
+        
+        [Test]
+        public void MoveKnightToA3()
+        {
+            BitBoardMap useMap = Map.Clone();
+            
+            useMap.Move((1, 0), (0, 2));
+            Assert.AreEqual((Piece.Knight, PieceColor.White), useMap[0, 2]);
+        }
 
     }
 
