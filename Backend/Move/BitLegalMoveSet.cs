@@ -122,8 +122,7 @@ namespace Backend.Move
             
             for (int h = 0; h < BitDataBoard.UBOUND; h++)
             for (int v = 0; v < BitDataBoard.UBOUND; v++) {
-                (_, BitBoard mask, _) = args.Item1[v, h];
-                mask = ~mask;
+                BitBoard mask = ~args.Item1[v, h].Item2;
                 
                 BitBoard occupied = BitBoard.Default;
                 while (true) {
