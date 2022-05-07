@@ -122,7 +122,7 @@ namespace Backend.Board
             if (bitBoard.Count != 1) 
                 throw new InvalidOperationException("Cannot convert this bitboard to tuple.");
 
-            ulong i = 0;
+            ulong i = 1;
             ulong copy = bitBoard.Internal;
 
             int p = 1;

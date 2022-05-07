@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Backend.Board;
+using Backend.Exception;
 
 namespace Backend.Move
 {
@@ -130,12 +131,19 @@ namespace Backend.Move
         private bool KCastleOverride;
         private bool QCastleOverride;
 
+        public static void SetUp()
+        {
+            BlackMagicBitBoard.SetUp();
+            GenerateSlidingMoves(Piece.Rook);
+            GenerateSlidingMoves(Piece.Bishop);
+        }
+
         private static void GenerateSlidingMoves(Piece piece)
         {
             ((BitBoard, BitBoard, int)[,], int) args = piece switch
             {
-                Piece.Rook => (MagicBitBoard.RookMagic, MagicBitBoard.ROOK),
-                Piece.Bishop => (MagicBitBoard.BishopMagic, MagicBitBoard.BISHOP),
+                Piece.Rook => (BlackMagicBitBoard.RookMagic, BlackMagicBitBoard.ROOK),
+                Piece.Bishop => (BlackMagicBitBoard.BishopMagic, BlackMagicBitBoard.BISHOP),
                 Piece.Pawn or Piece.Knight or Piece.Queen or Piece.King or Piece.Empty or _ => 
                     throw new InvalidDataException("No magic table found.")
             };
@@ -179,7 +187,7 @@ namespace Backend.Move
                         }
                     }
 
-                    SlidingMoves[MagicBitBoard.GetMagicIndex(piece, occupied, h, v)] = moves;
+                    SlidingMoves[BlackMagicBitBoard.GetMagicIndex(piece, occupied, h, v)] = moves;
 
                     occupied = (occupied - mask) & mask;
                     if (occupied.Count == 0) break;
@@ -188,12 +196,6 @@ namespace Backend.Move
                 string chsStr = Util.TupleToChessString((h, v));
                 Console.WriteLine("Generated Black Magic Attack Table for [" + piece + "] at: " + chsStr);
             }
-        }
-
-        static BitLegalMoveSet()
-        {
-            GenerateSlidingMoves(Piece.Rook);
-            GenerateSlidingMoves(Piece.Bishop);
         }
 
         public BitLegalMoveSet(BitDataBoard board, (int, int) from, bool verify = true)
@@ -226,11 +228,10 @@ namespace Backend.Move
                     break;
                 case Piece.Empty:
                 default:
-                    // throw InvalidMoveLookupException.FromBoard(
-                    //     board, 
-                    //     "Cannot generate move for empty piece: " + Util.TupleToChessString(from)
-                    // );
-                    break;
+                    throw InvalidMoveLookupException.FromBoard(
+                        board, 
+                        "Cannot generate move for empty piece: " + Util.TupleToChessString(from)
+                    );
             }
             
             if (!verify) return;
@@ -286,7 +287,7 @@ namespace Backend.Move
 
         private void LegalRookMoveSet(PieceColor color)
         {
-            int mIndex = MagicBitBoard.GetMagicIndex(Piece.Rook, ~Board.All(PieceColor.None), H, V);
+            int mIndex = BlackMagicBitBoard.GetMagicIndex(Piece.Rook, ~Board.All(PieceColor.None), H, V);
             Moves |= SlidingMoves[mIndex];
             Moves &= ~Board.All(color);
         }
@@ -299,7 +300,7 @@ namespace Backend.Move
         
         private void LegalBishopMoveSet(PieceColor color)
         {
-            int mIndex = MagicBitBoard.GetMagicIndex(Piece.Bishop, ~Board.All(PieceColor.None), H, V);
+            int mIndex = BlackMagicBitBoard.GetMagicIndex(Piece.Bishop, ~Board.All(PieceColor.None), H, V);
             Moves |= SlidingMoves[mIndex];
             Moves &= ~Board.All(color);
         }

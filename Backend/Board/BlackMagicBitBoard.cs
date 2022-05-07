@@ -4,7 +4,7 @@ using System.IO;
 namespace Backend.Board
 {
 
-    internal static class MagicBitBoard
+    internal static class BlackMagicBitBoard
     {
 
         public const int ROOK = 12;
@@ -101,7 +101,7 @@ namespace Backend.Board
         public static readonly (BitBoard, BitBoard, int)[,] BishopMagic =
             new (BitBoard, BitBoard, int)[BitDataBoard.UBOUND, BitDataBoard.UBOUND];
 
-        static MagicBitBoard()
+        public static void SetUp()
         {
             GenerateRookMagicTable();
             GenerateBishopMagicTable();

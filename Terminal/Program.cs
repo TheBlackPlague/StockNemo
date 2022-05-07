@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Backend;
 using Backend.Board;
+using Backend.Move;
 using Test;
 using Version = Backend.Version;
 
@@ -17,6 +18,8 @@ namespace Terminal
 
         private static void Main(string[] args)
         {
+            OutputTitle();
+            BitLegalMoveSet.SetUp();
             switch (args.Length) {
                 case > 0 when args[0] == "perft":
                     RunPerft();
@@ -108,6 +111,10 @@ namespace Terminal
                     goto ToSelection;
                 }
 
+                if (result == MoveAttempt.Success) {
+                    
+                }
+
                 if (result == MoveAttempt.Checkmate) {
                     Draw();
                     string winner = Board.IsWhiteTurn() ? "Black" : "White";
@@ -124,7 +131,7 @@ namespace Terminal
 
                 // Sleep for a bit to show work being done
                 // It's funny because the program is lightning fast
-                Thread.Sleep(200);
+                // Thread.Sleep(200);
             }
         }
 
@@ -141,7 +148,8 @@ namespace Terminal
         {
             Console.Clear();
             OutputTitle();
-            Console.WriteLine(Board.ToString());
+            string board = Board.ToString();
+            Console.WriteLine(board);
         }
 
         private static bool VerifyTurn((int, int) from)

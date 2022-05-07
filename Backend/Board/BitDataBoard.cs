@@ -142,8 +142,9 @@ namespace Backend.Board
             (Piece pieceT, PieceColor colorT) = Map[hT, vT];
             
             // Can't move same color.
-            if (colorF == colorT) return;
-            // throw InvalidMoveAttemptException.FromBoard(this, Log, "Cannot move to same color.");
+            if (colorF == colorT) {
+                throw InvalidMoveAttemptException.FromBoard(this, "Cannot move to same color.");
+            }
             
             if (EnPassantTarget && to == EnPassantTarget && pieceF == Piece.Pawn) {
                 int vA = colorF == PieceColor.White ? vT - 1 : vT + 1;
@@ -156,7 +157,7 @@ namespace Backend.Board
             
             Map.Move(from, to);
 
-            // Castling and castling right update on king/rook move
+            // Castling and castling right update on rook move
             switch (pieceF) {
                 case Piece.King when Math.Abs(hT - hF) == 2:
                 {
@@ -198,21 +199,6 @@ namespace Backend.Board
                     }
 
                     break;
-                case Piece.King:
-                    switch (colorF) {
-                        case PieceColor.White:
-                            WhiteKCastle = false;
-                            WhiteQCastle = false;
-                            break;
-                        case PieceColor.Black:
-                            BlackKCastle = false;
-                            BlackQCastle = false;
-                            break;
-                        case PieceColor.None:
-                        default:
-                            throw new InvalidOperationException("King cannot have no color.");
-                    }
-                    break;
                 case Piece.Empty:
                 case Piece.Pawn:
                 case Piece.Knight:
@@ -220,6 +206,23 @@ namespace Backend.Board
                 case Piece.Queen:
                 default:
                     break;
+            }
+
+            // Castling right update on king move
+            if (pieceF == Piece.King) {
+                switch (colorF) {
+                    case PieceColor.White:
+                        WhiteKCastle = false;
+                        WhiteQCastle = false;
+                        break;
+                    case PieceColor.Black:
+                        BlackKCastle = false;
+                        BlackQCastle = false;
+                        break;
+                    case PieceColor.None:
+                    default:
+                        throw new InvalidOperationException("King cannot have no color.");
+                }
             }
 
             // Castling right update on rook captured
