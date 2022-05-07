@@ -29,6 +29,7 @@ namespace Backend.Board
         private bool BlackQCastle;
         
         private BitBoard EnPassantTarget;
+        private BitBoard HighlightedMoves = BitBoard.Default;
         
         public static BitDataBoard Default()
         {
@@ -75,11 +76,6 @@ namespace Backend.Board
             } else EnPassantTarget = BitBoard.Default;
         }
 
-        internal BitBoardMap GetMap()
-        {
-            return Map;
-        }
-
         internal BitBoard GetEnPassantTarget()
         {
             return EnPassantTarget;
@@ -113,6 +109,25 @@ namespace Backend.Board
         public bool EmptyAt((int, int) loc)
         {
             return Map[loc.Item1, loc.Item2].Item1 == Piece.Empty;
+        }
+
+        public MoveAttempt SecureMove((int, int) from, (int, int) to)
+        {
+            BitLegalMoveSet moveSet = new(this, from);
+            BitBoard moves = moveSet.Get();
+
+            if (!moves[to.Item1, to.Item2]) return MoveAttempt.Fail;
+            
+            Move(from, to);
+
+            PieceColor color = Map[to.Item1, to.Item2].Item2;
+            PieceColor oppositeColor = Util.OppositeColor(color);
+
+            BitLegalMoveSet opposingMoveSet = new(this, oppositeColor);
+            if (opposingMoveSet.Count == 0) return MoveAttempt.Checkmate;
+
+            BitBoard kingLoc = KingLoc(oppositeColor);
+            return AttackBitBoard(color) & kingLoc ? MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
         }
 
         public void Move((int, int) from, (int, int) to)
@@ -224,6 +239,8 @@ namespace Backend.Board
                         throw new InvalidOperationException("Rook cannot have no color.");
                 }
             }
+
+            WhiteTurn = !WhiteTurn;
         }
 
         public BitDataBoard Clone()
@@ -243,6 +260,28 @@ namespace Backend.Board
             }
 
             return attackBoard;
+        }
+
+        public void HighlightMoves((int, int) from)
+        {
+            BitLegalMoveSet moveSet = new(this, from);
+            HighlightedMoves = moveSet.Get();
+        }
+
+        public void HighlightMoves(PieceColor color)
+        {
+            if (color == PieceColor.None) 
+                throw new InvalidOperationException("Cannot highlight moves for no color.");
+
+            BitLegalMoveSet moveSet = new(this, color);
+            HighlightedMoves = moveSet.Get();
+        }
+
+        public override string ToString()
+        {
+            string board = DrawBoardCli().ToString().Trim(' ');
+            string fen = "FEN: " + GenerateFen() + "\n";
+            return board + fen;
         }
 
         private Table DrawBoardCli()
@@ -279,11 +318,11 @@ namespace Backend.Board
                         _ => Color.Gray
                     };
 
-                    // if (HighlightedMoves.Contains((h, v))) {
-                    //     uiColor = piece == Piece.Empty ? Color.Yellow : Color.Red;
-                    //     if (piece == Piece.Empty && EnPassantTarget.HasValue && (h, v) == EnPassantTarget.Value) 
-                    //         uiColor = Color.Red; 
-                    // }
+                    if (HighlightedMoves[h, v]) {
+                        uiColor = piece == Piece.Empty ? Color.Yellow : Color.Red;
+                        if (piece == Piece.Empty && EnPassantTarget && EnPassantTarget[h, v]) 
+                            uiColor = Color.Red; 
+                    }
 
                     // Set piece value for file
                     cells[h + 1] = new TableCell(
@@ -304,9 +343,36 @@ namespace Backend.Board
             table.Config = TableConfig.Unicode();
             table.Config.hasInnerRows = true;
 
-            // HighlightedMoves = Array.Empty<(int, int)>();
+            HighlightedMoves = BitBoard.Default;
 
             return table;
+        }
+
+        private string GenerateFen()
+        {
+            string boardData = Map.GenerateBoardFen();
+            string turnData = WhiteTurn ? "w" : "b";
+            
+            string castlingRight = "";
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (!WhiteKCastle && !WhiteQCastle && !BlackKCastle && !BlackQCastle) {
+                castlingRight = "-";
+                goto EnPassantFill;
+            }
+            
+            if (WhiteKCastle) castlingRight += "K";
+            if (WhiteQCastle) castlingRight += "Q";
+            if (BlackKCastle) castlingRight += "k";
+            if (BlackQCastle) castlingRight += "q";
+            
+            EnPassantFill:
+            string enPassantTarget = "-";
+            if (EnPassantTarget) {
+                enPassantTarget = Util.TupleToChessString(((int, int))EnPassantTarget);
+            }
+
+            string[] fen = { boardData, turnData, castlingRight, enPassantTarget };
+            return string.Join(" ", fen);
         }
 
     }

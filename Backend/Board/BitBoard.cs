@@ -116,6 +116,23 @@ namespace Backend.Board
                 [from.Item1, from.Item2] = true 
             };
         }
+
+        public static explicit operator (int, int)(BitBoard bitBoard)
+        {
+            if (bitBoard.Count != 1) 
+                throw new InvalidOperationException("Cannot convert this bitboard to tuple.");
+
+            ulong i = 0;
+            ulong copy = bitBoard.Internal;
+
+            int p = 1;
+            while ((i & copy) == 0) {
+                i <<= 1;
+                ++p;
+            }
+
+            return (p % 8, p / 8);
+        }
         
         private static int OneD(int h, int v)
         {

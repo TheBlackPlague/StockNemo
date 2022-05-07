@@ -296,6 +296,37 @@ namespace Backend.Board
                    BNB == map.BNB && BBB == map.BBB && BQB == map.BQB && BKB == map.BKB;
         }
 
+        internal string GenerateBoardFen()
+        {
+            string[] expandedBoardData = new string[BitDataBoard.UBOUND];
+            for (int v = 0; v < BitDataBoard.UBOUND; v++) {
+                string rankData = "";
+                for (int h = 0; h < BitDataBoard.UBOUND; h++) {
+                    (Piece piece, PieceColor color) = this[h, v];
+                    if (piece == Piece.Empty) {
+                        int c = 1;
+                        for (int i = h + 1; i < BitDataBoard.UBOUND; i++) {
+                            if (this[i, v].Item1 == Piece.Empty) c++;
+                            else break;
+                        }
+
+                        rankData += c.ToString();
+                        h += c - 1;
+                        continue;
+                    }
+
+                    string input = piece.ToString()[0].ToString();
+                    if (piece == Piece.Knight) input = "N";
+                    if (color == PieceColor.White) rankData += input;
+                    else rankData += input.ToLower();
+                }
+
+                expandedBoardData[v] = rankData;
+            }
+
+            return string.Join(FEN_SPR, expandedBoardData.Reverse());
+        }
+
     }
 
 }

@@ -9,8 +9,9 @@ namespace Terminal
 
         public static void RunAll()
         {
-            BenchmarkRunner.Run<BoardmarkDefault>();
-            BenchmarkRunner.Run<BoardMarkKiwipete>();
+            // BenchmarkRunner.Run<BoardmarkDefault>();
+            // BenchmarkRunner.Run<BoardMarkKiwipete>();
+            BenchmarkRunner.Run<BitBoardMapMarkDefault>();
         }
 
     }

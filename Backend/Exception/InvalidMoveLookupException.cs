@@ -10,7 +10,7 @@ namespace Backend.Exception
     public class InvalidMoveLookupException : InvalidOperationException
     {
 
-        public static InvalidMoveLookupException FromBoard(DataBoard board, string? message)
+        public static InvalidMoveLookupException FromBoard(BitDataBoard board, string? message)
         {
             InvalidMoveLookupException e = new("\n" + board + message);
             return e;

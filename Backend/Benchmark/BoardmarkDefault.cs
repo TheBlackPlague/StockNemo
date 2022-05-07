@@ -8,28 +8,28 @@ namespace Backend.Benchmark
     public class BoardmarkDefault
     {
 
-        private readonly DataBoard Board = DataBoard.Default();
+        private readonly BitDataBoard Board = BitDataBoard.Default();
 
         [Benchmark]
-        public DataBoard Clone() => Board.Clone();
+        public BitDataBoard Clone() => Board.Clone();
         
         [Benchmark]
-        public LegalMoveSet MoveGenerationPawn() => new(Board, (0, 1));
+        public BitLegalMoveSet MoveGenerationPawn() => new(Board, (0, 1));
         
         [Benchmark]
-        public LegalMoveSet MoveGenerationRook() => new(Board, (0, 0));
+        public BitLegalMoveSet MoveGenerationRook() => new(Board, (0, 0));
         
         [Benchmark]
-        public LegalMoveSet MoveGenerationKnight() => new(Board, (1, 0));
+        public BitLegalMoveSet MoveGenerationKnight() => new(Board, (1, 0));
         
         [Benchmark]
-        public LegalMoveSet MoveGenerationBishop() => new(Board, (2, 0));
+        public BitLegalMoveSet MoveGenerationBishop() => new(Board, (2, 0));
         
         [Benchmark]
-        public LegalMoveSet MoveGenerationQueen() => new(Board, (3, 0));
+        public BitLegalMoveSet MoveGenerationQueen() => new(Board, (3, 0));
         
         [Benchmark]
-        public LegalMoveSet MoveGenerationKing() => new(Board, (4, 0));
+        public BitLegalMoveSet MoveGenerationKing() => new(Board, (4, 0));
 
     }
 

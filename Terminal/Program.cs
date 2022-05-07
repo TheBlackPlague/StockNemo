@@ -13,7 +13,7 @@ namespace Terminal
     internal static class Program
     {
 
-        private static DataBoard Board;
+        private static BitDataBoard Board;
 
         private static void Main(string[] args)
         {
@@ -22,10 +22,10 @@ namespace Terminal
                     RunPerft();
                     return;
                 case > 0 when args[0] == "fen":
-                    Board = DataBoard.FromFen(args[1]);
+                    Board = BitDataBoard.FromFen(args[1]);
                     break;
                 default:
-                    Board = DataBoard.Default();
+                    Board = BitDataBoard.Default();
                     break;
             }
 
@@ -110,14 +110,14 @@ namespace Terminal
 
                 if (result == MoveAttempt.Checkmate) {
                     Draw();
-                    string winner = Board.MoveCount() % 2 == 0 ? "Black" : "White";
+                    string winner = Board.IsWhiteTurn() ? "Black" : "White";
                     Console.WriteLine("CHECKMATE. " + winner + " won!");
                     break;
                 }
 
                 if (result == MoveAttempt.SuccessAndCheck) {
                     Draw();
-                    string underCheck = Board.MoveCount() % 2 == 0 ? "White" : "Black";
+                    string underCheck = Board.IsWhiteTurn() ? "White" : "Black";
                     Console.WriteLine(underCheck + " is under check!");
                     goto FromSelection;
                 }

@@ -19,7 +19,7 @@ namespace Test
         private const ulong D5 = 4865609;
         private const ulong D6 = 119060324;
         
-        private readonly DataBoard Board = DataBoard.Default();
+        private readonly BitDataBoard Board = BitDataBoard.Default();
 
         private int SelectedDepth;
 
@@ -88,43 +88,55 @@ namespace Test
             return (D6, MoveGeneration(Board, 6));
         }
         
-        private ulong MoveGeneration(DataBoard board, int depth, PieceColor color = PieceColor.White, bool verbose = true)
+        private ulong MoveGeneration(BitDataBoard board, int depth, PieceColor color = PieceColor.White, bool verbose = true)
         {
             if (depth == 0) return 1;
             ulong count = 0;
             
             if (depth == SelectedDepth) color = board.IsWhiteTurn() ? PieceColor.White : PieceColor.Black;
 
+            BitBoard colored = ~board.All(color);
             if (depth == 1) {
-                foreach ((int, int) piece in board.All(color)) {
-                    LegalMoveSet moveSet = new(board, piece);
-                    count += (ulong) moveSet.Count();
+                for (int h = 0; h < BitDataBoard.UBOUND; h++)
+                for (int v = 0; v < BitDataBoard.UBOUND; v++) {
+                    if (colored[h, v]) continue;
+
+                    BitLegalMoveSet moveSet = new(board, (h, v));
+                    count += (ulong)moveSet.Count;
                     if (depth != SelectedDepth) continue;
                     
-                    if (verbose) LogNodeCount(piece, moveSet.Count());
+                    if (verbose) LogNodeCount((h, v), moveSet.Count);
                 }
 
                 return count;
             }
             
-            Parallel.ForEach(board.All(color), piece =>
+            Parallel.For(0, BitDataBoard.UBOUND, h =>
             {
-                LegalMoveSet moveSet = new(board, piece);
+                Parallel.For(0, BitDataBoard.UBOUND, v =>
+                {
+                    if (colored[h, v]) return;
+                    
+                    BitLegalMoveSet moveSet = new(board, (h, v));
+                    BitBoard moves = ~moveSet.Get();
 
-                foreach ((int, int) move in moveSet.Get()) {
-                    DataBoard nextBoard = board.Clone();
-                    nextBoard.Move(piece, move);
-                    ulong generatedCount = MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
-                    Interlocked.Add(
-                        ref count,
-                        generatedCount
-                    );
-                    // board.Move(move, piece, true);
+                    ulong interlockedCount = 0;
+                    for (int mH = 0; mH < BitDataBoard.UBOUND; mH++)
+                    for (int mV = 0; mV < BitDataBoard.UBOUND; mV++) {
+                        if (moves[mH, mV]) continue;
 
-                    if (depth != SelectedDepth) continue;
+                        BitDataBoard next = Board.Clone();
+                        next.Move((h, v), (mH, mV));
+                        ulong nextCount = MoveGeneration(next, depth - 1, Util.OppositeColor(color));
+                        interlockedCount += count;
+                        
+                        if (depth != SelectedDepth) continue;
+                        
+                        if (verbose) LogNodeCount((h, v), (mH, mV), nextCount);
+                    }
 
-                    if (verbose) LogNodeCount(piece, move, generatedCount);
-                }
+                    Interlocked.Add(ref count, interlockedCount);
+                });
             });
             
             return count;
