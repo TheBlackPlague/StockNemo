@@ -196,8 +196,8 @@ namespace Backend.Move
                 int hI = i % 8;
                 int vI = i / 8;
 
-                int hD = Math.Abs((sbyte)(ulong)BitBoard.Hs[h] - (sbyte)(ulong)BitBoard.Hs[hI]);
-                int vD = Math.Abs((sbyte)(ulong)BitBoard.Vs[v] - (sbyte)(ulong)BitBoard.Vs[vI]);
+                int hD = Math.Abs(h - hI);
+                int vD = Math.Abs(v - vI);
 
                 if (hD == vD && vD != 0) rays |= 1UL << i;
 
