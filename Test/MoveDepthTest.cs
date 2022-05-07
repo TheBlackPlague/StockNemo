@@ -96,50 +96,81 @@ namespace Test
             if (depth == SelectedDepth) color = board.IsWhiteTurn() ? PieceColor.White : PieceColor.Black;
 
             BitBoard colored = ~board.All(color);
-            if (depth == 1) {
-                for (int h = 0; h < BitDataBoard.UBOUND; h++)
-                for (int v = 0; v < BitDataBoard.UBOUND; v++) {
-                    if (colored[h, v]) continue;
-
-                    BitLegalMoveSet moveSet = new(board, (h, v));
-                    count += (ulong)moveSet.Count;
-                    if (depth != SelectedDepth) continue;
-                    
-                    if (verbose) LogNodeCount((h, v), moveSet.Count);
-                }
-
-                return count;
-            }
+            for (int h = 0; h < BitDataBoard.UBOUND; h++)
+            for (int v = 0; v < BitDataBoard.UBOUND; v++) {
+                if (colored[h, v]) continue;
             
-            Parallel.For(0, BitDataBoard.UBOUND, h =>
-            {
-                Parallel.For(0, BitDataBoard.UBOUND, v =>
-                {
-                    if (colored[h, v]) return;
+                BitLegalMoveSet moveSet = new(board, (h, v));
+                if (depth == 1) {
+                    count += (ulong)moveSet.Count;
                     
-                    BitLegalMoveSet moveSet = new(board, (h, v));
+                    if (depth != SelectedDepth) continue;
+                
+                    if (verbose) LogNodeCount((h, v), moveSet.Count);
+                } else {
                     BitBoard moves = ~moveSet.Get();
-
-                    ulong interlockedCount = 0;
+                    Console.WriteLine(moves.ToString());
+                
                     for (int mH = 0; mH < BitDataBoard.UBOUND; mH++)
                     for (int mV = 0; mV < BitDataBoard.UBOUND; mV++) {
                         if (moves[mH, mV]) continue;
-
+                
                         BitDataBoard next = Board.Clone();
                         next.Move((h, v), (mH, mV));
                         ulong nextCount = MoveGeneration(next, depth - 1, Util.OppositeColor(color));
-                        interlockedCount += count;
-                        
+                        count += nextCount;
+                    
                         if (depth != SelectedDepth) continue;
-                        
+                    
                         if (verbose) LogNodeCount((h, v), (mH, mV), nextCount);
                     }
-
-                    Interlocked.Add(ref count, interlockedCount);
-                });
-            });
+                }
+            }
             
             return count;
+            
+            // if (depth == 1) {
+            //     for (int h = 0; h < BitDataBoard.UBOUND; h++)
+            //     for (int v = 0; v < BitDataBoard.UBOUND; v++) {
+            //         if (colored[h, v]) continue;
+            //
+            //         BitLegalMoveSet moveSet = new(board, (h, v));
+            //         count += (ulong)moveSet.Count;
+            //         if (depth != SelectedDepth) continue;
+            //         
+            //         if (verbose) LogNodeCount((h, v), moveSet.Count);
+            //     }
+            //
+            //     return count;
+            // }
+            //
+            // Parallel.For(0, BitDataBoard.UBOUND, h =>
+            // {
+            //     Parallel.For(0, BitDataBoard.UBOUND, v =>
+            //     {
+            //         if (colored[h, v]) return;
+            //         
+            //         BitLegalMoveSet moveSet = new(board, (h, v));
+            //         BitBoard moves = ~moveSet.Get();
+            //
+            //         ulong interlockedCount = 0;
+            //         for (int mH = 0; mH < BitDataBoard.UBOUND; mH++)
+            //         for (int mV = 0; mV < BitDataBoard.UBOUND; mV++) {
+            //             if (moves[mH, mV]) continue;
+            //
+            //             BitDataBoard next = Board.Clone();
+            //             next.Move((h, v), (mH, mV));
+            //             ulong nextCount = MoveGeneration(next, depth - 1, Util.OppositeColor(color));
+            //             interlockedCount += count;
+            //             
+            //             if (depth != SelectedDepth) continue;
+            //             
+            //             if (verbose) LogNodeCount((h, v), (mH, mV), nextCount);
+            //         }
+            //
+            //         Interlocked.Add(ref count, interlockedCount);
+            //     });
+            // });
         }
 
     }
