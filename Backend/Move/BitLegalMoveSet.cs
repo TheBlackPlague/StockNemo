@@ -167,11 +167,11 @@ namespace Backend.Move
                 0x0044280000000000, 0x0088500000000000, 0x0010A00000000000, 0x0020400000000000
             }
         };
-        private static (BitBoard, BitBoard, int)[,] RookMagic =
+        private static readonly (BitBoard, BitBoard, int)[,] RookMagic =
             new (BitBoard, BitBoard, int)[BitDataBoard.UBOUND, BitDataBoard.UBOUND];
-        private static (BitBoard, BitBoard, int)[,] BishopMagic =
+        private static readonly (BitBoard, BitBoard, int)[,] BishopMagic =
             new (BitBoard, BitBoard, int)[BitDataBoard.UBOUND, BitDataBoard.UBOUND];
-        private static BitBoard[] SlidingMoves = new BitBoard[87988];
+        private static readonly BitBoard[] SlidingMoves = new BitBoard[87988];
         
         private readonly BitDataBoard Board;
         private readonly BitBoard From;
@@ -228,7 +228,7 @@ namespace Backend.Move
         }
 
         private static int GetMagicIndex(
-            ref (BitBoard, BitBoard, int)[,] magics, int indexBits, BitBoard blockers, int h, int v
+            (BitBoard, BitBoard, int)[,] magics, int indexBits, BitBoard blockers, int h, int v
         )
         {
             (BitBoard magic, BitBoard mask, int offset) = magics[v, h];
@@ -238,7 +238,7 @@ namespace Backend.Move
         }
 
         private static void GenerateSlidingMoves(
-            ref BitBoard[] moveTable, ref (BitBoard, BitBoard, int)[,] magics, int indexBits, (int, int)[] deltas
+            BitBoard[] moveTable, (BitBoard, BitBoard, int)[,] magics, int indexBits, (int, int)[] deltas
         )
         {
             for (int h = 0; h < BitDataBoard.UBOUND; h++)
@@ -260,7 +260,7 @@ namespace Backend.Move
                         }
                     }
 
-                    moveTable[GetMagicIndex(ref magics, indexBits, blockers, h, v)] = moves;
+                    moveTable[GetMagicIndex(magics, indexBits, blockers, h, v)] = moves;
 
                     blockers = (blockers - mask) & mask;
                     if (blockers.Count == 0) break;
@@ -276,7 +276,7 @@ namespace Backend.Move
             GenerateRookMasks();
             GenerateBishopMasks();
             
-            GenerateSlidingMoves(ref SlidingMoves, ref RookMagic, ROOK_BITS, new []
+            GenerateSlidingMoves(SlidingMoves, RookMagic, ROOK_BITS, new []
             {
                 (1, 0),
                 (0, -1),
@@ -284,7 +284,7 @@ namespace Backend.Move
                 (0, 1)
             });
             
-            GenerateSlidingMoves(ref SlidingMoves, ref BishopMagic, BISHOP_BITS, new []
+            GenerateSlidingMoves(SlidingMoves, BishopMagic, BISHOP_BITS, new []
             {
                 (1, 1),
                 (1, -1),
@@ -370,7 +370,7 @@ namespace Backend.Move
 
         private void LegalRookMoveSet(PieceColor color)
         {
-            int mIndex = GetMagicIndex(ref RookMagic, ROOK_BITS, ~Board.All(PieceColor.None), H, V);
+            int mIndex = GetMagicIndex(RookMagic, ROOK_BITS, ~Board.All(PieceColor.None), H, V);
             Moves |= SlidingMoves[mIndex];
             Moves &= ~Board.All(color);
         }
@@ -383,7 +383,7 @@ namespace Backend.Move
         
         private void LegalBishopMoveSet(PieceColor color)
         {
-            int mIndex = GetMagicIndex(ref BishopMagic, BISHOP_BITS, ~Board.All(PieceColor.None), H, V);
+            int mIndex = GetMagicIndex(BishopMagic, BISHOP_BITS, ~Board.All(PieceColor.None), H, V);
             Moves |= SlidingMoves[mIndex];
             Moves &= ~Board.All(color);
         }
