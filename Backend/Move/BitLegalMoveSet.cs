@@ -209,7 +209,7 @@ namespace Backend.Move
             for (int h = 0; h < BitDataBoard.UBOUND; h++)
             for (int v = 0; v < BitDataBoard.UBOUND; v++) {
                 (BitBoard magic, int offset) = RookMagicData[v, h];
-                RookMagic[v, h] = (magic, GetRookBlockers(v, h), offset);
+                RookMagic[v, h] = (magic, ~GetRookBlockers(v, h), offset);
                 Console.WriteLine("Generated rook magic: " + (h, v));
             }
         }
@@ -219,7 +219,7 @@ namespace Backend.Move
             for (int h = 0; h < BitDataBoard.UBOUND; h++)
             for (int v = 0; v < BitDataBoard.UBOUND; v++) {
                 (BitBoard magic, int offset) = BishopMagicData[v, h];
-                BishopMagic[v, h] = (magic, GetBishopBlockers(v, h), offset);
+                BishopMagic[v, h] = (magic, ~GetBishopBlockers(v, h), offset);
                 Console.WriteLine("Generated bishop magic: " + (h, v));
             }
         }
