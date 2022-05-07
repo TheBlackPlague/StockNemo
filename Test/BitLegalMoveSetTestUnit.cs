@@ -11,6 +11,12 @@ namespace Test
 
         private readonly BitDataBoard Board = BitDataBoard.Default();
 
+        [SetUp]
+        public void SetUp()
+        {
+            BitLegalMoveSet.SetUp();
+        }
+
         [Test]
         public void CountKnightMovesAtB1()
         {
@@ -45,6 +51,15 @@ namespace Test
             BitLegalMoveSet moveSet = new(use, (0, 2));
             Console.WriteLine(moveSet.Get().ToString());
             Assert.AreEqual(11, moveSet.Count);
+        }
+        
+        [Test]
+        public void CountRookMovesAtA1()
+        {
+            BitDataBoard use = Board.Clone();
+            BitLegalMoveSet moveSet = new(use, (0, 0));
+            Console.WriteLine(moveSet.Get().ToString());
+            Assert.AreEqual(0, moveSet.Count);
         }
         
         [Test]
