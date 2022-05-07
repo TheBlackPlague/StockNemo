@@ -36,6 +36,26 @@ namespace Test
             Console.WriteLine(moveSet.Get().ToString());
             Assert.AreEqual(3, moveSet.Count);
         }
+        
+        [Test]
+        public void CountRookMovesAtA3()
+        {
+            BitDataBoard use = Board.Clone();
+            use.Move((0, 0), (0, 2));
+            BitLegalMoveSet moveSet = new(use, (0, 2));
+            Console.WriteLine(moveSet.Get().ToString());
+            Assert.AreEqual(11, moveSet.Count);
+        }
+        
+        [Test]
+        public void CountBishopMovesAtC3()
+        {
+            BitDataBoard use = Board.Clone();
+            use.Move((2, 0), (2, 2));
+            BitLegalMoveSet moveSet = new(use, (2, 2));
+            Console.WriteLine(moveSet.Get().ToString());
+            Assert.AreEqual(6, moveSet.Count);
+        }
 
     }
 

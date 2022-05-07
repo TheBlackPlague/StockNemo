@@ -271,7 +271,7 @@ namespace Backend.Move
             }
         }
 
-        public static void SetUp()
+        private static void SetUp()
         {
             GenerateRookMasks();
             GenerateBishopMasks();
@@ -293,6 +293,11 @@ namespace Backend.Move
             });
         }
 
+        static BitLegalMoveSet()
+        {
+            SetUp();
+        }
+
         public BitLegalMoveSet(BitDataBoard board, (int, int) from, bool verify = true)
         {
             Board = board;
@@ -307,13 +312,13 @@ namespace Backend.Move
                     LegalPawnMoveSet(color, !verify);
                     break;
                 case Piece.Rook:
-                    // LegalRookMoveSet(color);
+                    LegalRookMoveSet(color);
                     break;
                 case Piece.Knight:
                     LegalKnightMoveSet(color);
                     break;
                 case Piece.Bishop:
-                    // LegalBishopMoveSet(color);
+                    LegalBishopMoveSet(color);
                     break;
                 case Piece.Queen:
                     // LegalQueenMoveSet(color);
@@ -366,23 +371,22 @@ namespace Backend.Move
         private void LegalRookMoveSet(PieceColor color)
         {
             int mIndex = GetMagicIndex(ref RookMagic, ROOK_BITS, ~Board.All(PieceColor.None), H, V);
-            Moves = SlidingMoves[mIndex];
+            Moves |= SlidingMoves[mIndex];
             Moves &= ~Board.All(color);
         }
 
         private void LegalKnightMoveSet(PieceColor color)
         {
-            Moves = KnightMoves[V, H];
+            Moves |= KnightMoves[V, H];
             Moves &= ~Board.All(color);
         }
         
         private void LegalBishopMoveSet(PieceColor color)
         {
-            int mIndex = GetMagicIndex(ref RookMagic, BISHOP_BITS, ~Board.All(PieceColor.None), H, V);
-            Moves = SlidingMoves[mIndex];
+            int mIndex = GetMagicIndex(ref BishopMagic, BISHOP_BITS, ~Board.All(PieceColor.None), H, V);
+            Moves |= SlidingMoves[mIndex];
             Moves &= ~Board.All(color);
         }
-
 
     }
 
