@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using Backend.Exception;
+using Backend.Move;
 using BetterConsoles.Core;
 using BetterConsoles.Tables;
 using BetterConsoles.Tables.Builders;
@@ -228,6 +229,20 @@ namespace Backend.Board
         public BitDataBoard Clone()
         {
             return new BitDataBoard(this);
+        }
+
+        public BitBoard AttackBitBoard(PieceColor color)
+        {
+            BitBoard attackBoard = BitBoard.Default;
+            BitBoard colored = ~Map[color];
+            for (int h = 0; h < UBOUND; h++)
+            for (int v = 0; v < UBOUND; v++) {
+                if (colored[h, v]) continue;
+                BitLegalMoveSet moveSet = new(this, (h, v), false);
+                attackBoard |= moveSet.Get();
+            }
+
+            return attackBoard;
         }
 
         private Table DrawBoardCli()
