@@ -53,7 +53,7 @@ namespace Test
             useMap.Move((0, 1), (0, 6));
 
             bool success = (Piece.Pawn, PieceColor.White) == useMap[0, 6] &&
-                           useMap[Piece.Pawn, PieceColor.Black].Count() == 7;
+                           useMap[Piece.Pawn, PieceColor.Black].Count == 7;
             Assert.IsTrue(success);
         }
         
