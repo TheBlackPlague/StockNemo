@@ -144,9 +144,10 @@ namespace Backend.Board
         public int Count()
         {
             ulong c = 0;
-            while (Internal > 0) {
-                c += Internal & 1UL;
-                Internal >>= 1;
+            ulong internalData = Internal;
+            while (internalData > 0) {
+                c += internalData & 1UL;
+                internalData >>= 1;
             }
 
             return (int)c;
