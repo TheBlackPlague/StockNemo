@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 
 namespace Backend.Board
 {
@@ -28,6 +29,8 @@ namespace Backend.Board
             0xFF00000000000000
         };
         public static readonly BitBoard Edged = Hs[0] | Hs[7] | Vs[0] | Vs[7];
+        
+        public int Count => BitOperations.PopCount(Internal); // Number of set bits.
 
         private ulong Internal;
 
@@ -139,18 +142,6 @@ namespace Backend.Board
                 if (value) Internal |= 1UL << OneD(h, v);
                 else Internal &= ~(1UL << OneD(h, v));
             }
-        }
-
-        public int Count()
-        {
-            ulong c = 0;
-            ulong internalData = Internal;
-            while (internalData > 0) {
-                c += internalData & 1UL;
-                internalData >>= 1;
-            }
-
-            return (int)c;
         }
 
         public override bool Equals(object obj)

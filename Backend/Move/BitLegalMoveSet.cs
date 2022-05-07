@@ -178,6 +178,9 @@ namespace Backend.Move
         private readonly int H;
         private readonly int V;
         
+        public int Count => Moves.Count;
+        private BitBoard Moves = BitBoard.Default;
+        
         private static BitBoard GetRookBlockers(int v, int h)
         {
             BitBoard hMoves = BitBoard.Hs[h] & ~(BitBoard.Vs[0] | BitBoard.Vs[7]);
@@ -260,7 +263,7 @@ namespace Backend.Move
                     moveTable[GetMagicIndex(ref magics, indexBits, blockers, h, v)] = moves;
 
                     blockers = (blockers - mask) & mask;
-                    if (blockers.Count() == 0) break;
+                    if (blockers.Count == 0) break;
                 }
                 
                 Console.WriteLine("Generated sliding moves for [" + (indexBits == ROOK_BITS ? "Rook" : "Bishop") + "]: "
@@ -272,6 +275,10 @@ namespace Backend.Move
         {
             GenerateRookMasks();
             GenerateBishopMasks();
+            
+            Console.WriteLine("Rook Magic at (0, 2) (A3): \n" + RookMagic[2, 0].Item1);
+            Console.WriteLine("Rook Mask at (0, 2) (A3): \n" + ~RookMagic[2, 0].Item2);
+            Console.WriteLine("Rook Offset at (0, 2) (A3): \n" + RookMagic[2, 0].Item3);
             
             GenerateSlidingMoves(ref SlidingMoves, ref RookMagic, ROOK_BITS, new []
             {
@@ -289,9 +296,6 @@ namespace Backend.Move
                 (-1, 1)
             });
         }
-
-        private BitBoard Moves = BitBoard.Default;
-        public int Count => Moves.Count();
 
         public BitLegalMoveSet(BitDataBoard board, (int, int) from, bool verify = true)
         {
