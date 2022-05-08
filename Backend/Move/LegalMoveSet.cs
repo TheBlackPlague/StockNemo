@@ -347,36 +347,36 @@ namespace Backend.Move
             Moves |= KingMoves[V, H];
             Moves &= ~Board.All(color);
 
-            if (!checkMovesOnly) {
-                // Castling
-                (bool q, bool k) = Board.CastlingRight(color);
-                if (q) {
-                    BitBoard path = new(BitBoard.Default)
-                    {
-                        [H - 3, V] = true,
-                        [H - 2, V] = true,
-                        [H - 1, V] = true
-                    };
-                    BitBoard all = ~Board.All(PieceColor.None);
-                    if ((path & all) == BitBoard.Default) {
-                        Moves |= (H - 2, V);
-                        QCastle = true;
-                    }
+            if (checkMovesOnly) return;
+            
+            // Castling
+            (bool q, bool k) = Board.CastlingRight(color);
+            if (q) {
+                BitBoard path = new(BitBoard.Default)
+                {
+                    [H - 3, V] = true,
+                    [H - 2, V] = true,
+                    [H - 1, V] = true
+                };
+                BitBoard all = ~Board.All(PieceColor.None);
+                if ((path & all) == BitBoard.Default) {
+                    Moves |= (H - 2, V);
+                    QCastle = true;
                 }
+            }
 
+            // ReSharper disable once InvertIf
+            if (k) {
+                BitBoard path = new(BitBoard.Default)
+                {
+                    [H + 2, V] = true,
+                    [H + 1, V] = true
+                };
+                BitBoard all = ~Board.All(PieceColor.None);
                 // ReSharper disable once InvertIf
-                if (k) {
-                    BitBoard path = new(BitBoard.Default)
-                    {
-                        [H + 2, V] = true,
-                        [H + 1, V] = true
-                    };
-                    BitBoard all = ~Board.All(PieceColor.None);
-                    // ReSharper disable once InvertIf
-                    if ((path & all) == BitBoard.Default) {
-                        Moves |= (H + 2, V);
-                        KCastle = true;
-                    }
+                if ((path & all) == BitBoard.Default) {
+                    Moves |= (H + 2, V);
+                    KCastle = true;
                 }
             }
         }
