@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend;
@@ -96,7 +96,7 @@ namespace Test
             if (depth == SelectedDepth) color = board.IsWhiteTurn() ? PieceColor.White : PieceColor.Black;
             PieceColor oppositeColor = Util.OppositeColor(color);
             int nextDepth = depth - 1;
-
+         
             BitBoard colored = board.All(color);
             if (depth < 5) {
                 foreach ((int, int) from in colored) {
@@ -143,7 +143,7 @@ namespace Test
                     }
                 });
             }
-            
+          
             return count;
         }
 
