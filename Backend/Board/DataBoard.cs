@@ -155,16 +155,8 @@ namespace Backend.Board
             
             Map.Move(from, to);
 
-            // Castling and castling right update on rook move
             switch (pieceF) {
-                case Piece.King when Math.Abs(hT - hF) == 2:
-                    if (hT > hF) { // King side castle
-                        Map.Move((7, vF), (hT - 1, vF));
-                    } else { // Queen side castle
-                        Map.Move((0, vF), (hT + 1, vF));
-                    }
-
-                    break;
+                // Castling rights update on rook move
                 case Piece.Rook:
                     switch (colorF) {
                         case PieceColor.White:
@@ -195,6 +187,32 @@ namespace Backend.Board
                     }
 
                     break;
+                // Castling rights update on king move & castling
+                case Piece.King:
+                {
+                    switch (colorF) {
+                        case PieceColor.White:
+                            WhiteKCastle = false;
+                            WhiteQCastle = false;
+                            break;
+                        case PieceColor.Black:
+                            BlackKCastle = false;
+                            BlackQCastle = false;
+                            break;
+                        case PieceColor.None:
+                        default:
+                            throw new InvalidOperationException("King cannot have no color.");
+                    }
+
+                    // Castling.
+                    int d = Math.Abs(hT - hF);
+                    if (d == 2) {
+                        if (hT > hF) Map.Move((7, vF), (hT - 1, vF)); // King-side
+                        else Map.Move((0, vF), (hT + 1, vF)); // Queen-side
+                    }
+
+                    break;
+                }
                 case Piece.Empty:
                 case Piece.Pawn:
                 case Piece.Knight:
@@ -202,23 +220,6 @@ namespace Backend.Board
                 case Piece.Queen:
                 default:
                     break;
-            }
-
-            // Castling right update on king move
-            if (pieceF == Piece.King) {
-                switch (colorF) {
-                    case PieceColor.White:
-                        WhiteKCastle = false;
-                        WhiteQCastle = false;
-                        break;
-                    case PieceColor.Black:
-                        BlackKCastle = false;
-                        BlackQCastle = false;
-                        break;
-                    case PieceColor.None:
-                    default:
-                        throw new InvalidOperationException("King cannot have no color.");
-                }
             }
 
             // Castling right update on rook captured
@@ -245,6 +246,26 @@ namespace Backend.Board
         public DataBoard Clone()
         {
             return new DataBoard(this);
+        }
+
+        public bool CheckIfAttacked(BitBoard safety, PieceColor by)
+        {
+            // Check sliding pieces.
+            BitBoard sliding = Map[Piece.Rook, by] | Map[Piece.Bishop, by] | Map[Piece.Queen, by];
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach ((int, int) piece in sliding) {
+                LegalMoveSet moveSet = new(this, piece, false);
+                if (safety & moveSet.Get()) return true;
+            }
+
+            BitBoard other = Map[Piece.Pawn, by] | Map[Piece.Knight, by] | Map[Piece.King, by];
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach ((int, int) piece in other) {
+                LegalMoveSet moveSet = new(this, piece, false);
+                if (safety & moveSet.Get()) return true;
+            }
+
+            return false;
         }
 
         public BitBoard AttackBitBoard(PieceColor color)

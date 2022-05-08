@@ -224,7 +224,7 @@ namespace Backend.Move
                     LegalQueenMoveSet(color);
                     break;
                 case Piece.King:
-                    LegalKingMoveSet(color);
+                    LegalKingMoveSet(color, !verify);
                     break;
                 case Piece.Empty:
                 default:
@@ -311,40 +311,42 @@ namespace Backend.Move
             LegalBishopMoveSet(color);
         }
 
-        private void LegalKingMoveSet(PieceColor color)
+        private void LegalKingMoveSet(PieceColor color, bool checkMovesOnly = false)
         {
             // Normal
             Moves |= KingMoves[V, H];
             Moves &= ~Board.All(color);
-            
-            // Castling
-            (bool q, bool k) = Board.CastlingRight(color);
-            if (q) {
-                BitBoard path = new(BitBoard.Default)
-                {
-                    [H - 3, V] = true,
-                    [H - 2, V] = true,
-                    [H - 1, V] = true
-                };
-                BitBoard all = ~Board.All(PieceColor.None);
-                if ((path & all) == BitBoard.Default) {
-                    Moves |= (H - 2, V);
-                    QCastle = true;
-                }
-            }
 
-            // ReSharper disable once InvertIf
-            if (k) {
-                BitBoard path = new(BitBoard.Default)
-                {
-                    [H + 2, V] = true,
-                    [H + 1, V] = true
-                };
-                BitBoard all = ~Board.All(PieceColor.None);
+            if (!checkMovesOnly) {
+                // Castling
+                (bool q, bool k) = Board.CastlingRight(color);
+                if (q) {
+                    BitBoard path = new(BitBoard.Default)
+                    {
+                        [H - 3, V] = true,
+                        [H - 2, V] = true,
+                        [H - 1, V] = true
+                    };
+                    BitBoard all = ~Board.All(PieceColor.None);
+                    if ((path & all) == BitBoard.Default) {
+                        Moves |= (H - 2, V);
+                        QCastle = true;
+                    }
+                }
+
                 // ReSharper disable once InvertIf
-                if ((path & all) == BitBoard.Default) {
-                    Moves |= (H + 2, V);
-                    KCastle = true;
+                if (k) {
+                    BitBoard path = new(BitBoard.Default)
+                    {
+                        [H + 2, V] = true,
+                        [H + 1, V] = true
+                    };
+                    BitBoard all = ~Board.All(PieceColor.None);
+                    // ReSharper disable once InvertIf
+                    if ((path & all) == BitBoard.Default) {
+                        Moves |= (H + 2, V);
+                        KCastle = true;
+                    }
                 }
             }
         }
@@ -358,25 +360,44 @@ namespace Backend.Move
             foreach ((int h, int v) in Moves) {
                 DataBoard board = Board.Clone();
                 board.Move((H, V), (h, v));
-                BitBoard attack = board.AttackBitBoard(oppositeColor);
+
                 if ((KCastle || QCastle) && From == (4, kV)) {
-                    if (QCastle && attack[3, kV]) {
+                    if (QCastle && board.CheckIfAttacked((3, kV), oppositeColor)) {
                         QCastle = false;
                         QCastleOverride = true;
                     }
-            
-                    if (KCastle && attack[5, kV]) {
+
+                    if (KCastle && board.CheckIfAttacked((4, kV), oppositeColor)) {
                         KCastle = false;
                         KCastleOverride = true;
                     }
                 }
                 
                 if (QCastleOverride && (h, v) == (2, kV)) continue;
-                if (KCastleOverride && (h, v) == (2, kV)) continue;
+                if (KCastleOverride && (h, v) == (6, kV)) continue;
+
+                BitBoard kingSafety = board.KingLoc(color);
+                if (board.CheckIfAttacked(kingSafety, oppositeColor)) continue;
+
+                // BitBoard attack = board.AttackBitBoard(oppositeColor);
+                // if ((KCastle || QCastle) && From == (4, kV)) {
+                //     if (QCastle && attack[3, kV]) {
+                //         QCastle = false;
+                //         QCastleOverride = true;
+                //     }
+                //
+                //     if (KCastle && attack[5, kV]) {
+                //         KCastle = false;
+                //         KCastleOverride = true;
+                //     }
+                // }
+                //
+                // if (QCastleOverride && (h, v) == (2, kV)) continue;
+                // if (KCastleOverride && (h, v) == (2, kV)) continue;
+                //
+                // BitBoard kingLoc = board.KingLoc(color);
+                // if (attack & kingLoc) continue;
                 
-                BitBoard kingLoc = board.KingLoc(color);
-                if (attack & kingLoc) continue;
-            
                 verifiedMoves[h, v] = true;
             }
 
