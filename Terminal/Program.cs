@@ -14,21 +14,21 @@ namespace Terminal
     internal static class Program
     {
 
-        private static BitDataBoard Board;
+        private static DataBoard Board;
 
         private static void Main(string[] args)
         {
             OutputTitle();
-            BitLegalMoveSet.SetUp();
+            LegalMoveSet.SetUp();
             switch (args.Length) {
                 case > 0 when args[0] == "perft":
                     RunPerft();
                     return;
                 case > 0 when args[0] == "fen":
-                    Board = BitDataBoard.FromFen(args[1]);
+                    Board = DataBoard.FromFen(args[1]);
                     break;
                 default:
-                    Board = BitDataBoard.Default();
+                    Board = DataBoard.Default();
                     break;
             }
 

@@ -11,7 +11,7 @@ using BetterConsoles.Tables.Models;
 namespace Backend.Board
 {
 
-    public class BitDataBoard
+    public class DataBoard
     {
 
         public const short UBOUND = 8;
@@ -31,18 +31,18 @@ namespace Backend.Board
         private BitBoard EnPassantTarget;
         private BitBoard HighlightedMoves = BitBoard.Default;
         
-        public static BitDataBoard Default()
+        public static DataBoard Default()
         {
             return FromFen(DEFAULT_FEN);
         }
 
-        public static BitDataBoard FromFen(string fen)
+        public static DataBoard FromFen(string fen)
         {
             string[] parts = fen.Split(" ");
-            return new BitDataBoard(parts[0], parts[1], parts[2], parts[3]);
+            return new DataBoard(parts[0], parts[1], parts[2], parts[3]);
         }
 
-        private BitDataBoard(BitDataBoard board)
+        private DataBoard(DataBoard board)
         {
             Map = board.Map.Clone();
             
@@ -56,7 +56,7 @@ namespace Backend.Board
             EnPassantTarget = board.EnPassantTarget;
         }
 
-        private BitDataBoard(string boardData, string turnData, string castlingData, string enPassantTargetData)
+        private DataBoard(string boardData, string turnData, string castlingData, string enPassantTargetData)
         {
             Map = new BitBoardMap(boardData);
             
@@ -67,12 +67,10 @@ namespace Backend.Board
             BlackKCastle = castlingData.Contains("k");
             BlackQCastle = castlingData.Contains("q");
             
+            EnPassantTarget = BitBoard.Default;
             if (enPassantTargetData.Length == 2) {
                 (int h, int v) = Util.ChessStringToTuple(enPassantTargetData.ToUpper());
-                EnPassantTarget = new BitBoard(BitBoard.Default)
-                {
-                    [h, v] = true
-                };
+                EnPassantTarget[h, v] = true;
             } else EnPassantTarget = BitBoard.Default;
         }
 
@@ -113,7 +111,7 @@ namespace Backend.Board
 
         public MoveAttempt SecureMove((int, int) from, (int, int) to)
         {
-            BitLegalMoveSet moveSet = new(this, from);
+            LegalMoveSet moveSet = new(this, from);
             BitBoard moves = moveSet.Get();
 
             if (!moves[to.Item1, to.Item2]) return MoveAttempt.Fail;
@@ -123,7 +121,7 @@ namespace Backend.Board
             PieceColor color = Map[to.Item1, to.Item2].Item2;
             PieceColor oppositeColor = Util.OppositeColor(color);
 
-            BitLegalMoveSet opposingMoveSet = new(this, oppositeColor);
+            LegalMoveSet opposingMoveSet = new(this, oppositeColor);
             if (opposingMoveSet.Count == 0) return MoveAttempt.Checkmate;
 
             BitBoard kingLoc = KingLoc(oppositeColor);
@@ -246,19 +244,17 @@ namespace Backend.Board
             WhiteTurn = !WhiteTurn;
         }
 
-        public BitDataBoard Clone()
+        public DataBoard Clone()
         {
-            return new BitDataBoard(this);
+            return new DataBoard(this);
         }
 
         public BitBoard AttackBitBoard(PieceColor color)
         {
             BitBoard attackBoard = BitBoard.Default;
-            BitBoard colored = ~Map[color];
-            for (int h = 0; h < UBOUND; h++)
-            for (int v = 0; v < UBOUND; v++) {
-                if (colored[h, v]) continue;
-                BitLegalMoveSet moveSet = new(this, (h, v), false);
+            BitBoard colored = Map[color];
+            foreach ((int h, int v) in colored) {
+                LegalMoveSet moveSet = new(this, (h, v), false);
                 attackBoard |= moveSet.Get();
             }
 
@@ -267,7 +263,7 @@ namespace Backend.Board
 
         public void HighlightMoves((int, int) from)
         {
-            BitLegalMoveSet moveSet = new(this, from);
+            LegalMoveSet moveSet = new(this, from);
             HighlightedMoves = moveSet.Get();
         }
 
@@ -276,7 +272,7 @@ namespace Backend.Board
             if (color == PieceColor.None) 
                 throw new InvalidOperationException("Cannot highlight moves for no color.");
 
-            BitLegalMoveSet moveSet = new(this, color);
+            LegalMoveSet moveSet = new(this, color);
             HighlightedMoves = moveSet.Get();
         }
 
@@ -371,7 +367,7 @@ namespace Backend.Board
             EnPassantFill:
             string enPassantTarget = "-";
             if (EnPassantTarget) {
-                enPassantTarget = Util.TupleToChessString(((int, int))EnPassantTarget);
+                enPassantTarget = Util.TupleToChessString(((int, int))EnPassantTarget).ToLower();
             }
 
             string[] fen = { boardData, turnData, castlingRight, enPassantTarget };

@@ -54,18 +54,18 @@ namespace Backend.Board
 
         private BitBoardMap(BitBoardMap map)
         {
-            WPB = map.WPB.Clone();
-            WRB = map.WRB.Clone();
-            WNB = map.WNB.Clone();
-            WBB = map.WBB.Clone();
-            WQB = map.WQB.Clone();
-            WKB = map.WKB.Clone();
-            BPB = map.BPB.Clone();
-            BRB = map.BRB.Clone();
-            BNB = map.BNB.Clone();
-            BBB = map.BBB.Clone();
-            BQB = map.BQB.Clone();
-            BKB = map.BKB.Clone();
+            WPB = map.WPB;
+            WRB = map.WRB;
+            WNB = map.WNB;
+            WBB = map.WBB;
+            WQB = map.WQB;
+            WKB = map.WKB;
+            BPB = map.BPB;
+            BRB = map.BRB;
+            BNB = map.BNB;
+            BBB = map.BBB;
+            BQB = map.BQB;
+            BKB = map.BKB;
         }
 
         public BitBoardMap(string boardFen)
@@ -84,10 +84,10 @@ namespace Backend.Board
             BKB = BitBoard.Default;
             
             string[] expandedBoardData = boardFen.Split(FEN_SPR).Reverse().ToArray();
-            if (expandedBoardData.Length != BitDataBoard.UBOUND) 
+            if (expandedBoardData.Length != DataBoard.UBOUND) 
                 throw new InvalidDataException("Wrong board data provided: " + boardFen);
 
-            for (int v = 0; v < BitDataBoard.UBOUND; v++) {
+            for (int v = 0; v < DataBoard.UBOUND; v++) {
                 string rankData = expandedBoardData[v];
                 int h = 0;
                 foreach (char p in rankData) {
@@ -298,14 +298,14 @@ namespace Backend.Board
 
         internal string GenerateBoardFen()
         {
-            string[] expandedBoardData = new string[BitDataBoard.UBOUND];
-            for (int v = 0; v < BitDataBoard.UBOUND; v++) {
+            string[] expandedBoardData = new string[DataBoard.UBOUND];
+            for (int v = 0; v < DataBoard.UBOUND; v++) {
                 string rankData = "";
-                for (int h = 0; h < BitDataBoard.UBOUND; h++) {
+                for (int h = 0; h < DataBoard.UBOUND; h++) {
                     (Piece piece, PieceColor color) = this[h, v];
                     if (piece == Piece.Empty) {
                         int c = 1;
-                        for (int i = h + 1; i < BitDataBoard.UBOUND; i++) {
+                        for (int i = h + 1; i < DataBoard.UBOUND; i++) {
                             if (this[i, v].Item1 == Piece.Empty) c++;
                             else break;
                         }

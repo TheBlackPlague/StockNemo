@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace Backend.Board
 {
 
-    public struct BitBoard
+    public struct BitBoard : IEnumerable<(int, int)>
     {
 
         public static readonly BitBoard Default = new(ulong.MinValue);
@@ -29,6 +31,17 @@ namespace Backend.Board
             0xFF00000000000000
         };
         public static readonly BitBoard Edged = Hs[0] | Hs[7] | Vs[0] | Vs[7];
+
+        private static readonly int[][] OneD = {
+            new [] {0, 1, 2, 3, 4, 5, 6, 7},
+            new [] {8, 9, 10, 11, 12, 13, 14, 15},
+            new [] {16, 17, 18, 19, 20, 21, 22, 23},
+            new [] {24, 25, 26, 27, 28, 29, 30, 31},
+            new [] {32, 33, 34, 35, 36, 37, 38, 39},
+            new [] {40, 41, 42, 43, 44, 45, 46, 47},
+            new [] {48, 49, 50, 51, 52, 53, 54, 55},
+            new [] {56, 57, 58, 59, 60, 61, 62, 63}
+        };
         
         public int Count => BitOperations.PopCount(Internal); // Number of set bits.
 
@@ -36,52 +49,62 @@ namespace Backend.Board
 
         public static BitBoard operator +(BitBoard left, BitBoard right)
         {
-            return new BitBoard(left.Internal + right.Internal);
+            left.Internal += right.Internal;
+            return left;
         }
         
         public static BitBoard operator -(BitBoard left, BitBoard right)
         {
-            return new BitBoard(left.Internal - right.Internal);
+            left.Internal -= right.Internal;
+            return left;
         }
         
         public static BitBoard operator *(BitBoard left, BitBoard right)
         {
-            return new BitBoard(left.Internal * right.Internal);
+            left.Internal *= right.Internal;
+            return left;
         }
 
         public static BitBoard operator /(BitBoard left, BitBoard right)
         {
-            return new BitBoard(left.Internal / right.Internal);
+            left.Internal /= right.Internal;
+            return left;
         }
 
         public static BitBoard operator %(BitBoard to, ulong by)
         {
-            return new BitBoard(to.Internal % by);
+            to.Internal %= by;
+            return to;
         }
 
         public static BitBoard operator |(BitBoard left, BitBoard right)
         {
-            return new BitBoard(left.Internal | right.Internal);
+            left.Internal |= right.Internal;
+            return left;
         }
         
         public static BitBoard operator &(BitBoard left, BitBoard right)
         {
-            return new BitBoard(left.Internal & right.Internal);
+            left.Internal &= right.Internal;
+            return left;
         }
         
         public static BitBoard operator ~(BitBoard bitBoard)
         {
-            return new BitBoard(~bitBoard.Internal);
+            bitBoard.Internal = ~bitBoard.Internal;
+            return bitBoard;
         }
 
         public static BitBoard operator >>(BitBoard bitBoard, int by)
         {
-            return new BitBoard(bitBoard.Internal >> by);
+            bitBoard.Internal >>= by;
+            return bitBoard;
         }
         
         public static BitBoard operator <<(BitBoard bitBoard, int by)
         {
-            return new BitBoard(bitBoard.Internal << by);
+            bitBoard.Internal <<= by;
+            return bitBoard;
         }
 
         public static bool operator ==(BitBoard left, BitBoard right)
@@ -111,10 +134,9 @@ namespace Backend.Board
 
         public static implicit operator BitBoard((int, int) from)
         {
-            return new BitBoard(Default)
-            {
-                [from.Item1, from.Item2] = true 
-            };
+            BitBoard a = Default;
+            a[from.Item1, from.Item2] = true;
+            return a;
         }
 
         public static explicit operator (int, int)(BitBoard bitBoard)
@@ -125,7 +147,7 @@ namespace Backend.Board
             ulong i = 1;
             ulong copy = bitBoard.Internal;
 
-            int p = 1;
+            int p = 0;
             while ((i & copy) == 0) {
                 i <<= 1;
                 ++p;
@@ -134,12 +156,12 @@ namespace Backend.Board
             return (p % 8, p / 8);
         }
         
-        private static int OneD(int h, int v)
-        {
-            if (h is > 7 or < 0 || v is > 7 or < 0) 
-                throw new InvalidOperationException("Invalid index: " + (h, v));
-            return v * 8 + h;
-        }
+        // private static int OneD(int h, int v)
+        // {
+        //     if (h is > 7 or < 0 || v is > 7 or < 0) 
+        //         throw new InvalidOperationException("Invalid index: " + (h, v));
+        //     return v * 8 + h;
+        // }
         
         public BitBoard(BitBoard from)
         {
@@ -153,12 +175,17 @@ namespace Backend.Board
 
         public bool this[int h, int v]
         {
-            get => (Internal >> OneD(h, v) & 1UL) == 1UL;
+            get => (Internal >> OneD[v][h] & 1UL) == 1UL;
             set
             {
-                if (value) Internal |= 1UL << OneD(h, v);
-                else Internal &= ~(1UL << OneD(h, v));
+                if (value) Internal |= 1UL << OneD[v][h];
+                else Internal &= ~(1UL << OneD[v][h]);
             }
+        }
+
+        public IEnumerator<(int, int)> GetEnumerator()
+        {
+            return new BitBoardEnumerator(Internal, Count);
         }
 
         public override bool Equals(object obj)
@@ -170,18 +197,13 @@ namespace Backend.Board
         {
             return Internal.GetHashCode();
         }
-
-        public BitBoard Clone()
-        {
-            return new BitBoard(this);
-        }
-
+        
         public override string ToString()
         {
             string final = "";
-            for (int v = 7; v > BitDataBoard.LBOUND; v--) {
+            for (int v = 7; v > DataBoard.LBOUND; v--) {
                 string bitString = "";
-                for (int h = 0; h < BitDataBoard.UBOUND; h++) {
+                for (int h = 0; h < DataBoard.UBOUND; h++) {
                     bitString += (this[h, v] ? 1 : "*") + " ";
                 }
 
@@ -191,9 +213,60 @@ namespace Backend.Board
             return final;
         }
 
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
         private bool Equals(BitBoard other)
         {
             return Internal == other.Internal;
+        }
+
+    }
+
+    public class BitBoardEnumerator : IEnumerator<(int, int)>
+    {
+        
+        private readonly int Count;
+
+        private ulong Value;
+        private int Iteration;
+
+        public BitBoardEnumerator(ulong value, int count)
+        {
+            Value = value;
+            Count = count;
+        }
+
+        public bool MoveNext()
+        {
+            Iteration++;
+            return Iteration <= Count;
+        }
+
+        public void Reset()
+        {
+            Iteration = 0;
+        }
+
+        object IEnumerator.Current => Current;
+
+        public (int, int) Current
+        {
+            get
+            {
+                int i = BitOperations.TrailingZeroCount(Value);
+                Value &= Value - 1;
+
+                int v = i / 8;
+                return (i - v * 8, v);
+            }
+        }
+
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
         }
 
     }

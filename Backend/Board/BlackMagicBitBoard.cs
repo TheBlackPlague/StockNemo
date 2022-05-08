@@ -97,9 +97,9 @@ namespace Backend.Board
         };
         
         public static readonly (BitBoard, BitBoard, int)[,] RookMagic =
-            new (BitBoard, BitBoard, int)[BitDataBoard.UBOUND, BitDataBoard.UBOUND];
+            new (BitBoard, BitBoard, int)[DataBoard.UBOUND, DataBoard.UBOUND];
         public static readonly (BitBoard, BitBoard, int)[,] BishopMagic =
-            new (BitBoard, BitBoard, int)[BitDataBoard.UBOUND, BitDataBoard.UBOUND];
+            new (BitBoard, BitBoard, int)[DataBoard.UBOUND, DataBoard.UBOUND];
 
         public static void SetUp()
         {
@@ -133,8 +133,8 @@ namespace Backend.Board
         private static BitBoard GenerateBishopOccupiedMask(int h, int v)
         {
             BitBoard rays = BitBoard.Default;
-            for (int hI = 0; hI < BitDataBoard.UBOUND; hI++)
-            for (int vI = 0; vI < BitDataBoard.UBOUND; vI++) {
+            for (int hI = 0; hI < DataBoard.UBOUND; hI++)
+            for (int vI = 0; vI < DataBoard.UBOUND; vI++) {
                 int hD = Math.Abs(hI - h);
                 int vD = Math.Abs(vI - v);
 
@@ -146,8 +146,8 @@ namespace Backend.Board
 
         private static void GenerateRookMagicTable()
         {
-            for (int h = 0; h < BitDataBoard.UBOUND; h++)
-            for (int v = 0; v < BitDataBoard.UBOUND; v++) {
+            for (int h = 0; h < DataBoard.UBOUND; h++)
+            for (int v = 0; v < DataBoard.UBOUND; v++) {
                 (BitBoard magic, int offset) = RookMagicData[v, h];
                 RookMagic[v, h] = (magic, ~GenerateRookOccupiedMask(h, v), offset);
                 string chsStr = Util.TupleToChessString((h, v));
@@ -157,8 +157,8 @@ namespace Backend.Board
 
         private static void GenerateBishopMagicTable()
         {
-            for (int h = 0; h < BitDataBoard.UBOUND; h++)
-            for (int v = 0; v < BitDataBoard.UBOUND; v++) {
+            for (int h = 0; h < DataBoard.UBOUND; h++)
+            for (int v = 0; v < DataBoard.UBOUND; v++) {
                 (BitBoard magic, int offset) = BishopMagicData[v, h];
                 BishopMagic[v, h] = (magic, ~GenerateBishopOccupiedMask(h, v), offset);
                 string chsStr = Util.TupleToChessString((h, v));

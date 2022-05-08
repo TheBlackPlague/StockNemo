@@ -6,7 +6,7 @@ using Backend.Exception;
 namespace Backend.Move
 {
 
-    public class BitLegalMoveSet
+    public class LegalMoveSet
     {
         
         private static readonly BitBoard[,] WhitePawnAttacks = {
@@ -118,7 +118,7 @@ namespace Backend.Move
         
         private static readonly BitBoard[] SlidingMoves = new BitBoard[87988];
         
-        private readonly BitDataBoard Board;
+        private readonly DataBoard Board;
         private readonly BitBoard From;
         private readonly int H;
         private readonly int V;
@@ -167,8 +167,8 @@ namespace Backend.Move
                     throw new InvalidDataException("No magic table found.")
             };
             
-            for (int h = 0; h < BitDataBoard.UBOUND; h++)
-            for (int v = 0; v < BitDataBoard.UBOUND; v++) {
+            for (int h = 0; h < DataBoard.UBOUND; h++)
+            for (int v = 0; v < DataBoard.UBOUND; v++) {
                 BitBoard mask = ~args.Item1[v, h].Item2;
                 
                 BitBoard occupied = BitBoard.Default;
@@ -198,7 +198,7 @@ namespace Backend.Move
             }
         }
 
-        public BitLegalMoveSet(BitDataBoard board, (int, int) from, bool verify = true)
+        public LegalMoveSet(DataBoard board, (int, int) from, bool verify = true)
         {
             Board = board;
             From = from;
@@ -238,18 +238,15 @@ namespace Backend.Move
             VerifyMoves(color);
         }
 
-        public BitLegalMoveSet(BitDataBoard board, PieceColor color)
+        public LegalMoveSet(DataBoard board, PieceColor color)
         {
             Board = board;
 
             BitBoard colored = ~board.All(color);
-            for (int h = 0; h < BitDataBoard.UBOUND; h++)
-            for (int v = 0; v < BitDataBoard.UBOUND; v++) {
-                if (colored[h, v]) continue;
-
-                BitLegalMoveSet moveSet = new BitLegalMoveSet(board, (h, v));
+            foreach ((int h, int v) in colored) {
+                LegalMoveSet moveSet = new(board, (h, v));
                 Moves |= moveSet.Get();
-            } 
+            }
         }
 
         public BitBoard Get()
@@ -259,21 +256,24 @@ namespace Backend.Move
 
         private void LegalPawnMoveSet(PieceColor color, bool checkMovesOnly = false)
         {
+            PieceColor oppositeColor = Util.OppositeColor(color);
             if (!checkMovesOnly) {
                 // Normal
                 // 1 Push
-                Moves |= color == PieceColor.White ? From << 8 : From >> 8;
+                Moves |= (color == PieceColor.White ? From << 8 : From >> 8) & Board.All(PieceColor.None);
                 
                 if (V is 1 or 6 && Moves) {
                     // 2 Push
                     Moves |= color == PieceColor.White ? From << 16 : From >> 16;
                 }
 
+                Moves &= ~Board.All(oppositeColor);
+
                 // En Passant
                 BitBoard enPassantTarget = Board.GetEnPassantTarget();
                 if (enPassantTarget) {
                     BitBoard targetExist = (color == PieceColor.White ? enPassantTarget << 8 : enPassantTarget >> 8) &
-                                           Board.All(Util.OppositeColor(color));
+                                           Board.All(oppositeColor);
                     if (targetExist) Moves |= enPassantTarget;
                 }
             }
@@ -281,7 +281,7 @@ namespace Backend.Move
             // Attack Moves
             BitBoard attack = color == PieceColor.White ? WhitePawnAttacks[V, H] : BlackPawnAttacks[V, H];
 
-            Moves |= attack & Board.All(Util.OppositeColor(color));
+            Moves |= attack & Board.All(oppositeColor);
             Moves &= ~Board.All(color);
         }
 
@@ -355,25 +355,29 @@ namespace Backend.Move
             int kV = color == PieceColor.White ? 0 : 7;
             
             BitBoard verifiedMoves = BitBoard.Default;
-            for (int h = 0; h < BitDataBoard.UBOUND; h++)
-            for (int v = 0; v < BitDataBoard.UBOUND; v++) {
-                if (!Moves[h, v]) continue;
-
-                BitDataBoard board = Board.Clone();
+            foreach ((int h, int v) in Moves) {
+                DataBoard board = Board.Clone();
                 board.Move((H, V), (h, v));
-                BitBoard danger = board.AttackBitBoard(oppositeColor);
-                BitBoard kingLoc = board.KingLoc(color);
-
+                BitBoard attack = board.AttackBitBoard(oppositeColor);
                 if ((KCastle || QCastle) && From == (4, kV)) {
-                    if (QCastle && danger[3, kV]) QCastleOverride = true;
-                    if (KCastle && danger[5, kV]) KCastleOverride = true;
+                    if (QCastle && attack[3, kV]) {
+                        QCastle = false;
+                        QCastleOverride = true;
+                    }
+            
+                    if (KCastle && attack[5, kV]) {
+                        KCastle = false;
+                        KCastleOverride = true;
+                    }
                 }
                 
                 if (QCastleOverride && (h, v) == (2, kV)) continue;
                 if (KCastleOverride && (h, v) == (2, kV)) continue;
-
-                if (danger & kingLoc) continue; 
-                verifiedMoves |= (h, v);
+                
+                BitBoard kingLoc = board.KingLoc(color);
+                if (attack & kingLoc) continue;
+            
+                verifiedMoves[h, v] = true;
             }
 
             Moves = verifiedMoves;

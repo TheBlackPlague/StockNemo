@@ -9,18 +9,18 @@ namespace Test
     public class BitLegalMoveSetTestUnit
     {
 
-        private readonly BitDataBoard Board = BitDataBoard.Default();
+        private readonly DataBoard Board = DataBoard.Default();
 
         [SetUp]
         public void SetUp()
         {
-            BitLegalMoveSet.SetUp();
+            LegalMoveSet.SetUp();
         }
 
         [Test]
         public void CountKnightMovesAtB1()
         {
-            BitLegalMoveSet moveSet = new(Board, (1, 0));
+            LegalMoveSet moveSet = new(Board, (1, 0));
             Console.WriteLine(moveSet.Get().ToString());
             Assert.AreEqual(2, moveSet.Count);
         }
@@ -28,7 +28,7 @@ namespace Test
         [Test]
         public void CountPawnMovesAtA2()
         {
-            BitLegalMoveSet moveSet = new(Board, (0, 1));
+            LegalMoveSet moveSet = new(Board, (0, 1));
             Console.WriteLine(moveSet.Get().ToString());
             Assert.AreEqual(2, moveSet.Count);
         }
@@ -36,9 +36,9 @@ namespace Test
         [Test]
         public void CountKnightMovesAtA3()
         {
-            BitDataBoard use = Board.Clone();
+            DataBoard use = Board.Clone();
             use.Move((1, 0), (0, 2));
-            BitLegalMoveSet moveSet = new(use, (0, 2));
+            LegalMoveSet moveSet = new(use, (0, 2));
             Console.WriteLine(moveSet.Get().ToString());
             Assert.AreEqual(3, moveSet.Count);
         }
@@ -46,9 +46,9 @@ namespace Test
         [Test]
         public void CountRookMovesAtA3()
         {
-            BitDataBoard use = Board.Clone();
+            DataBoard use = Board.Clone();
             use.Move((0, 0), (0, 2));
-            BitLegalMoveSet moveSet = new(use, (0, 2));
+            LegalMoveSet moveSet = new(use, (0, 2));
             Console.WriteLine(moveSet.Get().ToString());
             Assert.AreEqual(11, moveSet.Count);
         }
@@ -56,8 +56,8 @@ namespace Test
         [Test]
         public void CountRookMovesAtA1()
         {
-            BitDataBoard use = Board.Clone();
-            BitLegalMoveSet moveSet = new(use, (0, 0));
+            DataBoard use = Board.Clone();
+            LegalMoveSet moveSet = new(use, (0, 0));
             Console.WriteLine(moveSet.Get().ToString());
             Assert.AreEqual(0, moveSet.Count);
         }
@@ -65,9 +65,9 @@ namespace Test
         [Test]
         public void CountBishopMovesAtC3()
         {
-            BitDataBoard use = Board.Clone();
+            DataBoard use = Board.Clone();
             use.Move((2, 0), (2, 2));
-            BitLegalMoveSet moveSet = new(use, (2, 2));
+            LegalMoveSet moveSet = new(use, (2, 2));
             Console.WriteLine(moveSet.Get().ToString());
             Assert.AreEqual(6, moveSet.Count);
         }
