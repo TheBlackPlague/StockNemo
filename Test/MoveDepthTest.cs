@@ -95,38 +95,55 @@ namespace Test
             
             if (depth == SelectedDepth) color = board.IsWhiteTurn() ? PieceColor.White : PieceColor.Black;
 
-            if (depth == 1) {
+            if (depth < 4) {
+                if (depth == 1) {
+                    foreach ((int, int) piece in board.All(color)) {
+                        LegalMoveSet moveSet = new(board, piece);
+                        count += (ulong) moveSet.Count();
+                        if (depth != SelectedDepth) continue;
+                    
+                        if (verbose) LogNodeCount(piece, moveSet.Count());
+                    }
+
+                    return count;
+                }
+
                 foreach ((int, int) piece in board.All(color)) {
                     LegalMoveSet moveSet = new(board, piece);
-                    count += (ulong) moveSet.Count();
-                    if (depth != SelectedDepth) continue;
-                    
-                    if (verbose) LogNodeCount(piece, moveSet.Count());
-                }
+                    foreach ((int, int) move in moveSet.Get()) {
+                        DataBoard nextBoard = board.Clone();
+                        nextBoard.Move(piece, move);
+                        ulong generatedCount = MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
+                        count += generatedCount;
+                        // board.Move(move, piece, true);
 
-                return count;
+                        if (depth != SelectedDepth) continue;
+
+                        if (verbose) LogNodeCount(piece, move, generatedCount);
+                    }
+                }
+            } else {
+                Parallel.ForEach(board.All(color), piece =>
+                {
+                    LegalMoveSet moveSet = new(board, piece);
+
+                    foreach ((int, int) move in moveSet.Get()) {
+                        DataBoard nextBoard = board.Clone();
+                        nextBoard.Move(piece, move);
+                        ulong generatedCount = MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
+                        Interlocked.Add(
+                            ref count,
+                            generatedCount
+                        );
+                        // board.Move(move, piece, true);
+
+                        if (depth != SelectedDepth) continue;
+
+                        if (verbose) LogNodeCount(piece, move, generatedCount);
+                    }
+                });
             }
-            
-            Parallel.ForEach(board.All(color), piece =>
-            {
-                LegalMoveSet moveSet = new(board, piece);
 
-                foreach ((int, int) move in moveSet.Get()) {
-                    DataBoard nextBoard = board.Clone();
-                    nextBoard.Move(piece, move);
-                    ulong generatedCount = MoveGeneration(nextBoard, depth - 1, Util.OppositeColor(color));
-                    Interlocked.Add(
-                        ref count,
-                        generatedCount
-                    );
-                    // board.Move(move, piece, true);
-
-                    if (depth != SelectedDepth) continue;
-
-                    if (verbose) LogNodeCount(piece, move, generatedCount);
-                }
-            });
-            
             return count;
         }
 
