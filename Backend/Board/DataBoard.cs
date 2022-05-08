@@ -158,7 +158,6 @@ namespace Backend.Board
             // Castling and castling right update on rook move
             switch (pieceF) {
                 case Piece.King when Math.Abs(hT - hF) == 2:
-                {
                     if (hT > hF) { // King side castle
                         Map.Move((7, vF), (hT - 1, vF));
                     } else { // Queen side castle
@@ -166,7 +165,6 @@ namespace Backend.Board
                     }
 
                     break;
-                }
                 case Piece.Rook:
                     switch (colorF) {
                         case PieceColor.White:
