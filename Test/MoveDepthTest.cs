@@ -98,7 +98,7 @@ namespace Test
             int nextDepth = depth - 1;
 
             BitBoard colored = board.All(color);
-            if (depth < 4) {
+            if (depth < 5) {
                 foreach ((int, int) from in colored) {
                     LegalMoveSet moveSet = new(board, from);
                     if (depth == 1) {

@@ -99,6 +99,11 @@ namespace Backend.Board
             return Map[color];
         }
 
+        public BitBoard All(Piece piece, PieceColor color)
+        {
+            return Map[piece, color];
+        }
+
         public BitBoard KingLoc(PieceColor color)
         {
             return Map[Piece.King, color];
@@ -125,7 +130,8 @@ namespace Backend.Board
             if (opposingMoveSet.Count == 0) return MoveAttempt.Checkmate;
 
             BitBoard kingLoc = KingLoc(oppositeColor);
-            return AttackBitBoard(color) & kingLoc ? MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
+            return LegalMoveSet.UnderAttack(this, kingLoc, color) ? 
+                MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
         }
 
         public void Move((int, int) from, (int, int) to)
@@ -246,38 +252,6 @@ namespace Backend.Board
         public DataBoard Clone()
         {
             return new DataBoard(this);
-        }
-
-        public bool CheckIfAttacked(BitBoard safety, PieceColor by)
-        {
-            // Check sliding pieces.
-            BitBoard sliding = Map[Piece.Rook, by] | Map[Piece.Bishop, by] | Map[Piece.Queen, by];
-            // ReSharper disable once LoopCanBeConvertedToQuery
-            foreach ((int, int) piece in sliding) {
-                LegalMoveSet moveSet = new(this, piece, false);
-                if (safety & moveSet.Get()) return true;
-            }
-
-            BitBoard other = Map[Piece.Pawn, by] | Map[Piece.Knight, by] | Map[Piece.King, by];
-            // ReSharper disable once LoopCanBeConvertedToQuery
-            foreach ((int, int) piece in other) {
-                LegalMoveSet moveSet = new(this, piece, false);
-                if (safety & moveSet.Get()) return true;
-            }
-
-            return false;
-        }
-
-        public BitBoard AttackBitBoard(PieceColor color)
-        {
-            BitBoard attackBoard = BitBoard.Default;
-            BitBoard colored = Map[color];
-            foreach ((int h, int v) in colored) {
-                LegalMoveSet moveSet = new(this, (h, v), false);
-                attackBoard |= moveSet.Get();
-            }
-
-            return attackBoard;
         }
 
         public void HighlightMoves((int, int) from)

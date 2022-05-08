@@ -144,7 +144,7 @@ namespace Backend.Board
             if (bitBoard.Count != 1) 
                 throw new InvalidOperationException("Cannot convert this bitboard to tuple.");
 
-            ulong i = 1;
+            ulong i = 1UL;
             ulong copy = bitBoard.Internal;
 
             int p = 0;
@@ -153,15 +153,9 @@ namespace Backend.Board
                 ++p;
             }
 
-            return (p % 8, p / 8);
+            int v = p / 8;
+            return (p - v * 8, v);
         }
-        
-        // private static int OneD(int h, int v)
-        // {
-        //     if (h is > 7 or < 0 || v is > 7 or < 0) 
-        //         throw new InvalidOperationException("Invalid index: " + (h, v));
-        //     return v * 8 + h;
-        // }
         
         public BitBoard(BitBoard from)
         {

@@ -137,6 +137,27 @@ namespace Backend.Move
             GenerateSlidingMoves(Piece.Rook);
             GenerateSlidingMoves(Piece.Bishop);
         }
+        
+        public static bool UnderAttack(DataBoard board, BitBoard safety, PieceColor by)
+        {
+            foreach ((int h, int v) in safety) {
+                BitBoard pawnAttack = by == PieceColor.White ? BlackPawnAttacks[v, h] : WhitePawnAttacks[v, h];
+                if (pawnAttack & board.All(Piece.Pawn, by)) return true;
+                if (KnightMoves[v, h] & board.All(Piece.Knight, by)) return true;
+                BitBoard occupied = ~board.All(PieceColor.None);
+                BitBoard queen = board.All(Piece.Queen, by);
+                
+                int mIndex = BlackMagicBitBoard.GetMagicIndex(Piece.Rook, occupied, h, v);
+                if (SlidingMoves[mIndex] & (queen | board.All(Piece.Rook, by))) return true;
+                
+                mIndex = BlackMagicBitBoard.GetMagicIndex(Piece.Bishop, occupied, h, v);
+                if (SlidingMoves[mIndex] & (queen | board.All(Piece.Bishop, by))) return true;
+                
+                if (KingMoves[v, h] & board.All(Piece.King, by)) return true;
+            }
+
+            return false;
+        }
 
         private static void GenerateSlidingMoves(Piece piece)
         {
@@ -242,7 +263,7 @@ namespace Backend.Move
         {
             Board = board;
 
-            BitBoard colored = ~board.All(color);
+            BitBoard colored = board.All(color);
             foreach ((int h, int v) in colored) {
                 LegalMoveSet moveSet = new(board, (h, v));
                 Moves |= moveSet.Get();
@@ -273,7 +294,7 @@ namespace Backend.Move
                 BitBoard enPassantTarget = Board.GetEnPassantTarget();
                 if (enPassantTarget) {
                     BitBoard targetExist = (color == PieceColor.White ? enPassantTarget << 8 : enPassantTarget >> 8) &
-                                           Board.All(oppositeColor);
+                                           Board.All(Piece.Pawn, oppositeColor);
                     if (targetExist) Moves |= enPassantTarget;
                 }
             }
@@ -362,12 +383,12 @@ namespace Backend.Move
                 board.Move((H, V), (h, v));
 
                 if ((KCastle || QCastle) && From == (4, kV)) {
-                    if (QCastle && board.CheckIfAttacked((3, kV), oppositeColor)) {
+                    if (QCastle && UnderAttack(board, (3, kV), oppositeColor)) {
                         QCastle = false;
                         QCastleOverride = true;
                     }
 
-                    if (KCastle && board.CheckIfAttacked((4, kV), oppositeColor)) {
+                    if (KCastle && UnderAttack(board, (4, kV), oppositeColor)) {
                         KCastle = false;
                         KCastleOverride = true;
                     }
@@ -377,7 +398,7 @@ namespace Backend.Move
                 if (KCastleOverride && (h, v) == (6, kV)) continue;
 
                 BitBoard kingSafety = board.KingLoc(color);
-                if (board.CheckIfAttacked(kingSafety, oppositeColor)) continue;
+                if (UnderAttack(board, kingSafety, oppositeColor)) continue;
 
                 // BitBoard attack = board.AttackBitBoard(oppositeColor);
                 // if ((KCastle || QCastle) && From == (4, kV)) {
