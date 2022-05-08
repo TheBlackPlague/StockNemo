@@ -144,17 +144,11 @@ namespace Backend.Board
             if (bitBoard.Count != 1) 
                 throw new InvalidOperationException("Cannot convert this bitboard to tuple.");
 
-            ulong i = 1UL;
-            ulong copy = bitBoard.Internal;
+            ulong value = bitBoard.Internal;
+            int i = BitOperations.TrailingZeroCount(value);
 
-            int p = 0;
-            while ((i & copy) == 0) {
-                i <<= 1;
-                ++p;
-            }
-
-            int v = p / 8;
-            return (p - v * 8, v);
+            int v = i / 8;
+            return (i - v * 8, v);
         }
         
         public BitBoard(BitBoard from)
