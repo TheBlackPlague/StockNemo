@@ -10,7 +10,7 @@ namespace Backend.Move
     {
         
         private static readonly BitBoard[,] WhitePawnAttacks = {
-            { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
+            { 0x200, 0x500, 0xa00, 0x1400, 0x2800, 0x5000, 0xa000, 0x4000 },
             { 0x20000, 0x50000, 0xa0000, 0x140000, 0x280000, 0x500000, 0xa00000, 0x400000 },
             { 0x2000000, 0x5000000, 0xa000000, 0x14000000, 0x28000000, 0x50000000, 0xa0000000, 0x40000000 },
             {
@@ -45,7 +45,10 @@ namespace Backend.Move
                 0x20000000000, 0x50000000000, 0xa0000000000, 0x140000000000, 0x280000000000, 0x500000000000, 
                 0xa00000000000, 0x400000000000
             },
-            { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
+            {
+                0x2000000000000, 0x5000000000000, 0xa000000000000, 0x14000000000000, 0x28000000000000, 0x50000000000000, 
+                0xa0000000000000, 0x40000000000000
+            }
         };
         private static readonly BitBoard[,] KnightMoves = {
             {
@@ -278,6 +281,7 @@ namespace Backend.Move
         private void LegalPawnMoveSet(PieceColor color, bool checkMovesOnly = false)
         {
             PieceColor oppositeColor = Util.OppositeColor(color);
+            
             if (!checkMovesOnly) {
                 // Normal
                 // 1 Push
@@ -293,9 +297,14 @@ namespace Backend.Move
                 // En Passant
                 BitBoard enPassantTarget = Board.GetEnPassantTarget();
                 if (enPassantTarget) {
-                    BitBoard targetExist = (color == PieceColor.White ? enPassantTarget << 8 : enPassantTarget >> 8) &
-                                           Board.All(Piece.Pawn, oppositeColor);
-                    if (targetExist) Moves |= enPassantTarget;
+                    BitBoard target = color == PieceColor.White ? enPassantTarget >> 8 : enPassantTarget << 8;
+                    BitBoard allOpposingPawns = Board.All(Piece.Pawn, oppositeColor);
+                    
+                    (int h, int v) = ((int, int))enPassantTarget;
+                    BitBoard pieceExistCheck =
+                        color == PieceColor.White ? BlackPawnAttacks[v, h] : WhitePawnAttacks[v, h];
+
+                    if (target & allOpposingPawns && pieceExistCheck[H, V]) Moves |= enPassantTarget;
                 }
             }
             
@@ -388,7 +397,7 @@ namespace Backend.Move
                         QCastleOverride = true;
                     }
 
-                    if (KCastle && UnderAttack(board, (4, kV), oppositeColor)) {
+                    if (KCastle && UnderAttack(board, (5, kV), oppositeColor)) {
                         KCastle = false;
                         KCastleOverride = true;
                     }
