@@ -43,7 +43,7 @@ namespace Backend.Board
 
         public BitBoard And(BitBoard second)
         {
-            return new BitBoard(Internal | second.Internal);
+            return new BitBoard(Internal & second.Internal);
         }
 
     }
