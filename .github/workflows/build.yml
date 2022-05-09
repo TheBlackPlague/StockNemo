@@ -91,10 +91,6 @@ jobs:
         run: |
           cd Terminal
           dotnet publish -r osx.11.0-x64 -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Build for MacOS Monterey. (x64)
-        run: |
-          cd Terminal
-          dotnet publish -r osx.12-x64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Upload MacOS binaries.
         uses: actions/upload-artifact@v3
         with:
