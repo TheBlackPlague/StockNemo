@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Test
 {
 
-    public class BitLegalMoveSetTestUnit
+    public class LegalMoveSetTestUnit
     {
 
         private readonly DataBoard Board = DataBoard.Default();

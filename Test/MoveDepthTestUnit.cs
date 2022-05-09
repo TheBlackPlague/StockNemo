@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using Backend.Move;
+using NUnit.Framework;
 
 namespace Test
 {
@@ -7,6 +8,12 @@ namespace Test
     {
 
         private readonly MoveDepthTest Test = new();
+        
+        [SetUp]
+        public void SetUp()
+        {
+            LegalMoveSet.SetUp();
+        }
 
         [Test]
         public void Depth0()

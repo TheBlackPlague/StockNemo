@@ -409,25 +409,6 @@ namespace Backend.Move
                 BitBoard kingSafety = board.KingLoc(color);
                 if (UnderAttack(board, kingSafety, oppositeColor)) continue;
 
-                // BitBoard attack = board.AttackBitBoard(oppositeColor);
-                // if ((KCastle || QCastle) && From == (4, kV)) {
-                //     if (QCastle && attack[3, kV]) {
-                //         QCastle = false;
-                //         QCastleOverride = true;
-                //     }
-                //
-                //     if (KCastle && attack[5, kV]) {
-                //         KCastle = false;
-                //         KCastleOverride = true;
-                //     }
-                // }
-                //
-                // if (QCastleOverride && (h, v) == (2, kV)) continue;
-                // if (KCastleOverride && (h, v) == (2, kV)) continue;
-                //
-                // BitBoard kingLoc = board.KingLoc(color);
-                // if (attack & kingLoc) continue;
-                
                 verifiedMoves[h, v] = true;
             }
 

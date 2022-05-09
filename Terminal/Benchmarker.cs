@@ -1,4 +1,5 @@
 ﻿using Backend.Benchmark;
+using Backend.Move;
 using BenchmarkDotNet.Running;
 
 namespace Terminal
@@ -9,9 +10,12 @@ namespace Terminal
 
         public static void RunAll()
         {
+            LegalMoveSet.SetUp();
+            
             // BenchmarkRunner.Run<BoardmarkDefault>();
             // BenchmarkRunner.Run<BoardMarkKiwipete>();
-            BenchmarkRunner.Run<BitBoardMapMarkDefault>();
+            // BenchmarkRunner.Run<BitBoardMapMarkDefault>();
+            BenchmarkRunner.Run<LegalMoveSetMark>();
         }
 
     }
