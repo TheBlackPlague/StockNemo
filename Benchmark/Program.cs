@@ -1,14 +1,14 @@
-﻿using Backend.Benchmark;
-using Backend.Move;
+﻿using Backend.Move;
+using Benchmark.Move;
 using BenchmarkDotNet.Running;
 
-namespace Terminal
+namespace Benchmark
 {
 
-    public class Benchmarker
+    public static class Program
     {
 
-        public static void RunAll()
+        public static void Main()
         {
             LegalMoveSet.SetUp();
             

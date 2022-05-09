@@ -2,7 +2,7 @@
 using Backend.Move;
 using BenchmarkDotNet.Attributes;
 
-namespace Backend.Benchmark
+namespace Benchmark.Move
 {
 
     public class LegalMoveSetMark

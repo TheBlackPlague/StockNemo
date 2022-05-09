@@ -1,7 +1,7 @@
 ﻿using Backend.Board;
 using BenchmarkDotNet.Attributes;
 
-namespace Backend.Benchmark
+namespace Benchmark.Board
 {
 
     public class BitBoardMapMarkDefault
