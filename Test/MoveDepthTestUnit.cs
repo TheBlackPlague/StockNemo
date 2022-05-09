@@ -63,6 +63,13 @@ namespace Test
             (ulong, ulong) test = Test.Depth6();
             Assert.AreEqual(test.Item1, test.Item2);
         }
+        
+        [Test]
+        public void Depth7()
+        {
+            (ulong, ulong) test = Test.Depth7();
+            Assert.AreEqual(test.Item1, test.Item2);
+        }
 
     }
 

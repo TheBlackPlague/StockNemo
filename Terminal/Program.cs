@@ -237,6 +237,15 @@ namespace Terminal
             
             output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
             Console.WriteLine(output);
+            
+            Console.WriteLine("Running Depth 7: ");
+            watch = new Stopwatch();
+            watch.Start();
+            result = test.Depth7();
+            watch.Stop();
+            
+            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+            Console.WriteLine(output);
         }
 
     }

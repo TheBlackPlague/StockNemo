@@ -18,6 +18,7 @@ namespace Test
         private const ulong D4 = 197281;
         private const ulong D5 = 4865609;
         private const ulong D6 = 119060324;
+        private const ulong D7 = 3195901860;
         
         private readonly DataBoard Board = DataBoard.Default();
 
@@ -86,6 +87,12 @@ namespace Test
         {
             SelectedDepth = 6;
             return (D6, MoveGeneration(Board, 6));
+        }
+        
+        public (ulong, ulong) Depth7()
+        {
+            SelectedDepth = 7;
+            return (D7, MoveGeneration(Board, 7));
         }
         
         private ulong MoveGeneration(DataBoard board, int depth, PieceColor color = PieceColor.White, bool verbose = true)

@@ -385,6 +385,13 @@ namespace Backend.Move
         {
             PieceColor oppositeColor = Util.OppositeColor(color);
             int kV = color == PieceColor.White ? 0 : 7;
+
+            if ((KCastle || QCastle) && UnderAttack(Board, Board.KingLoc(color), oppositeColor)) {
+                KCastle = false;
+                QCastle = false;
+                KCastleOverride = true;
+                QCastleOverride = true;
+            }
             
             BitBoard verifiedMoves = BitBoard.Default;
             foreach ((int h, int v) in Moves) {
