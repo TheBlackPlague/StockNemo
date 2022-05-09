@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
 using Backend;
 using Backend.Board;
 using Backend.Move;
-using Test;
+using Backend.Perft;
 using Version = Backend.Version;
 
 namespace Terminal

@@ -1,4 +1,5 @@
 ﻿using Backend.Move;
+using Backend.Perft;
 using NUnit.Framework;
 
 namespace Test

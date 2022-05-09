@@ -1,11 +1,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Backend;
 using Backend.Board;
 using Backend.Move;
 
-namespace Test
+namespace Backend.Perft
 {
 
     public class MoveDepthTest
