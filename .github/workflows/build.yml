@@ -16,19 +16,19 @@ jobs:
       - name: Build for Windows 10/11. (x64)
         run: |
           cd Terminal
-          dotnet publish -r win10-x64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r win10-x64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for Windows 10/11. (x86)
         run: |
           cd Terminal
-          dotnet publish -r win10-x86 -c Release /p:PublishSingleFile=true
+          dotnet publish -r win10-x86 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for Windows 10/11. (ARM-64)
         run: |
           cd Terminal
-          dotnet publish -r win10-arm64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r win10-arm64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for Windows 10/11. (ARM)
         run: |
           cd Terminal
-          dotnet publish -r win10-arm -c Release /p:PublishSingleFile=true
+          dotnet publish -r win10-arm -c Release /p:PublishSingleFile=true --self-contained true
       - name: Upload Windows binaries.
         uses: actions/upload-artifact@v3
         with:
@@ -49,19 +49,19 @@ jobs:
       - name: Build for Linux. (x64)
         run: |
           cd Terminal
-          dotnet publish -r linux-x64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r linux-x64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for Linux. (musl-x64)
         run: |
           cd Terminal
-          dotnet publish -r linux-musl-x64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r linux-musl-x64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for Linux. (ARM)
         run: |
           cd Terminal
-          dotnet publish -r linux-arm -c Release /p:PublishSingleFile=true
+          dotnet publish -r linux-arm -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for Linux. (ARM-64)
         run: |
           cd Terminal
-          dotnet publish -r linux-arm64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r linux-arm64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Upload Linux binaries.
         uses: actions/upload-artifact@v3
         with:
@@ -82,27 +82,27 @@ jobs:
       - name: Build for MacOS Mojave. (x64)
         run: |
           cd Terminal
-          dotnet publish -r osx.10.14-x64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r osx.10.14-x64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for MacOS Catalina. (x64)
         run: |
           cd Terminal
-          dotnet publish -r osx.10.15-x64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r osx.10.15-x64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for MacOS Big Sur. (x64)
         run: |
           cd Terminal
-          dotnet publish -r osx.11.0-x64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r osx.11.0-x64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for MacOS Big Sur. (ARM64)
         run: |
           cd Terminal
-          dotnet publish -r osx.11.0-arm64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r osx.11.0-arm64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for MacOS Monterey. (x64)
         run: |
           cd Terminal
-          dotnet publish -r osx.12-x64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r osx.12-x64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Build for MacOS Monterey. (ARM64)
         run: |
           cd Terminal
-          dotnet publish -r osx.12-arm64 -c Release /p:PublishSingleFile=true
+          dotnet publish -r osx.12-arm64 -c Release /p:PublishSingleFile=true --self-contained true
       - name: Upload MacOS binaries.
         uses: actions/upload-artifact@v3
         with:
