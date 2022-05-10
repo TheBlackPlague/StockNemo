@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using Backend.Board;
 using Backend.Exception;
 
@@ -8,23 +8,228 @@ namespace Backend.Move
 
     public class LegalMoveSet
     {
-
-        private List<(int, int)> Moves = new();
+        
+        private static readonly BitBoard[,] WhitePawnAttacks = {
+            { 0x200, 0x500, 0xa00, 0x1400, 0x2800, 0x5000, 0xa000, 0x4000 },
+            { 0x20000, 0x50000, 0xa0000, 0x140000, 0x280000, 0x500000, 0xa00000, 0x400000 },
+            { 0x2000000, 0x5000000, 0xa000000, 0x14000000, 0x28000000, 0x50000000, 0xa0000000, 0x40000000 },
+            {
+                0x200000000, 0x500000000, 0xa00000000, 0x1400000000, 0x2800000000, 0x5000000000, 0xa000000000,
+                0x4000000000
+            },
+            {
+                0x20000000000, 0x50000000000, 0xa0000000000, 0x140000000000, 0x280000000000, 0x500000000000,
+                0xa00000000000, 0x400000000000
+            },
+            {
+                0x2000000000000, 0x5000000000000, 0xa000000000000, 0x14000000000000, 0x28000000000000,
+                0x50000000000000, 0xa0000000000000, 0x40000000000000
+            },
+            {
+                0x200000000000000, 0x500000000000000, 0xa00000000000000, 0x1400000000000000, 0x2800000000000000,
+                0x5000000000000000, 0xa000000000000000, 0x4000000000000000
+            },
+            { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
+        };
+        private static readonly BitBoard[,] BlackPawnAttacks = {
+            { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
+            { 0x2, 0x5, 0xa, 0x14, 0x28, 0x50, 0xa0, 0x40 },
+            { 0x200, 0x500, 0xa00, 0x1400, 0x2800, 0x5000, 0xa000, 0x4000 },
+            { 0x20000, 0x50000, 0xa0000, 0x140000, 0x280000, 0x500000, 0xa00000, 0x400000 },
+            { 0x2000000, 0x5000000, 0xa000000, 0x14000000, 0x28000000, 0x50000000, 0xa0000000, 0x40000000 },
+            { 
+                0x200000000, 0x500000000, 0xa00000000, 0x1400000000, 0x2800000000, 0x5000000000, 0xa000000000, 
+                0x4000000000
+            },
+            {
+                0x20000000000, 0x50000000000, 0xa0000000000, 0x140000000000, 0x280000000000, 0x500000000000, 
+                0xa00000000000, 0x400000000000
+            },
+            {
+                0x2000000000000, 0x5000000000000, 0xa000000000000, 0x14000000000000, 0x28000000000000, 0x50000000000000, 
+                0xa0000000000000, 0x40000000000000
+            }
+        };
+        private static readonly BitBoard[,] KnightMoves = {
+            {
+                0x0000000000020400, 0x0000000000050800, 0x00000000000A1100, 0x0000000000142200,
+                0x0000000000284400, 0x0000000000508800, 0x0000000000A01000, 0x0000000000402000
+            },
+            {
+                0x0000000002040004, 0x0000000005080008, 0x000000000A110011, 0x0000000014220022,
+                0x0000000028440044, 0x0000000050880088, 0x00000000A0100010, 0x0000000040200020
+            },
+            {
+                0x0000000204000402, 0x0000000508000805, 0x0000000A1100110A, 0x0000001422002214,
+                0x0000002844004428, 0x0000005088008850, 0x000000A0100010A0, 0x0000004020002040
+            },
+            {
+                0x0000020400040200, 0x0000050800080500, 0x00000A1100110A00, 0x0000142200221400,
+                0x0000284400442800, 0x0000508800885000, 0x0000A0100010A000, 0x0000402000204000
+            },
+            {
+                0x0002040004020000, 0x0005080008050000, 0x000A1100110A0000, 0x0014220022140000,
+                0x0028440044280000, 0x0050880088500000, 0x00A0100010A00000, 0x0040200020400000
+            },
+            {
+                0x0204000402000000, 0x0508000805000000, 0x0A1100110A000000, 0x1422002214000000,
+                0x2844004428000000, 0x5088008850000000, 0xA0100010A0000000, 0x4020002040000000
+            },
+            {
+                0x0400040200000000, 0x0800080500000000, 0x1100110A00000000, 0x2200221400000000,
+                0x4400442800000000, 0x8800885000000000, 0x100010A000000000, 0x2000204000000000
+            },
+            {
+                0x0004020000000000, 0x0008050000000000, 0x00110A0000000000, 0x0022140000000000,
+                0x0044280000000000, 0x0088500000000000, 0x0010A00000000000, 0x0020400000000000
+            }
+        };
+        private static readonly BitBoard[,] KingMoves = {
+            {
+                0x0000000000000302, 0x0000000000000705, 0x0000000000000E0A, 0x0000000000001C14,
+                0x0000000000003828, 0x0000000000007050, 0x000000000000E0A0, 0x000000000000C040,
+            },
+            {
+                0x0000000000030203, 0x0000000000070507, 0x00000000000E0A0E, 0x00000000001C141C,
+                0x0000000000382838, 0x0000000000705070, 0x0000000000E0A0E0, 0x0000000000C040C0,
+            },
+            {
+                0x0000000003020300, 0x0000000007050700, 0x000000000E0A0E00, 0x000000001C141C00,
+                0x0000000038283800, 0x0000000070507000, 0x00000000E0A0E000, 0x00000000C040C000,
+            },
+            {
+                0x0000000302030000, 0x0000000705070000, 0x0000000E0A0E0000, 0x0000001C141C0000,
+                0x0000003828380000, 0x0000007050700000, 0x000000E0A0E00000, 0x000000C040C00000,
+            },
+            {
+                0x0000030203000000, 0x0000070507000000, 0x00000E0A0E000000, 0x00001C141C000000,
+                0x0000382838000000, 0x0000705070000000, 0x0000E0A0E0000000, 0x0000C040C0000000,
+            },
+            {
+                0x0003020300000000, 0x0007050700000000, 0x000E0A0E00000000, 0x001C141C00000000,
+                0x0038283800000000, 0x0070507000000000, 0x00E0A0E000000000, 0x00C040C000000000,
+            },
+            {
+                0x0302030000000000, 0x0705070000000000, 0x0E0A0E0000000000, 0x1C141C0000000000,
+                0x3828380000000000, 0x7050700000000000, 0xE0A0E00000000000, 0xC040C00000000000,
+            },
+            {
+                0x0203000000000000, 0x0507000000000000, 0x0A0E000000000000, 0x141C000000000000,
+                0x2838000000000000, 0x5070000000000000, 0xA0E0000000000000, 0x40C0000000000000
+            }
+        };
+        
+        private static readonly BitBoard[] SlidingMoves = new BitBoard[87988];
         
         private readonly DataBoard Board;
-        private readonly (int, int) From;
+        private readonly BitBoard From;
+        private readonly int H;
+        private readonly int V;
+        
+        public int Count => Moves.Count;
+        private BitBoard Moves = BitBoard.Default;
 
         private bool KCastle;
         private bool QCastle;
         private bool KCastleOverride;
         private bool QCastleOverride;
 
+        public static void SetUp()
+        {
+            BlackMagicBitBoard.SetUp();
+            GenerateSlidingMoves(Piece.Rook);
+            GenerateSlidingMoves(Piece.Bishop);
+        }
+        
+        public static bool UnderAttack(DataBoard board, BitBoard safety, PieceColor by)
+        {
+            foreach ((int h, int v) in safety) {
+                BitBoard pawnAttack = by == PieceColor.White ? BlackPawnAttacks[v, h] : WhitePawnAttacks[v, h];
+                if (pawnAttack & board.All(Piece.Pawn, by)) return true;
+                if (KnightMoves[v, h] & board.All(Piece.Knight, by)) return true;
+                BitBoard occupied = ~board.All(PieceColor.None);
+                BitBoard queen = board.All(Piece.Queen, by);
+                
+                int mIndex = BlackMagicBitBoard.GetMagicIndex(Piece.Rook, occupied, h, v);
+                if (SlidingMoves[mIndex] & (queen | board.All(Piece.Rook, by))) return true;
+                
+                mIndex = BlackMagicBitBoard.GetMagicIndex(Piece.Bishop, occupied, h, v);
+                if (SlidingMoves[mIndex] & (queen | board.All(Piece.Bishop, by))) return true;
+                
+                if (KingMoves[v, h] & board.All(Piece.King, by)) return true;
+            }
+
+            return false;
+        }
+
+        private static void GenerateSlidingMoves(Piece piece)
+        {
+            ((BitBoard, BitBoard, int)[,], int) args = piece switch
+            {
+                Piece.Rook => (BlackMagicBitBoard.RookMagic, BlackMagicBitBoard.ROOK),
+                Piece.Bishop => (BlackMagicBitBoard.BishopMagic, BlackMagicBitBoard.BISHOP),
+                Piece.Pawn or Piece.Knight or Piece.Queen or Piece.King or Piece.Empty or _ => 
+                    throw new InvalidDataException("No magic table found.")
+            };
+            (int, int)[] deltas = piece switch
+            {
+                Piece.Rook => new[]
+                {
+                    (1, 0),
+                    (0, -1),
+                    (-1, 0),
+                    (0, 1)
+                },
+                Piece.Bishop => new[]
+                {
+                    (1, 1),
+                    (1, -1),
+                    (-1, -1),
+                    (-1, 1)
+                },
+                Piece.Pawn or Piece.Knight or Piece.Queen or Piece.King or Piece.Empty or _ =>
+                    throw new InvalidDataException("No magic table found.")
+            };
+            
+            for (int h = 0; h < DataBoard.UBOUND; h++)
+            for (int v = 0; v < DataBoard.UBOUND; v++) {
+                BitBoard mask = ~args.Item1[v, h].Item2;
+                
+                BitBoard occupied = BitBoard.Default;
+                while (true) {
+                    BitBoard moves = BitBoard.Default;
+                    foreach ((int dH, int dV) in deltas) {
+                        int hI = h;
+                        int vI = v;
+                        
+                        while (!occupied[hI, vI]) {
+                            if (hI + dH is > 7 or < 0 || vI + dV is > 7 or < 0) break;
+                            
+                            hI += dH;
+                            vI += dV;
+                            moves |= (hI, vI);
+                        }
+                    }
+
+                    SlidingMoves[BlackMagicBitBoard.GetMagicIndex(piece, occupied, h, v)] = moves;
+
+                    occupied = (occupied - mask) & mask;
+                    if (occupied.Count == 0) break;
+                }
+                
+                string chsStr = Util.TupleToChessString((h, v));
+                Console.WriteLine("Generated Black Magic Attack Table for [" + piece + "] at: " + chsStr);
+            }
+        }
+
         public LegalMoveSet(DataBoard board, (int, int) from, bool verify = true)
         {
             Board = board;
             From = from;
-            (Piece piece, PieceColor color) = Board.At(from);
+
+            (H, V) = from;
             
+            (Piece piece, PieceColor color) = Board.At(from);
             // Generate Pseudo-Legal Moves
             switch (piece) {
                 case Piece.Pawn:
@@ -43,7 +248,7 @@ namespace Backend.Move
                     LegalQueenMoveSet(color);
                     break;
                 case Piece.King:
-                    LegalKingMoveSet(color);
+                    LegalKingMoveSet(color, !verify);
                     break;
                 case Piece.Empty:
                 default:
@@ -54,7 +259,6 @@ namespace Backend.Move
             }
             
             if (!verify) return;
-            // Verify Pseudo-Legal Moves to ensure they're Legal Moves
             VerifyMoves(color);
         }
 
@@ -62,196 +266,73 @@ namespace Backend.Move
         {
             Board = board;
 
-            foreach ((int, int) piece in Board.All(color)) {
-                LegalMoveSet moveSet = new(board, piece);
-                foreach ((int, int) move in moveSet.Get()) {
-                    if (Moves.Contains(move)) continue;
-
-                    Moves.Add(move);
-                }
+            BitBoard colored = board.All(color);
+            foreach ((int h, int v) in colored) {
+                LegalMoveSet moveSet = new(board, (h, v));
+                Moves |= moveSet.Get();
             }
         }
 
-        public (int, int)[] Get()
+        public BitBoard Get()
         {
-            return Moves.ToArray();
-        }
-
-        public int Count()
-        {
-            return Moves.Count;
+            return Moves;
         }
 
         private void LegalPawnMoveSet(PieceColor color, bool checkMovesOnly = false)
         {
-            (int h, int v) = From;
-
-            if (color == PieceColor.White) {
-                int normalMoveC = v == 1 ? 2 : 1;
-                if (!checkMovesOnly) {
-                    // Normal
-                    for (int vI = v + 1; vI < DataBoard.UBOUND; vI++) {
-                        if (normalMoveC == 0) break;
-
-                        (int, int) move = (h, vI);
-                        
-                        if (!Board.EmptyAt(move)) break;
-                        Moves.Add(move);
-
-                        normalMoveC--;
-                    }
-                    
-                    // En Passant
-                    (int, int)? enPassantTarget = Board.GetEnPassantTarget();
-                    if (enPassantTarget.HasValue) {
-                        (int epH, int epV) = enPassantTarget.Value;
-                        (int, int) blackPiece = (epH, epV - 1);
-                        if (Math.Abs(blackPiece.Item1 - h) < 2 && blackPiece.Item2 == From.Item2) {
-                            (Piece assumedPiece, PieceColor assumedColor) = Board.At(blackPiece);
-                            if (assumedPiece == Piece.Pawn && assumedColor == PieceColor.Black) 
-                                Moves.Add(enPassantTarget.Value);
-                        }
-                    }
-                }
+            PieceColor oppositeColor = Util.OppositeColor(color);
+            
+            if (!checkMovesOnly) {
+                // Normal
+                // 1 Push
+                Moves |= (color == PieceColor.White ? From << 8 : From >> 8) & Board.All(PieceColor.None);
                 
-                // Attack Move
-                for (int hI = h - 1; hI < h + 2; hI++) {
-                    if (hI is < 0 or > 7 || hI == h || v + 1 > 7) continue;
-
-                    (int, int) move = (hI, v + 1);
-                    
-                    if (Board.EmptyAt(move)) continue;
-                    
-                    (_, PieceColor otherColor) = Board.At(move);
-                    if (color != otherColor) Moves.Add(move);
+                if (V is 1 or 6 && Moves) {
+                    // 2 Push
+                    Moves |= color == PieceColor.White ? From << 16 : From >> 16;
                 }
-            } else {
-                int normalMoveC = v == 6 ? 2 : 1;
-                if (!checkMovesOnly) {
-                    // Normal
-                    for (int vI = v - 1; vI > -1; vI--) {
-                        if (normalMoveC == 0) break;
 
-                        (int, int) move = (h, vI);
-                        
-                        if (!Board.EmptyAt(move)) break;
-                        Moves.Add(move);
+                Moves &= ~Board.All(oppositeColor);
 
-                        normalMoveC--;
-                    }
+                // En Passant
+                BitBoard enPassantTarget = Board.GetEnPassantTarget();
+                if (enPassantTarget) {
+                    BitBoard target = color == PieceColor.White ? enPassantTarget >> 8 : enPassantTarget << 8;
+                    BitBoard allOpposingPawns = Board.All(Piece.Pawn, oppositeColor);
                     
-                    // En Passant
-                    (int, int)? enPassantTarget = Board.GetEnPassantTarget();
-                    if (enPassantTarget.HasValue) {
-                        (int epH, int epV) = enPassantTarget.Value;
-                        (int, int) whitePiece = (epH, epV + 1);
-                        if (Math.Abs(whitePiece.Item1 - h) < 2 && whitePiece.Item2 == From.Item2) {
-                            (Piece assumedPiece, PieceColor assumedColor) = Board.At(whitePiece);
-                            if (assumedPiece == Piece.Pawn && assumedColor == PieceColor.White) 
-                                Moves.Add(enPassantTarget.Value);
-                        }
-                    }
-                }
-                
-                // Attack Move
-                for (int hI = h - 1; hI < h + 2; hI++) {
-                    if (hI is < 0 or > 7 || hI == h || v - 1 < 0) continue;
+                    (int h, int v) = ((int, int))enPassantTarget;
+                    BitBoard pieceExistCheck =
+                        color == PieceColor.White ? BlackPawnAttacks[v, h] : WhitePawnAttacks[v, h];
 
-                    (int, int) move = (hI, v - 1);
-                    
-                    if (Board.EmptyAt(move)) continue;
-                    
-                    (_, PieceColor otherColor) = Board.At(move);
-                    if (color != otherColor) Moves.Add(move);
+                    if (target & allOpposingPawns && pieceExistCheck[H, V]) Moves |= enPassantTarget;
                 }
             }
+            
+            // Attack Moves
+            BitBoard attack = color == PieceColor.White ? WhitePawnAttacks[V, H] : BlackPawnAttacks[V, H];
+
+            Moves |= attack & Board.All(oppositeColor);
+            Moves &= ~Board.All(color);
         }
 
         private void LegalRookMoveSet(PieceColor color)
         {
-            (int h, int v) = From;
-
-            // fromInclusive, toExclusive, Iterator
-            (int, int, int)[] loopDirection = {
-                (h + 1, DataBoard.UBOUND, 1), // Right
-                (h - 1, DataBoard.LBOUND, -1), // Left
-                (v + 1, DataBoard.UBOUND, 1), // Top
-                (v - 1, DataBoard.LBOUND, -1) // Bottom
-            };
-
-            int iteration = 0;
-            foreach ((int, int, int) iterator in loopDirection) {
-                if (iterator.Item2 == DataBoard.UBOUND)
-                    for (int i = iterator.Item1; i < iterator.Item2; i += iterator.Item3) {
-                        (int, int) move = iteration > 1 ? (h, i) : (i, v);
-
-                        if (!AddMove(move, color)) break;
-                    }
-                else
-                    for (int i = iterator.Item1; i > iterator.Item2; i += iterator.Item3) {
-                        (int, int) move = iteration > 1 ? (h, i) : (i, v);
-
-                        if (!AddMove(move, color)) break;
-                    }
-
-                iteration++;
-            }
+            int mIndex = BlackMagicBitBoard.GetMagicIndex(Piece.Rook, ~Board.All(PieceColor.None), H, V);
+            Moves |= SlidingMoves[mIndex];
+            Moves &= ~Board.All(color);
         }
 
         private void LegalKnightMoveSet(PieceColor color)
         {
-            (int h, int v) = From;
-
-            // Horizontal
-            for (int hI = h - 2; hI < h + 3; hI++) {
-                if (hI is < 0 or > 7) continue;
-                if (hI != h - 2 && hI != h + 2) continue;
-
-                for (int vI = v - 1; vI < v + 2; vI++) {
-                    if (vI is < 0 or > 7 || vI == v) continue;
-
-                    (int, int) move = (hI, vI);
-                    AddMove(move, color);
-                }
-            }
-            
-            // Vertical
-            for (int vI = v - 2; vI < v + 3; vI++) {
-                if (vI is < 0 or > 7) continue;
-                if (vI != v - 2 && vI != v + 2) continue;
-
-                for (int hI = h - 1; hI < h + 2; hI++) {
-                    if (hI is < 0 or > 7 || hI == h) continue;
-                    
-                    (int, int) move = (hI, vI);
-                    AddMove(move, color);
-                }
-            }
+            Moves |= KnightMoves[V, H];
+            Moves &= ~Board.All(color);
         }
-
+        
         private void LegalBishopMoveSet(PieceColor color)
         {
-            (int h, int v) = From;
-
-            (int, int)[] loopDirection =
-            {
-                (1, 1), // Top Right
-                (-1, 1), // Top Left
-                (-1, -1), // Bottom Left
-                (1, -1) // Bottom Right
-            };
-            
-            foreach ((int, int) iterator in loopDirection)
-                for (int i = 1; i < DataBoard.UBOUND; i++) {
-                    int hI = h + iterator.Item1 * i;
-                    int vI = v + iterator.Item2 * i;
-                    
-                    if (hI is < 0 or > 7) break;
-                    if (vI is < 0 or > 7) break;
-
-                    (int, int) move = (hI, vI);
-                    if (!AddMove(move, color)) break;
-                }
+            int mIndex = BlackMagicBitBoard.GetMagicIndex(Piece.Bishop, ~Board.All(PieceColor.None), H, V);
+            Moves |= SlidingMoves[mIndex];
+            Moves &= ~Board.All(color);
         }
 
         private void LegalQueenMoveSet(PieceColor color)
@@ -260,86 +341,82 @@ namespace Backend.Move
             LegalBishopMoveSet(color);
         }
 
-        private void LegalKingMoveSet(PieceColor color)
+        private void LegalKingMoveSet(PieceColor color, bool checkMovesOnly = false)
         {
-            (int h, int v) = From;
+            // Normal
+            Moves |= KingMoves[V, H];
+            Moves &= ~Board.All(color);
 
-            // Regular Move
-            for (int hI = h - 1; hI < h + 2; hI++) {
-                if (hI is < 0 or > 7) continue;
-                for (int vI = v - 1; vI < v + 2; vI++) {
-                    if (vI is < 0 or > 7) continue;
-                    if (hI == h && vI == v) continue;
-
-                    (int, int) move = (hI, vI);
-
-                    AddMove(move, color);
-                }
-            }
+            if (checkMovesOnly) return;
             
             // Castling
             (bool q, bool k) = Board.CastlingRight(color);
             if (q) {
-                (int, int) move = (h - 2, v);
-                (int, int) secondaryMove = (h - 1, v);
-                (int, int) passWay = (h - 3, v);
-                // ReSharper disable once InvertIf
-                if (Board.EmptyAt(move) && Board.EmptyAt(secondaryMove) && Board.EmptyAt(passWay)) {
-                    Moves.Add(move);
+                BitBoard path = new(BitBoard.Default)
+                {
+                    [H - 3, V] = true,
+                    [H - 2, V] = true,
+                    [H - 1, V] = true
+                };
+                BitBoard all = ~Board.All(PieceColor.None);
+                if ((path & all) == BitBoard.Default) {
+                    Moves |= (H - 2, V);
                     QCastle = true;
                 }
             }
 
             // ReSharper disable once InvertIf
             if (k) {
-                (int, int) move = (h + 2, v);
-                (int, int) secondaryMove = (h + 1, v);
+                BitBoard path = new(BitBoard.Default)
+                {
+                    [H + 2, V] = true,
+                    [H + 1, V] = true
+                };
+                BitBoard all = ~Board.All(PieceColor.None);
                 // ReSharper disable once InvertIf
-                if (Board.EmptyAt(move) && Board.EmptyAt(secondaryMove)) {
-                    Moves.Add(move);
+                if ((path & all) == BitBoard.Default) {
+                    Moves |= (H + 2, V);
                     KCastle = true;
                 }
             }
         }
 
-        private bool AddMove((int, int) move, PieceColor color)
-        {
-            if (!Board.EmptyAt(move)) {
-                PieceColor otherColor = Board.At(move).Item2;
-                if (color != otherColor) Moves.Add(move);
-                return false;
-            }
-                        
-            Moves.Add(move);
-            return true;
-        }
-
         private void VerifyMoves(PieceColor color)
         {
             PieceColor oppositeColor = Util.OppositeColor(color);
-            
             int kV = color == PieceColor.White ? 0 : 7;
+
+            if ((KCastle || QCastle) && UnderAttack(Board, Board.KingLoc(color), oppositeColor)) {
+                KCastle = false;
+                QCastle = false;
+                KCastleOverride = true;
+                QCastleOverride = true;
+            }
             
-            List<(int, int)> verifiedMoves = new(Moves.Count);
-            foreach ((int, int) move in Moves) {
+            BitBoard verifiedMoves = BitBoard.Default;
+            foreach ((int h, int v) in Moves) {
                 DataBoard board = Board.Clone();
-                board.Move(From, move);
-                BitBoard bitBoard = board.AttackBitBoard(oppositeColor);
-                (int h, int v) = board.KingLoc(color);
-                // Board.Move(From, move);
-                // bool[,] bitBoard = Board.BitBoard(oppositeColor);
-                // (int h, int v) = Board.KingLoc(color);
+                board.Move((H, V), (h, v));
 
                 if ((KCastle || QCastle) && From == (4, kV)) {
-                    if (QCastle && bitBoard[3, kV]) QCastleOverride = true;
-                    if (KCastle && bitBoard[5, kV]) KCastleOverride = true;
-                }
+                    if (QCastle && UnderAttack(board, (3, kV), oppositeColor)) {
+                        QCastle = false;
+                        QCastleOverride = true;
+                    }
 
-                if (QCastleOverride && move == (2, kV)) continue;
-                if (KCastleOverride && move == (6, kV)) continue;
+                    if (KCastle && UnderAttack(board, (5, kV), oppositeColor)) {
+                        KCastle = false;
+                        KCastleOverride = true;
+                    }
+                }
                 
-                if (!bitBoard[h, v]) verifiedMoves.Add(move);
-                // Board.Move(move, From, true);
+                if (QCastleOverride && (h, v) == (2, kV)) continue;
+                if (KCastleOverride && (h, v) == (6, kV)) continue;
+
+                BitBoard kingSafety = board.KingLoc(color);
+                if (UnderAttack(board, kingSafety, oppositeColor)) continue;
+
+                verifiedMoves[h, v] = true;
             }
 
             Moves = verifiedMoves;

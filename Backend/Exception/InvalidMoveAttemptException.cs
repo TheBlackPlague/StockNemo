@@ -10,9 +10,9 @@ namespace Backend.Exception
     public class InvalidMoveAttemptException : InvalidOperationException
     {
 
-        public static InvalidMoveAttemptException FromBoard(DataBoard board, Log moveLog, string? message)
+        public static InvalidMoveAttemptException FromBoard(DataBoard board, string? message)
         {
-            InvalidMoveAttemptException e = new("\n"+ board + moveLog + message);
+            InvalidMoveAttemptException e = new("\n"+ board + message);
             return e;
         }
 

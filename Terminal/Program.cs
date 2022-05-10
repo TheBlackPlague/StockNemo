@@ -4,7 +4,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Backend;
 using Backend.Board;
-using Test;
+using Backend.Move;
+using Backend.Perft;
 using Version = Backend.Version;
 
 namespace Terminal
@@ -17,6 +18,8 @@ namespace Terminal
 
         private static void Main(string[] args)
         {
+            OutputTitle();
+            LegalMoveSet.SetUp();
             switch (args.Length) {
                 case > 0 when args[0] == "perft":
                     RunPerft();
@@ -108,23 +111,27 @@ namespace Terminal
                     goto ToSelection;
                 }
 
+                if (result == MoveAttempt.Success) {
+                    
+                }
+
                 if (result == MoveAttempt.Checkmate) {
                     Draw();
-                    string winner = Board.MoveCount() % 2 == 0 ? "Black" : "White";
+                    string winner = Board.IsWhiteTurn() ? "Black" : "White";
                     Console.WriteLine("CHECKMATE. " + winner + " won!");
                     break;
                 }
 
                 if (result == MoveAttempt.SuccessAndCheck) {
                     Draw();
-                    string underCheck = Board.MoveCount() % 2 == 0 ? "White" : "Black";
+                    string underCheck = Board.IsWhiteTurn() ? "White" : "Black";
                     Console.WriteLine(underCheck + " is under check!");
                     goto FromSelection;
                 }
 
                 // Sleep for a bit to show work being done
                 // It's funny because the program is lightning fast
-                Thread.Sleep(200);
+                // Thread.Sleep(200);
             }
         }
 
@@ -141,7 +148,8 @@ namespace Terminal
         {
             Console.Clear();
             OutputTitle();
-            Console.WriteLine(Board.ToString());
+            string board = Board.ToString();
+            Console.WriteLine(board);
         }
 
         private static bool VerifyTurn((int, int) from)
@@ -225,6 +233,15 @@ namespace Terminal
             watch = new Stopwatch();
             watch.Start();
             result = test.Depth6();
+            watch.Stop();
+            
+            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+            Console.WriteLine(output);
+            
+            Console.WriteLine("Running Depth 7: ");
+            watch = new Stopwatch();
+            watch.Start();
+            result = test.Depth7();
             watch.Stop();
             
             output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
