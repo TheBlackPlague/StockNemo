@@ -113,8 +113,8 @@ namespace Test
         {
             bool success = false;
             try {
-                bool a = BitBoard.Default[8, 0];
-            } catch (InvalidOperationException) {
+                bool unused = BitBoard.Default[8, 0];
+            } catch (IndexOutOfRangeException) {
                 success = true;
             }
             
