@@ -10,7 +10,7 @@ namespace Benchmark.Board
         private readonly BitBoardMap Map = new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
 
         [Benchmark]
-        public BitBoardMap Clone() => Map.Clone();
+        public BitBoardMap Clone() => Map;
         
         [Benchmark]
         public (Piece, PieceColor) GetWhitePawn() => Map[0, 1];

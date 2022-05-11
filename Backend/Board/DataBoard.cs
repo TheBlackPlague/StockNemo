@@ -19,7 +19,7 @@ namespace Backend.Board
         
         private const string DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-        private readonly BitBoardMap Map;
+        private BitBoardMap Map;
 
         private bool WhiteTurn;
         
@@ -44,7 +44,7 @@ namespace Backend.Board
 
         private DataBoard(DataBoard board)
         {
-            Map = board.Map.Clone();
+            Map = board.Map;
             
             WhiteTurn = board.WhiteTurn;
 

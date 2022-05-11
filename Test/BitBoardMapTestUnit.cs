@@ -10,7 +10,7 @@ namespace Test
         private readonly BitBoardMap Map = new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
 
         [Test]
-        public void Clone() => Assert.IsTrue(Map.Equals(Map.Clone()));
+        public void Clone() => Assert.AreEqual(Map, Map);
         
         [Test]
         public void GetWhitePawn() => Assert.AreEqual((Piece.Pawn, PieceColor.White), Map[0, 1]);
@@ -39,7 +39,7 @@ namespace Test
         [Test]
         public void MoveWhitePawn()
         {
-            BitBoardMap useMap = Map.Clone();
+            BitBoardMap useMap = Map;
             
             useMap.Move((0, 1), (0, 3));
             Assert.AreEqual((Piece.Pawn, PieceColor.White), useMap[0, 3]);
@@ -48,7 +48,7 @@ namespace Test
         [Test]
         public void MoveWhitePawnInEnemy()
         {
-            BitBoardMap useMap = Map.Clone();
+            BitBoardMap useMap = Map;
             
             useMap.Move((0, 1), (0, 6));
 
@@ -60,7 +60,7 @@ namespace Test
         [Test]
         public void RemoveWhitePawn()
         {
-            BitBoardMap useMap = Map.Clone();
+            BitBoardMap useMap = Map;
             
             useMap.Empty(0, 1);
             Assert.AreEqual((Piece.Empty, PieceColor.None), useMap[0, 1]);
@@ -69,7 +69,7 @@ namespace Test
         [Test]
         public void MoveKnightToA3()
         {
-            BitBoardMap useMap = Map.Clone();
+            BitBoardMap useMap = Map;
             
             useMap.Move((1, 0), (0, 2));
             Assert.AreEqual((Piece.Knight, PieceColor.White), useMap[0, 2]);

@@ -6,7 +6,7 @@ using System.Linq;
 namespace Backend.Board
 {
 
-    public class BitBoardMap
+    public struct BitBoardMap
     {
         
         private const string FEN_SPR = "/";
@@ -50,22 +50,6 @@ namespace Backend.Board
             fromBoard[from.Item1, from.Item2] = false;
             toBoard[to.Item1, to.Item2] = false;
             fromBoard[to.Item1, to.Item2] = true;
-        }
-
-        private BitBoardMap(BitBoardMap map)
-        {
-            WPB = map.WPB;
-            WRB = map.WRB;
-            WNB = map.WNB;
-            WBB = map.WBB;
-            WQB = map.WQB;
-            WKB = map.WKB;
-            BPB = map.BPB;
-            BRB = map.BRB;
-            BNB = map.BNB;
-            BBB = map.BBB;
-            BQB = map.BQB;
-            BKB = map.BKB;
         }
 
         public BitBoardMap(string boardFen)
@@ -282,18 +266,6 @@ namespace Backend.Board
                 if (BQB[h, v]) BQB[h, v] = false;
                 if (BKB[h, v]) BKB[h, v] = false;
             } else throw new InvalidOperationException("Attempting to set already empty piece empty.");
-        }
-
-        public BitBoardMap Clone()
-        {
-            return new BitBoardMap(this);
-        }
-
-        public bool Equals(BitBoardMap map)
-        {
-            return WPB == map.WPB && WRB == map.WRB && WNB == map.WNB && WBB == map.WBB && 
-                   WQB == map.WQB && WKB == map.WKB && BPB == map.BPB && BRB == map.BRB && 
-                   BNB == map.BNB && BBB == map.BBB && BQB == map.BQB && BKB == map.BKB;
         }
 
         internal string GenerateBoardFen()
