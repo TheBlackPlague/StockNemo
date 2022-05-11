@@ -74,45 +74,24 @@ namespace Backend.Board
             } else EnPassantTarget = BitBoard.Default;
         }
 
-        internal BitBoard GetEnPassantTarget()
-        {
-            return EnPassantTarget;
-        }
-        
-        public bool IsWhiteTurn()
-        {
-            return WhiteTurn;
-        }
+        internal BitBoard GetEnPassantTarget() => EnPassantTarget;
+
+        public bool IsWhiteTurn() => WhiteTurn;
         
         public (bool, bool) CastlingRight(PieceColor color)
         {
             return color == PieceColor.White ? (WhiteQCastle, WhiteKCastle) : (BlackQCastle, BlackKCastle);
         }
+
+        public (Piece, PieceColor) At((int, int) loc) => Map[loc.Item1, loc.Item2];
         
-        public (Piece, PieceColor) At((int, int) loc)
-        {
-            return Map[loc.Item1, loc.Item2];
-        }
-        
-        public BitBoard All(PieceColor color)
-        {
-            return Map[color];
-        }
+        public BitBoard All(PieceColor color) => Map[color];
 
-        public BitBoard All(Piece piece, PieceColor color)
-        {
-            return Map[piece, color];
-        }
+        public BitBoard All(Piece piece, PieceColor color) => Map[piece, color];
 
-        public BitBoard KingLoc(PieceColor color)
-        {
-            return Map[Piece.King, color];
-        }
+        public BitBoard KingLoc(PieceColor color) => Map[Piece.King, color];
 
-        public bool EmptyAt((int, int) loc)
-        {
-            return Map[loc.Item1, loc.Item2].Item1 == Piece.Empty;
-        }
+        public bool EmptyAt((int, int) loc) => Map[loc.Item1, loc.Item2].Item1 == Piece.Empty;
 
         public MoveAttempt SecureMove((int, int) from, (int, int) to)
         {
