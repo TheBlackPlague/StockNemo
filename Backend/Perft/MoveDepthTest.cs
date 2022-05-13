@@ -99,12 +99,12 @@ namespace Backend.Perft
             if (depth == 0) return 1;
             ulong count = 0;
             
-            if (depth == SelectedDepth) color = board.IsWhiteTurn() ? PieceColor.White : PieceColor.Black;
+            if (depth == SelectedDepth) color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
             PieceColor oppositeColor = Util.OppositeColor(color);
             int nextDepth = depth - 1;
          
             BitBoard colored = board.All(color);
-            if (depth < 5) {
+            if (depth < 10) {
                 foreach ((int, int) from in colored) {
                     LegalMoveSet moveSet = new(board, from);
                     if (depth == 1) {
@@ -118,10 +118,10 @@ namespace Backend.Perft
                         if (moves.Count == 0) continue;
             
                         foreach ((int, int) move in moves) {
-                            DataBoard next = board.Clone();
-                            next.Move(from, move);
-                            ulong nextCount = MoveGeneration(next, nextDepth, oppositeColor);
+                            board.Move(from, move);
+                            ulong nextCount = MoveGeneration(board, nextDepth, oppositeColor);
                             count += nextCount;
+                            board.UndoMove();
                         
                             if (depth != SelectedDepth) continue;
                         
@@ -134,14 +134,16 @@ namespace Backend.Perft
                 {
                     LegalMoveSet moveSet = new(board, from);
                     if (moveSet.Count == 0) return;
+                    
+                    DataBoard next = board.Clone();
                 
                     BitBoard moves = moveSet.Get();
                     
                     foreach ((int, int) move in moves) {
-                        DataBoard next = board.Clone();
                         next.Move(from, move);
                         ulong nextCount = MoveGeneration(next, depth - 1, Util.OppositeColor(color));
                         Interlocked.Add(ref count, nextCount);
+                        next.UndoMove();
                         
                         if (depth != SelectedDepth) continue;
                         

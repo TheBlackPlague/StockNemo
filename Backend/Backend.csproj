@@ -9,4 +9,8 @@
       <PackageReference Include="BetterConsoleTables" Version="2.0.4-rc1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Move\Log.cs" />
+    </ItemGroup>
+
 </Project>

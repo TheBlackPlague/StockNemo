@@ -199,6 +199,65 @@ namespace Backend.Board
             }
         }
 
+        public void InsertPiece(Piece piece, PieceColor color, (int, int) at)
+        {
+            switch (color) {
+                case PieceColor.White:
+                    switch (piece) {
+                        case Piece.Pawn:
+                            WPB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.Rook:
+                            WRB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.Knight:
+                            WNB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.Bishop:
+                            WBB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.Queen:
+                            WQB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.King:
+                            WKB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.Empty:
+                        default:
+                            throw new InvalidOperationException("Use BitBoardMap.Empty() instead.");
+                    }
+                    break;
+                case PieceColor.Black:
+                    switch (piece) {
+                        case Piece.Pawn:
+                            BPB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.Rook:
+                            BRB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.Knight:
+                            BNB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.Bishop:
+                            BBB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.Queen:
+                            BQB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.King:
+                            BKB[at.Item1, at.Item2] = true;
+                            break;
+                        case Piece.Empty:
+                        default:
+                            throw new InvalidOperationException("Use BitBoardMap.Empty() instead.");
+                    }
+                    break;
+                case PieceColor.None:
+                default:
+                    throw new InvalidOperationException("Use BitBoardMap.Empty() instead.");
+            }
+        }
+
         public void Move((int, int) from, (int, int) to)
         {
             ref BitBoard fromBoard = ref WPB;
@@ -221,7 +280,11 @@ namespace Backend.Board
                 if (BBB[from.Item1, from.Item2]) fromBoard = ref BBB;
                 if (BQB[from.Item1, from.Item2]) fromBoard = ref BQB;
                 if (BKB[from.Item1, from.Item2]) fromBoard = ref BKB;
-            } else throw new InvalidOperationException("Cannot move empty piece.");
+            } else {
+                Console.WriteLine("White:\n" + this[PieceColor.White] + "\n");
+                Console.WriteLine("Black:\n" + this[PieceColor.Black] + "\n");
+                throw new InvalidOperationException("Cannot move empty piece: " + from);
+            }
             
             if (this[PieceColor.White][to.Item1, to.Item2]) {
                 toBoardSet = true;

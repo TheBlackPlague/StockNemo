@@ -295,7 +295,7 @@ namespace Backend.Move
                 Moves &= ~Board.All(oppositeColor);
 
                 // En Passant
-                BitBoard enPassantTarget = Board.GetEnPassantTarget();
+                BitBoard enPassantTarget = Board.EnPassantTarget;
                 if (enPassantTarget) {
                     BitBoard target = color == PieceColor.White ? enPassantTarget >> 8 : enPassantTarget << 8;
                     BitBoard allOpposingPawns = Board.All(Piece.Pawn, oppositeColor);
@@ -395,28 +395,39 @@ namespace Backend.Move
             
             BitBoard verifiedMoves = BitBoard.Default;
             foreach ((int h, int v) in Moves) {
-                DataBoard board = Board.Clone();
-                board.Move((H, V), (h, v));
+                Board.Move((H, V), (h, v));
 
                 if ((KCastle || QCastle) && From == (4, kV)) {
-                    if (QCastle && UnderAttack(board, (3, kV), oppositeColor)) {
+                    if (QCastle && UnderAttack(Board, (3, kV), oppositeColor)) {
                         QCastle = false;
                         QCastleOverride = true;
                     }
 
-                    if (KCastle && UnderAttack(board, (5, kV), oppositeColor)) {
+                    if (KCastle && UnderAttack(Board, (5, kV), oppositeColor)) {
                         KCastle = false;
                         KCastleOverride = true;
                     }
                 }
-                
-                if (QCastleOverride && (h, v) == (2, kV)) continue;
-                if (KCastleOverride && (h, v) == (6, kV)) continue;
 
-                BitBoard kingSafety = board.KingLoc(color);
-                if (UnderAttack(board, kingSafety, oppositeColor)) continue;
+                if (QCastleOverride && (h, v) == (2, kV)) {
+                    Board.UndoMove();
+                    continue;
+                }
+
+                if (KCastleOverride && (h, v) == (6, kV)) {
+                    Board.UndoMove();
+                    continue;
+                }
+
+                BitBoard kingSafety = Board.KingLoc(color);
+                if (UnderAttack(Board, kingSafety, oppositeColor)) {
+                    Board.UndoMove();
+                    continue;
+                }
 
                 verifiedMoves[h, v] = true;
+                
+                Board.UndoMove();
             }
 
             Moves = verifiedMoves;
