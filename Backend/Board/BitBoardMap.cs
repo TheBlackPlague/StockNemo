@@ -39,6 +39,15 @@ namespace Backend.Board
         // ReSharper disable once InconsistentNaming
         private BitBoard BKB;
         
+        public bool WhiteTurn;
+        
+        public bool WhiteKCastle;
+        public bool WhiteQCastle;
+        public bool BlackKCastle;
+        public bool BlackQCastle;
+        
+        public BitBoard EnPassantTarget;
+        
         private static void Move(ref BitBoard board, (int, int) from, (int, int) to)
         {
             board[from.Item1, from.Item2] = false;
@@ -52,7 +61,7 @@ namespace Backend.Board
             fromBoard[to.Item1, to.Item2] = true;
         }
 
-        public BitBoardMap(string boardFen)
+        public BitBoardMap(string boardFen, string turnData, string castlingData, string enPassantTargetData)
         {
             WPB = BitBoard.Default;
             WRB = BitBoard.Default;
@@ -127,6 +136,18 @@ namespace Backend.Board
                     h++;
                 }
             }
+
+            WhiteTurn = turnData[0] == 'w';
+            WhiteKCastle = castlingData.Contains("K");
+            WhiteQCastle = castlingData.Contains("Q");
+            BlackKCastle = castlingData.Contains("k");
+            BlackQCastle = castlingData.Contains("q");
+            EnPassantTarget = BitBoard.Default;
+            
+            if (enPassantTargetData.Length == 2) {
+                (int h, int v) = Util.ChessStringToTuple(enPassantTargetData.ToUpper());
+                EnPassantTarget[h, v] = true;
+            }
         }
 
         [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
@@ -196,65 +217,6 @@ namespace Backend.Board
                     },
                     _ or PieceColor.None => throw new InvalidOperationException("Must provide a color.")
                 };
-            }
-        }
-
-        public void InsertPiece(Piece piece, PieceColor color, (int, int) at)
-        {
-            switch (color) {
-                case PieceColor.White:
-                    switch (piece) {
-                        case Piece.Pawn:
-                            WPB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.Rook:
-                            WRB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.Knight:
-                            WNB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.Bishop:
-                            WBB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.Queen:
-                            WQB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.King:
-                            WKB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.Empty:
-                        default:
-                            throw new InvalidOperationException("Use BitBoardMap.Empty() instead.");
-                    }
-                    break;
-                case PieceColor.Black:
-                    switch (piece) {
-                        case Piece.Pawn:
-                            BPB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.Rook:
-                            BRB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.Knight:
-                            BNB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.Bishop:
-                            BBB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.Queen:
-                            BQB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.King:
-                            BKB[at.Item1, at.Item2] = true;
-                            break;
-                        case Piece.Empty:
-                        default:
-                            throw new InvalidOperationException("Use BitBoardMap.Empty() instead.");
-                    }
-                    break;
-                case PieceColor.None:
-                default:
-                    throw new InvalidOperationException("Use BitBoardMap.Empty() instead.");
             }
         }
 

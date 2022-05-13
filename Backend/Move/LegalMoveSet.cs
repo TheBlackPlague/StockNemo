@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using Backend.Board;
 using Backend.Exception;
@@ -6,7 +8,7 @@ using Backend.Exception;
 namespace Backend.Move
 {
 
-    public class LegalMoveSet
+    public class LegalMoveSet : IEnumerable<(int, int)>
     {
         
         private static readonly BitBoard[,] WhitePawnAttacks = {
@@ -431,6 +433,16 @@ namespace Backend.Move
             }
 
             Moves = verifiedMoves;
+        }
+
+        public IEnumerator<(int, int)> GetEnumerator()
+        {
+            return Moves.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
     }

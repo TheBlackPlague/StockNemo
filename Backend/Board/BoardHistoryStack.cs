@@ -1,4 +1,4 @@
-﻿using Backend.Move;
+﻿using System;
 
 namespace Backend.Board
 {
@@ -7,18 +7,26 @@ namespace Backend.Board
     {
 
         public int Count;
-        
-        private readonly (BoardState, MoveState)[] Internal;
+        private readonly BitBoardMap[] Internal;
 
-        public BoardHistoryStack(int size)
+        public BoardHistoryStack(uint size)
         {
-            Internal = new (BoardState, MoveState)[size];
+            Internal = new BitBoardMap[size];
             Count = 0;
         }
 
-        public void Push((BoardState, MoveState) element) => Internal[Count++] = element;
+        private BoardHistoryStack(BoardHistoryStack stack)
+        {
+            Count = stack.Count;
+            Internal = new BitBoardMap[stack.Internal.Length];
+            Array.Copy(stack.Internal, Internal, Count);
+        }
 
-        public (BoardState, MoveState) Pop() => Internal[--Count];
+        public void Push(BitBoardMap element) => Internal[Count++] = element;
+
+        public BitBoardMap Pop() => Internal[--Count];
+
+        public BoardHistoryStack Clone() => new(this);
 
     }
 
