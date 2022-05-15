@@ -13,6 +13,25 @@ namespace Backend.Board
         private const string FEN_SPR = "/";
 
         // White
+        private static readonly (Piece, PieceColor) Wp = (Piece.Pawn, PieceColor.White);
+        private static readonly (Piece, PieceColor) Wr = (Piece.Rook, PieceColor.White);
+        private static readonly (Piece, PieceColor) Wn = (Piece.Knight, PieceColor.White);
+        private static readonly (Piece, PieceColor) Wb = (Piece.Bishop, PieceColor.White);
+        private static readonly (Piece, PieceColor) Wq = (Piece.Queen, PieceColor.White);
+        private static readonly (Piece, PieceColor) Wk = (Piece.King, PieceColor.White);
+        
+        // Black
+        private static readonly (Piece, PieceColor) Bp = (Piece.Pawn, PieceColor.Black);
+        private static readonly (Piece, PieceColor) Br = (Piece.Rook, PieceColor.Black);
+        private static readonly (Piece, PieceColor) Bn = (Piece.Knight, PieceColor.Black);
+        private static readonly (Piece, PieceColor) Bb = (Piece.Bishop, PieceColor.Black);
+        private static readonly (Piece, PieceColor) Bq = (Piece.Queen, PieceColor.Black);
+        private static readonly (Piece, PieceColor) Bk = (Piece.King, PieceColor.Black);
+        
+        // Empty
+        private static readonly (Piece, PieceColor) E = (Piece.Empty, PieceColor.None);
+
+        // White
         // ReSharper disable once InconsistentNaming
         private BitBoard WPB;
         // ReSharper disable once InconsistentNaming
@@ -162,23 +181,23 @@ namespace Backend.Board
         {
             get
             {
-                if (this[PieceColor.White][h, v]) {
-                    if (WPB[h, v]) return (Piece.Pawn, PieceColor.White);
-                    if (WRB[h, v]) return (Piece.Rook, PieceColor.White);
-                    if (WNB[h, v]) return (Piece.Knight, PieceColor.White);
-                    if (WBB[h, v]) return (Piece.Bishop, PieceColor.White);
-                    if (WQB[h, v]) return (Piece.Queen, PieceColor.White);
-                    if (WKB[h, v]) return (Piece.King, PieceColor.White);
-                } else if (this[PieceColor.Black][h, v]) {
-                    if (BPB[h, v]) return (Piece.Pawn, PieceColor.Black);
-                    if (BRB[h, v]) return (Piece.Rook, PieceColor.Black);
-                    if (BNB[h, v]) return (Piece.Knight, PieceColor.Black);
-                    if (BBB[h, v]) return (Piece.Bishop, PieceColor.Black);
-                    if (BQB[h, v]) return (Piece.Queen, PieceColor.Black);
-                    if (BKB[h, v]) return (Piece.King, PieceColor.Black);
+                if (White[h, v]) {
+                    if (WPB[h, v]) return Wp;
+                    if (WRB[h, v]) return Wr;
+                    if (WNB[h, v]) return Wn;
+                    if (WBB[h, v]) return Wb;
+                    if (WQB[h, v]) return Wq;
+                    if (WKB[h, v]) return Wk;
+                } else if (Black[h, v]) {
+                    if (BPB[h, v]) return Bp;
+                    if (BRB[h, v]) return Br;
+                    if (BNB[h, v]) return Bn;
+                    if (BBB[h, v]) return Bb;
+                    if (BQB[h, v]) return Bq;
+                    if (BKB[h, v]) return Bk;
                 }
 
-                return (Piece.Empty, PieceColor.None);
+                return E;
             }
         }
 
