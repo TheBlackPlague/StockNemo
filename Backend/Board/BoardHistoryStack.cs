@@ -9,16 +9,16 @@ namespace Backend.Board
         public int Count;
         private readonly BitBoardMap[] Internal;
 
-        public BoardHistoryStack(uint size)
+        public BoardHistoryStack(int size)
         {
-            Internal = new BitBoardMap[size];
+            Internal = GC.AllocateUninitializedArray<BitBoardMap>(size);
             Count = 0;
         }
 
         private BoardHistoryStack(BoardHistoryStack stack)
         {
             Count = stack.Count;
-            Internal = new BitBoardMap[stack.Internal.Length];
+            Internal = GC.AllocateUninitializedArray<BitBoardMap>(stack.Internal.Length);
             Array.Copy(stack.Internal, Internal, Count);
         }
 

@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Backend.Board
 {
@@ -177,6 +178,7 @@ namespace Backend.Board
 
         public BitBoard this[PieceColor color]
         {
+            [MethodImpl(MethodImplOptions.AggressiveOptimization)]
             get
             {
                 return color switch
