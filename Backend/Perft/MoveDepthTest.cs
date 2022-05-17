@@ -104,7 +104,7 @@ namespace Backend.Perft
             int nextDepth = depth - 1;
          
             BitBoard colored = board.All(color);
-            if (depth < 10) {
+            if (depth < 5) {
                 foreach ((int, int) from in colored) {
                     LegalMoveSet moveSet = new(board, from);
                     if (depth == 1) {
