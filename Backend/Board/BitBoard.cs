@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace Backend.Board
 {
@@ -58,91 +59,107 @@ namespace Backend.Board
 
         private ulong Internal;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator +(BitBoard left, BitBoard right)
         {
             left.Internal += right.Internal;
             return left;
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator -(BitBoard left, BitBoard right)
         {
             left.Internal -= right.Internal;
             return left;
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator *(BitBoard left, BitBoard right)
         {
             left.Internal *= right.Internal;
             return left;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator /(BitBoard left, BitBoard right)
         {
             left.Internal /= right.Internal;
             return left;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator %(BitBoard to, ulong by)
         {
             to.Internal %= by;
             return to;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator |(BitBoard left, BitBoard right)
         {
             left.Internal |= right.Internal;
             return left;
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator &(BitBoard left, BitBoard right)
         {
             left.Internal &= right.Internal;
             return left;
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator ~(BitBoard bitBoard)
         {
             bitBoard.Internal = ~bitBoard.Internal;
             return bitBoard;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator >>(BitBoard bitBoard, int by)
         {
             bitBoard.Internal >>= by;
             return bitBoard;
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator <<(BitBoard bitBoard, int by)
         {
             bitBoard.Internal <<= by;
             return bitBoard;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(BitBoard left, BitBoard right)
         {
             return left.Internal == right.Internal;
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(BitBoard left, BitBoard right)
         {
             return left.Internal != right.Internal;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator bool(BitBoard bitBoard)
         {
             return bitBoard.Internal != 0UL;
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator ulong(BitBoard bitBoard)
         {
             return bitBoard.Internal;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator BitBoard(ulong from)
         {
             return new BitBoard(from);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator BitBoard((int, int) from)
         {
             BitBoard a = Default;
@@ -173,7 +190,9 @@ namespace Backend.Board
 
         public bool this[int h, int v]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (Internal >> OneD[v][h] & 1UL) == 1UL;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
                 if (value) Internal |= 1UL << OneD[v][h];

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using Backend.Board;
 using Backend.Exception;
 
@@ -131,11 +132,6 @@ namespace Backend.Move
         public int Count => Moves.Count;
         private BitBoard Moves = BitBoard.Default;
 
-        private bool KCastle;
-        private bool QCastle;
-        private bool KCastleOverride;
-        private bool QCastleOverride;
-
         public static void SetUp()
         {
             BlackMagicBitBoard.SetUp();
@@ -143,6 +139,7 @@ namespace Backend.Move
             GenerateSlidingMoves(Piece.Bishop);
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public static bool UnderAttack(DataBoard board, BitBoard safety, PieceColor by)
         {
             foreach ((int h, int v) in safety) {
@@ -350,25 +347,27 @@ namespace Backend.Move
             Moves &= ~Board.All(color);
 
             if (checkMovesOnly) return;
-            
+
+            PieceColor oppositeColor = Util.OppositeColor(color);
+            if (UnderAttack(Board, From, oppositeColor)) return;
+
             // Castling
             (bool q, bool k) = Board.CastlingRight(color);
-            if (q) {
+            if (q && !UnderAttack(Board, (3, V), oppositeColor)) {
                 BitBoard path = new(BitBoard.Default)
                 {
-                    [H - 3, V] = true,
-                    [H - 2, V] = true,
-                    [H - 1, V] = true
+                    [1, V] = true,
+                    [2, V] = true,
+                    [3, V] = true
                 };
                 BitBoard all = ~Board.All(PieceColor.None);
                 if ((path & all) == BitBoard.Default) {
-                    Moves |= (H - 2, V);
-                    QCastle = true;
+                    Moves |= (2, V);
                 }
             }
 
             // ReSharper disable once InvertIf
-            if (k) {
+            if (k && !UnderAttack(Board, (5, V), oppositeColor)) {
                 BitBoard path = new(BitBoard.Default)
                 {
                     [H + 2, V] = true,
@@ -378,7 +377,6 @@ namespace Backend.Move
                 // ReSharper disable once InvertIf
                 if ((path & all) == BitBoard.Default) {
                     Moves |= (H + 2, V);
-                    KCastle = true;
                 }
             }
         }
@@ -386,48 +384,13 @@ namespace Backend.Move
         private void VerifyMoves(PieceColor color)
         {
             PieceColor oppositeColor = Util.OppositeColor(color);
-            int kV = color == PieceColor.White ? 0 : 7;
-
-            if ((KCastle || QCastle) && UnderAttack(Board, Board.KingLoc(color), oppositeColor)) {
-                KCastle = false;
-                QCastle = false;
-                KCastleOverride = true;
-                QCastleOverride = true;
-            }
             
             BitBoard verifiedMoves = BitBoard.Default;
             foreach ((int h, int v) in Moves) {
                 Board.Move((H, V), (h, v));
 
-                if ((KCastle || QCastle) && From == (4, kV)) {
-                    if (QCastle && UnderAttack(Board, (3, kV), oppositeColor)) {
-                        QCastle = false;
-                        QCastleOverride = true;
-                    }
-
-                    if (KCastle && UnderAttack(Board, (5, kV), oppositeColor)) {
-                        KCastle = false;
-                        KCastleOverride = true;
-                    }
-                }
-
-                if (QCastleOverride && (h, v) == (2, kV)) {
-                    Board.UndoMove();
-                    continue;
-                }
-
-                if (KCastleOverride && (h, v) == (6, kV)) {
-                    Board.UndoMove();
-                    continue;
-                }
-
                 BitBoard kingSafety = Board.KingLoc(color);
-                if (UnderAttack(Board, kingSafety, oppositeColor)) {
-                    Board.UndoMove();
-                    continue;
-                }
-
-                verifiedMoves[h, v] = true;
+                if (!UnderAttack(Board, kingSafety, oppositeColor)) verifiedMoves[h, v] = true;
                 
                 Board.UndoMove();
             }

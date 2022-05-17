@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using Backend.Exception;
 using Backend.Move;
 using BetterConsoles.Core;
@@ -56,14 +57,19 @@ namespace Backend.Board
         public (bool, bool) CastlingRight(PieceColor color) => color == PieceColor.White ? 
             (Map.WhiteQCastle, Map.WhiteKCastle) : (Map.BlackQCastle, Map.BlackKCastle);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (Piece, PieceColor) At((int, int) loc) => Map[loc.Item1, loc.Item2];
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public BitBoard All(PieceColor color) => Map[color];
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public BitBoard All(Piece piece, PieceColor color) => Map[piece, color];
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public BitBoard KingLoc(PieceColor color) => Map[Piece.King, color];
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool EmptyAt((int, int) loc) => Map[loc.Item1, loc.Item2].Item1 == Piece.Empty;
 
         public MoveAttempt SecureMove((int, int) from, (int, int) to)
@@ -86,6 +92,7 @@ namespace Backend.Board
                 MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public void Move((int, int) from, (int, int) to)
         {
             (int hF, int vF) = from;
