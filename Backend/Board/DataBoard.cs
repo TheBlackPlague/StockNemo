@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using Backend.Exception;
 using Backend.Move;
 using BetterConsoles.Core;
@@ -19,17 +20,15 @@ namespace Backend.Board
         
         private const string DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+        public bool WhiteTurn => Map.WhiteTurn;
+        
         private BitBoardMap Map;
 
-        private bool WhiteTurn;
-        
-        private bool WhiteKCastle;
-        private bool WhiteQCastle;
-        private bool BlackKCastle;
-        private bool BlackQCastle;
-        
-        private BitBoard EnPassantTarget;
+        private BoardHistoryStack History;
+
         private BitBoard HighlightedMoves = BitBoard.Default;
+        
+        internal BitBoard EnPassantTarget => Map.EnPassantTarget;
         
         public static DataBoard Default()
         {
@@ -45,52 +44,32 @@ namespace Backend.Board
         private DataBoard(DataBoard board)
         {
             Map = board.Map;
-            
-            WhiteTurn = board.WhiteTurn;
-
-            WhiteKCastle = board.WhiteKCastle;
-            WhiteQCastle = board.WhiteQCastle;
-            BlackKCastle = board.BlackKCastle;
-            BlackQCastle = board.BlackQCastle;
-
-            EnPassantTarget = board.EnPassantTarget;
+            History = board.History.Clone();
         }
 
         private DataBoard(string boardData, string turnData, string castlingData, string enPassantTargetData)
         {
-            Map = new BitBoardMap(boardData);
+            Map = new BitBoardMap(boardData, turnData, castlingData, enPassantTargetData);
             
-            WhiteTurn = turnData[0] == 'w';
-            
-            WhiteKCastle = castlingData.Contains("K");
-            WhiteQCastle = castlingData.Contains("Q");
-            BlackKCastle = castlingData.Contains("k");
-            BlackQCastle = castlingData.Contains("q");
-            
-            EnPassantTarget = BitBoard.Default;
-            if (enPassantTargetData.Length == 2) {
-                (int h, int v) = Util.ChessStringToTuple(enPassantTargetData.ToUpper());
-                EnPassantTarget[h, v] = true;
-            } else EnPassantTarget = BitBoard.Default;
+            History = new BoardHistoryStack(256);
         }
-
-        internal BitBoard GetEnPassantTarget() => EnPassantTarget;
-
-        public bool IsWhiteTurn() => WhiteTurn;
         
-        public (bool, bool) CastlingRight(PieceColor color)
-        {
-            return color == PieceColor.White ? (WhiteQCastle, WhiteKCastle) : (BlackQCastle, BlackKCastle);
-        }
+        public (bool, bool) CastlingRight(PieceColor color) => color == PieceColor.White ? 
+            (Map.WhiteQCastle, Map.WhiteKCastle) : (Map.BlackQCastle, Map.BlackKCastle);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (Piece, PieceColor) At((int, int) loc) => Map[loc.Item1, loc.Item2];
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public BitBoard All(PieceColor color) => Map[color];
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public BitBoard All(Piece piece, PieceColor color) => Map[piece, color];
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public BitBoard KingLoc(PieceColor color) => Map[Piece.King, color];
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool EmptyAt((int, int) loc) => Map[loc.Item1, loc.Item2].Item1 == Piece.Empty;
 
         public MoveAttempt SecureMove((int, int) from, (int, int) to)
@@ -113,6 +92,7 @@ namespace Backend.Board
                 MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public void Move((int, int) from, (int, int) to)
         {
             (int hF, int vF) = from;
@@ -129,14 +109,16 @@ namespace Backend.Board
                 throw InvalidMoveAttemptException.FromBoard(this, "Cannot move to same color.");
             }
             
+            History.Push(Map);
+            
             if (EnPassantTarget && to == EnPassantTarget && pieceF == Piece.Pawn) {
                 int vA = colorF == PieceColor.White ? vT - 1 : vT + 1;
                 Map.Empty(hT, vA);
             }
 
             if (pieceF == Piece.Pawn && Math.Abs(vT - vF) == 2) {
-                EnPassantTarget = colorF == PieceColor.White ? (hF, vT - 1) : (hF, vT + 1);
-            } else EnPassantTarget = BitBoard.Default;
+                Map.EnPassantTarget = colorF == PieceColor.White ? (hF, vT - 1) : (hF, vT + 1);
+            } else Map.EnPassantTarget = BitBoard.Default;
             
             Map.Move(from, to);
 
@@ -147,10 +129,10 @@ namespace Backend.Board
                         case PieceColor.White:
                             switch (hF) {
                                 case 0:
-                                    WhiteQCastle = false;
+                                    Map.WhiteQCastle = false;
                                     break;
                                 case 7:
-                                    WhiteKCastle = false;
+                                    Map.WhiteKCastle = false;
                                     break;
                             }
 
@@ -158,10 +140,10 @@ namespace Backend.Board
                         case PieceColor.Black:
                             switch (hF) {
                                 case 0:
-                                    BlackQCastle = false;
+                                    Map.BlackQCastle = false;
                                     break;
                                 case 7:
-                                    BlackKCastle = false;
+                                    Map.BlackKCastle = false;
                                     break;
                             }
 
@@ -177,12 +159,12 @@ namespace Backend.Board
                 {
                     switch (colorF) {
                         case PieceColor.White:
-                            WhiteKCastle = false;
-                            WhiteQCastle = false;
+                            Map.WhiteKCastle = false;
+                            Map.WhiteQCastle = false;
                             break;
                         case PieceColor.Black:
-                            BlackKCastle = false;
-                            BlackQCastle = false;
+                            Map.BlackKCastle = false;
+                            Map.BlackQCastle = false;
                             break;
                         case PieceColor.None:
                         default:
@@ -208,16 +190,15 @@ namespace Backend.Board
             }
 
             // Castling right update on rook captured
-            // ReSharper disable once InvertIf
             if (pieceT == Piece.Rook) {
                 switch (colorT) {
                     case PieceColor.White:
-                        if (hT == 7) WhiteKCastle = false;
-                        else WhiteQCastle = false;
+                        if (hT == 7) Map.WhiteKCastle = false;
+                        else Map.WhiteQCastle = false;
                         break;
                     case PieceColor.Black:
-                        if (hT == 7) BlackKCastle = false;
-                        else BlackQCastle = false;
+                        if (hT == 7) Map.BlackKCastle = false;
+                        else Map.BlackQCastle = false;
                         break;
                     case PieceColor.None:
                     default:
@@ -225,7 +206,14 @@ namespace Backend.Board
                 }
             }
 
-            WhiteTurn = !WhiteTurn;
+            Map.WhiteTurn = !WhiteTurn;
+        }
+
+        public void UndoMove()
+        {
+            if (History.Count < 1) return;
+
+            Map = History.Pop();
         }
 
         public DataBoard Clone()
@@ -326,15 +314,15 @@ namespace Backend.Board
             
             string castlingRight = "";
             // ReSharper disable once ConvertIfStatementToSwitchStatement
-            if (!WhiteKCastle && !WhiteQCastle && !BlackKCastle && !BlackQCastle) {
+            if (!Map.WhiteKCastle && !Map.WhiteQCastle && !Map.BlackKCastle && !Map.BlackQCastle) {
                 castlingRight = "-";
                 goto EnPassantFill;
             }
             
-            if (WhiteKCastle) castlingRight += "K";
-            if (WhiteQCastle) castlingRight += "Q";
-            if (BlackKCastle) castlingRight += "k";
-            if (BlackQCastle) castlingRight += "q";
+            if (Map.WhiteKCastle) castlingRight += "K";
+            if (Map.WhiteQCastle) castlingRight += "Q";
+            if (Map.BlackKCastle) castlingRight += "k";
+            if (Map.BlackQCastle) castlingRight += "q";
             
             EnPassantFill:
             string enPassantTarget = "-";

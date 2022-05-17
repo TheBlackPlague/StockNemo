@@ -52,7 +52,7 @@ namespace Terminal
                         case 3:
                         {
                             if (toMove.Equals("ALL")) {
-                                PieceColor color = Board.IsWhiteTurn() ? PieceColor.White : PieceColor.Black;
+                                PieceColor color = Board.WhiteTurn ? PieceColor.White : PieceColor.Black;
                                 Board.HighlightMoves(color);
                                 Draw();
                                 Console.WriteLine("Highlighting moves for: " + color + "\n");
@@ -117,14 +117,14 @@ namespace Terminal
 
                 if (result == MoveAttempt.Checkmate) {
                     Draw();
-                    string winner = Board.IsWhiteTurn() ? "Black" : "White";
+                    string winner = Board.WhiteTurn ? "Black" : "White";
                     Console.WriteLine("CHECKMATE. " + winner + " won!");
                     break;
                 }
 
                 if (result == MoveAttempt.SuccessAndCheck) {
                     Draw();
-                    string underCheck = Board.IsWhiteTurn() ? "White" : "Black";
+                    string underCheck = Board.WhiteTurn ? "White" : "Black";
                     Console.WriteLine(underCheck + " is under check!");
                     goto FromSelection;
                 }
@@ -154,12 +154,12 @@ namespace Terminal
 
         private static bool VerifyTurn((int, int) from)
         {
-            if (Board.IsWhiteTurn() && Board.At(from).Item2 == PieceColor.Black) {
+            if (Board.WhiteTurn && Board.At(from).Item2 == PieceColor.Black) {
                 Console.WriteLine("It's White Turn.");
                 return false;
             }
             // ReSharper disable once InvertIf
-            if (!Board.IsWhiteTurn() && Board.At(from).Item2 == PieceColor.White) {
+            if (!Board.WhiteTurn && Board.At(from).Item2 == PieceColor.White) {
                 Console.WriteLine("It's Black Turn.");
                 return false;
             }

@@ -7,7 +7,8 @@ namespace Benchmark.Board
     public class BitBoardMapMarkDefault
     {
 
-        private readonly BitBoardMap Map = new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+        private readonly BitBoardMap Map = 
+            new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-");
 
         [Benchmark]
         public BitBoardMap Clone() => Map;

@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Backend.Board
 {
@@ -10,6 +11,25 @@ namespace Backend.Board
     {
         
         private const string FEN_SPR = "/";
+
+        // White
+        private static readonly (Piece, PieceColor) Wp = (Piece.Pawn, PieceColor.White);
+        private static readonly (Piece, PieceColor) Wr = (Piece.Rook, PieceColor.White);
+        private static readonly (Piece, PieceColor) Wn = (Piece.Knight, PieceColor.White);
+        private static readonly (Piece, PieceColor) Wb = (Piece.Bishop, PieceColor.White);
+        private static readonly (Piece, PieceColor) Wq = (Piece.Queen, PieceColor.White);
+        private static readonly (Piece, PieceColor) Wk = (Piece.King, PieceColor.White);
+        
+        // Black
+        private static readonly (Piece, PieceColor) Bp = (Piece.Pawn, PieceColor.Black);
+        private static readonly (Piece, PieceColor) Br = (Piece.Rook, PieceColor.Black);
+        private static readonly (Piece, PieceColor) Bn = (Piece.Knight, PieceColor.Black);
+        private static readonly (Piece, PieceColor) Bb = (Piece.Bishop, PieceColor.Black);
+        private static readonly (Piece, PieceColor) Bq = (Piece.Queen, PieceColor.Black);
+        private static readonly (Piece, PieceColor) Bk = (Piece.King, PieceColor.Black);
+        
+        // Empty
+        private static readonly (Piece, PieceColor) E = (Piece.Empty, PieceColor.None);
 
         // White
         // ReSharper disable once InconsistentNaming
@@ -38,6 +58,18 @@ namespace Backend.Board
         private BitBoard BQB;
         // ReSharper disable once InconsistentNaming
         private BitBoard BKB;
+
+        private BitBoard White;
+        private BitBoard Black;
+        
+        public bool WhiteTurn;
+        
+        public bool WhiteKCastle;
+        public bool WhiteQCastle;
+        public bool BlackKCastle;
+        public bool BlackQCastle;
+        
+        public BitBoard EnPassantTarget;
         
         private static void Move(ref BitBoard board, (int, int) from, (int, int) to)
         {
@@ -52,7 +84,7 @@ namespace Backend.Board
             fromBoard[to.Item1, to.Item2] = true;
         }
 
-        public BitBoardMap(string boardFen)
+        public BitBoardMap(string boardFen, string turnData, string castlingData, string enPassantTargetData)
         {
             WPB = BitBoard.Default;
             WRB = BitBoard.Default;
@@ -127,6 +159,21 @@ namespace Backend.Board
                     h++;
                 }
             }
+
+            WhiteTurn = turnData[0] == 'w';
+            WhiteKCastle = castlingData.Contains("K");
+            WhiteQCastle = castlingData.Contains("Q");
+            BlackKCastle = castlingData.Contains("k");
+            BlackQCastle = castlingData.Contains("q");
+            EnPassantTarget = BitBoard.Default;
+            
+            if (enPassantTargetData.Length == 2) {
+                (int h, int v) = Util.ChessStringToTuple(enPassantTargetData.ToUpper());
+                EnPassantTarget[h, v] = true;
+            }
+
+            White = WPB | WRB | WNB | WBB | WQB | WKB;
+            Black = BPB | BRB | BNB | BBB | BQB | BKB;
         }
 
         [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
@@ -134,35 +181,36 @@ namespace Backend.Board
         {
             get
             {
-                if (this[PieceColor.White][h, v]) {
-                    if (WPB[h, v]) return (Piece.Pawn, PieceColor.White);
-                    if (WRB[h, v]) return (Piece.Rook, PieceColor.White);
-                    if (WNB[h, v]) return (Piece.Knight, PieceColor.White);
-                    if (WBB[h, v]) return (Piece.Bishop, PieceColor.White);
-                    if (WQB[h, v]) return (Piece.Queen, PieceColor.White);
-                    if (WKB[h, v]) return (Piece.King, PieceColor.White);
-                } else if (this[PieceColor.Black][h, v]) {
-                    if (BPB[h, v]) return (Piece.Pawn, PieceColor.Black);
-                    if (BRB[h, v]) return (Piece.Rook, PieceColor.Black);
-                    if (BNB[h, v]) return (Piece.Knight, PieceColor.Black);
-                    if (BBB[h, v]) return (Piece.Bishop, PieceColor.Black);
-                    if (BQB[h, v]) return (Piece.Queen, PieceColor.Black);
-                    if (BKB[h, v]) return (Piece.King, PieceColor.Black);
+                if (White[h, v]) {
+                    if (WPB[h, v]) return Wp;
+                    if (WRB[h, v]) return Wr;
+                    if (WNB[h, v]) return Wn;
+                    if (WBB[h, v]) return Wb;
+                    if (WQB[h, v]) return Wq;
+                    if (WKB[h, v]) return Wk;
+                } else if (Black[h, v]) {
+                    if (BPB[h, v]) return Bp;
+                    if (BRB[h, v]) return Br;
+                    if (BNB[h, v]) return Bn;
+                    if (BBB[h, v]) return Bb;
+                    if (BQB[h, v]) return Bq;
+                    if (BKB[h, v]) return Bk;
                 }
 
-                return (Piece.Empty, PieceColor.None);
+                return E;
             }
         }
 
         public BitBoard this[PieceColor color]
         {
+            [MethodImpl(MethodImplOptions.AggressiveOptimization)]
             get
             {
                 return color switch
                 {
-                    PieceColor.White => WPB | WRB | WNB | WBB | WQB | WKB,
-                    PieceColor.Black => BPB | BRB | BNB | BBB | BQB | BKB,
-                    PieceColor.None => ~(this[PieceColor.White] | this[PieceColor.Black]),
+                    PieceColor.White => White,
+                    PieceColor.Black => Black,
+                    PieceColor.None => ~(White | Black),
                     _ => throw new InvalidOperationException("Must provide a valid PieceColor.")
                 };
             }
@@ -204,8 +252,10 @@ namespace Backend.Board
             ref BitBoard fromBoard = ref WPB;
             ref BitBoard toBoard = ref WPB;
             bool toBoardSet = false;
+            PieceColor f = PieceColor.White;
+            PieceColor t = PieceColor.White;
             
-            if (this[PieceColor.White][from.Item1, from.Item2]) {
+            if (White[from.Item1, from.Item2]) {
                 // White
                 if (WPB[from.Item1, from.Item2]) fromBoard = ref WPB;
                 if (WRB[from.Item1, from.Item2]) fromBoard = ref WRB;
@@ -213,17 +263,22 @@ namespace Backend.Board
                 if (WBB[from.Item1, from.Item2]) fromBoard = ref WBB;
                 if (WQB[from.Item1, from.Item2]) fromBoard = ref WQB;
                 if (WKB[from.Item1, from.Item2]) fromBoard = ref WKB;
-            } else if (this[PieceColor.Black][from.Item1, from.Item2]) {
+            } else if (Black[from.Item1, from.Item2]) {
                 // Black
+                f = PieceColor.Black;
                 if (BPB[from.Item1, from.Item2]) fromBoard = ref BPB;
                 if (BRB[from.Item1, from.Item2]) fromBoard = ref BRB;
                 if (BNB[from.Item1, from.Item2]) fromBoard = ref BNB;
                 if (BBB[from.Item1, from.Item2]) fromBoard = ref BBB;
                 if (BQB[from.Item1, from.Item2]) fromBoard = ref BQB;
                 if (BKB[from.Item1, from.Item2]) fromBoard = ref BKB;
-            } else throw new InvalidOperationException("Cannot move empty piece.");
+            } else {
+                Console.WriteLine("White:\n" + this[PieceColor.White] + "\n");
+                Console.WriteLine("Black:\n" + this[PieceColor.Black] + "\n");
+                throw new InvalidOperationException("Cannot move empty piece: " + from);
+            }
             
-            if (this[PieceColor.White][to.Item1, to.Item2]) {
+            if (White[to.Item1, to.Item2]) {
                 toBoardSet = true;
                 // White
                 if (WRB[to.Item1, to.Item2]) toBoard = ref WRB;
@@ -232,9 +287,10 @@ namespace Backend.Board
                 if (WBB[to.Item1, to.Item2]) toBoard = ref WBB;
                 if (WQB[to.Item1, to.Item2]) toBoard = ref WQB;
                 if (WKB[to.Item1, to.Item2]) toBoard = ref WKB;
-            } else if (this[PieceColor.Black][to.Item1, to.Item2]) {
+            } else if (Black[to.Item1, to.Item2]) {
                 toBoardSet = true;
                 // Black
+                t = PieceColor.Black;
                 if (BPB[to.Item1, to.Item2]) toBoard = ref BPB;
                 if (BRB[to.Item1, to.Item2]) toBoard = ref BRB;
                 if (BNB[to.Item1, to.Item2]) toBoard = ref BNB;
@@ -242,23 +298,36 @@ namespace Backend.Board
                 if (BQB[to.Item1, to.Item2]) toBoard = ref BQB;
                 if (BKB[to.Item1, to.Item2]) toBoard = ref BKB;
             }
-            
-            if (toBoardSet) Move(ref fromBoard, ref toBoard, from, to);
-            else Move(ref fromBoard, from, to);
+
+            if (toBoardSet) {
+                Move(ref fromBoard, ref toBoard, from, to);
+                if (t == PieceColor.White) White[to.Item1, to.Item2] = false;
+                else Black[to.Item1, to.Item2] = false;
+            } else Move(ref fromBoard, from, to);
+
+            if (f == PieceColor.White) {
+                White[from.Item1, from.Item2] = false;
+                White[to.Item1, to.Item2] = true;
+            } else {
+                Black[from.Item1, from.Item2] = false;
+                Black[to.Item1, to.Item2] = true;
+            }
         }
 
         public void Empty(int h, int v)
         {
-            if (this[PieceColor.White][h, v]) {
+            if (White[h, v]) {
                 // White
+                White[h, v] = false;
                 if (WPB[h, v]) WPB[h, v] = false;
                 if (WRB[h, v]) WRB[h, v] = false;
                 if (WNB[h, v]) WNB[h, v] = false;
                 if (WBB[h, v]) WBB[h, v] = false;
                 if (WQB[h, v]) WQB[h, v] = false;
                 if (WKB[h, v]) WKB[h, v] = false;
-            } else if (this[PieceColor.Black][h, v]) {
+            } else if (Black[h, v]) {
                 // Black
+                Black[h, v] = false;
                 if (BPB[h, v]) BPB[h, v] = false;
                 if (BRB[h, v]) BRB[h, v] = false;
                 if (BNB[h, v]) BNB[h, v] = false;

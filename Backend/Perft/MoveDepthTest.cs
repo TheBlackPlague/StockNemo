@@ -49,31 +49,31 @@ namespace Backend.Perft
         public (ulong, ulong) Depth0()
         {
             SelectedDepth = 0;
-            return (D0, MoveGeneration(Board, 0));
+            return (D0, MoveGeneration(Board.Clone(), 0));
         }
         
         public (ulong, ulong) Depth1()
         {
             SelectedDepth = 1;
-            return (D1, MoveGeneration(Board, 1));
+            return (D1, MoveGeneration(Board.Clone(), 1));
         }
         
         public (ulong, ulong) Depth2()
         {
             SelectedDepth = 2;
-            return (D2, MoveGeneration(Board, 2));
+            return (D2, MoveGeneration(Board.Clone(), 2));
         }
 
         public (ulong, ulong) Depth3()
         {
             SelectedDepth = 3;
-            return (D3, MoveGeneration(Board, 3));
+            return (D3, MoveGeneration(Board.Clone(), 3));
         }
 
         public (ulong, ulong) Depth4()
         {
             SelectedDepth = 4;
-            return (D4, MoveGeneration(Board, 4));
+            return (D4, MoveGeneration(Board.Clone(), 4));
         }
         
         public (ulong, ulong) Depth5()
@@ -99,7 +99,7 @@ namespace Backend.Perft
             if (depth == 0) return 1;
             ulong count = 0;
             
-            if (depth == SelectedDepth) color = board.IsWhiteTurn() ? PieceColor.White : PieceColor.Black;
+            if (depth == SelectedDepth) color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
             PieceColor oppositeColor = Util.OppositeColor(color);
             int nextDepth = depth - 1;
          
@@ -114,14 +114,13 @@ namespace Backend.Perft
                     
                         if (verbose) LogNodeCount(from, moveSet.Count);
                     } else {
-                        BitBoard moves = moveSet.Get();
-                        if (moves.Count == 0) continue;
+                        if (moveSet.Count == 0) continue;
             
-                        foreach ((int, int) move in moves) {
-                            DataBoard next = board.Clone();
-                            next.Move(from, move);
-                            ulong nextCount = MoveGeneration(next, nextDepth, oppositeColor);
+                        foreach ((int, int) move in moveSet) {
+                            board.Move(from, move);
+                            ulong nextCount = MoveGeneration(board, nextDepth, oppositeColor);
                             count += nextCount;
+                            board.UndoMove();
                         
                             if (depth != SelectedDepth) continue;
                         
@@ -134,14 +133,16 @@ namespace Backend.Perft
                 {
                     LegalMoveSet moveSet = new(board, from);
                     if (moveSet.Count == 0) return;
+                    
+                    DataBoard next = board.Clone();
                 
                     BitBoard moves = moveSet.Get();
                     
                     foreach ((int, int) move in moves) {
-                        DataBoard next = board.Clone();
                         next.Move(from, move);
                         ulong nextCount = MoveGeneration(next, depth - 1, Util.OppositeColor(color));
                         Interlocked.Add(ref count, nextCount);
+                        next.UndoMove();
                         
                         if (depth != SelectedDepth) continue;
                         

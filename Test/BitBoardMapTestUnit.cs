@@ -7,7 +7,8 @@ namespace Test
     public class BitBoardMapTestUnit
     {
 
-        private readonly BitBoardMap Map = new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+        private readonly BitBoardMap Map = 
+            new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-");
 
         [Test]
         public void Clone() => Assert.AreEqual(Map, Map);
