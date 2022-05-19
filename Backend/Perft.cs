@@ -19,7 +19,8 @@ namespace Backend
         private const ulong D6 = 119060324;
         private const ulong D7 = 3195901860;
         
-        private readonly Board Board = Board.Default();
+        // ReSharper disable once FieldCanBeMadeReadOnly.Local
+        private Board Board = Board.Default();
 
         private int SelectedDepth;
 
@@ -47,43 +48,43 @@ namespace Backend
         public (ulong, ulong) Depth0()
         {
             SelectedDepth = 0;
-            return (D0, MoveGeneration(Board.Clone(), 0));
+            return (D0, MoveGeneration(Board, 0));
         }
         
         public (ulong, ulong) Depth1()
         {
             SelectedDepth = 1;
-            return (D1, MoveGeneration(Board.Clone(), 1));
+            return (D1, MoveGeneration(Board, 1));
         }
         
         public (ulong, ulong) Depth2()
         {
             SelectedDepth = 2;
-            return (D2, MoveGeneration(Board.Clone(), 2));
+            return (D2, MoveGeneration(Board, 2));
         }
 
         public (ulong, ulong) Depth3()
         {
             SelectedDepth = 3;
-            return (D3, MoveGeneration(Board.Clone(), 3));
+            return (D3, MoveGeneration(Board, 3));
         }
 
         public (ulong, ulong) Depth4()
         {
             SelectedDepth = 4;
-            return (D4, MoveGeneration(Board.Clone(), 4));
+            return (D4, MoveGeneration(Board, 4));
         }
         
         public (ulong, ulong) Depth5()
         {
             SelectedDepth = 5;
-            return (D5, MoveGeneration(Board.Clone(), 5));
+            return (D5, MoveGeneration(Board, 5));
         }
         
         public (ulong, ulong) Depth6()
         {
             SelectedDepth = 6;
-            return (D6, MoveGeneration(Board.Clone(), 6));
+            return (D6, MoveGeneration(Board, 6));
         }
         
         public (ulong, ulong) Depth7()
@@ -137,7 +138,7 @@ namespace Backend
                 
                     BitBoard moves = moveList.Get();
                     
-                    BitBoardMap originalState = board.GetCurrentState;
+                    BitBoardMap originalState = next.GetCurrentState;
                     foreach ((int, int) move in moves) {
                         next.Move(from, move);
                         ulong nextCount = MoveGeneration(next, depth - 1, Util.OppositeColor(color));
