@@ -1,20 +1,17 @@
-﻿using Backend;
-using Backend.Data.Move;
-using Backend.Data.Struct;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace Test
 {
     
-    public class MoveDepthTestUnit
+    public class Perft
     {
 
-        private readonly Perft Test = new();
+        private readonly Backend.Perft Test = new();
         
         [SetUp]
         public void SetUp()
         {
-            MoveList.SetUp();
+            Backend.Data.Struct.MoveList.SetUp();
         }
 
         [Test]
