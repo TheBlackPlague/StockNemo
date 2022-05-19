@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.Serialization;
-using Backend.Board;
 
 namespace Backend.Exception
 {
@@ -10,7 +9,7 @@ namespace Backend.Exception
     public class InvalidMoveLookupException : InvalidOperationException
     {
 
-        public static InvalidMoveLookupException FromBoard(DataBoard board, string? message)
+        public static InvalidMoveLookupException FromBoard(Board board, string? message)
         {
             InvalidMoveLookupException e = new("\n" + board + message);
             return e;

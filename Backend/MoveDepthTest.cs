@@ -1,10 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Backend.Board;
-using Backend.Move;
+using Backend.Data.Enum;
+using Backend.Data.Move;
+using Backend.Data.Struct;
 
-namespace Backend.Perft
+namespace Backend
 {
 
     public class MoveDepthTest
@@ -19,7 +20,7 @@ namespace Backend.Perft
         private const ulong D6 = 119060324;
         private const ulong D7 = 3195901860;
         
-        private readonly DataBoard Board = DataBoard.Default();
+        private readonly Board Board = Board.Default();
 
         private int SelectedDepth;
 
@@ -94,7 +95,7 @@ namespace Backend.Perft
             return (D7, MoveGeneration(Board, 7));
         }
         
-        private ulong MoveGeneration(DataBoard board, int depth, PieceColor color = PieceColor.White, bool verbose = true)
+        private ulong MoveGeneration(Board board, int depth, PieceColor color = PieceColor.White, bool verbose = true)
         {
             if (depth == 0) return 1;
             ulong count = 0;
@@ -106,17 +107,17 @@ namespace Backend.Perft
             BitBoard colored = board.All(color);
             if (depth < 5) {
                 foreach ((int, int) from in colored) {
-                    LegalMoveSet moveSet = new(board, from);
+                    MoveList moveList = new(board, from);
                     if (depth == 1) {
-                        count += (ulong)moveSet.Count;
+                        count += (ulong)moveList.Count;
                     
                         if (depth != SelectedDepth) continue;
                     
-                        if (verbose) LogNodeCount(from, moveSet.Count);
+                        if (verbose) LogNodeCount(from, moveList.Count);
                     } else {
-                        if (moveSet.Count == 0) continue;
+                        if (moveList.Count == 0) continue;
             
-                        foreach ((int, int) move in moveSet) {
+                        foreach ((int, int) move in moveList) {
                             board.Move(from, move);
                             ulong nextCount = MoveGeneration(board, nextDepth, oppositeColor);
                             count += nextCount;
@@ -131,12 +132,12 @@ namespace Backend.Perft
             } else {
                 Parallel.ForEach(colored, from =>
                 {
-                    LegalMoveSet moveSet = new(board, from);
-                    if (moveSet.Count == 0) return;
+                    MoveList moveList = new(board, from);
+                    if (moveList.Count == 0) return;
                     
-                    DataBoard next = board.Clone();
+                    Board next = board.Clone();
                 
-                    BitBoard moves = moveSet.Get();
+                    BitBoard moves = moveList.Get();
                     
                     foreach ((int, int) move in moves) {
                         next.Move(from, move);

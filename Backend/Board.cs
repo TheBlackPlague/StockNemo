@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using Backend.Data.Enum;
+using Backend.Data.Move;
+using Backend.Data.Struct;
 using Backend.Exception;
-using Backend.Move;
 using BetterConsoles.Core;
 using BetterConsoles.Tables;
 using BetterConsoles.Tables.Builders;
 using BetterConsoles.Tables.Configuration;
 using BetterConsoles.Tables.Models;
 
-namespace Backend.Board
+namespace Backend
 {
 
-    public class DataBoard
+    public class Board
     {
 
         public const short UBOUND = 8;
@@ -30,24 +32,24 @@ namespace Backend.Board
         
         internal BitBoard EnPassantTarget => Map.EnPassantTarget;
         
-        public static DataBoard Default()
+        public static Board Default()
         {
             return FromFen(DEFAULT_FEN);
         }
 
-        public static DataBoard FromFen(string fen)
+        public static Board FromFen(string fen)
         {
             string[] parts = fen.Split(" ");
-            return new DataBoard(parts[0], parts[1], parts[2], parts[3]);
+            return new Board(parts[0], parts[1], parts[2], parts[3]);
         }
 
-        private DataBoard(DataBoard board)
+        private Board(Board board)
         {
             Map = board.Map;
             History = board.History.Clone();
         }
 
-        private DataBoard(string boardData, string turnData, string castlingData, string enPassantTargetData)
+        private Board(string boardData, string turnData, string castlingData, string enPassantTargetData)
         {
             Map = new BitBoardMap(boardData, turnData, castlingData, enPassantTargetData);
             
@@ -74,8 +76,8 @@ namespace Backend.Board
 
         public MoveAttempt SecureMove((int, int) from, (int, int) to)
         {
-            LegalMoveSet moveSet = new(this, from);
-            BitBoard moves = moveSet.Get();
+            MoveList moveList = new(this, from);
+            BitBoard moves = moveList.Get();
 
             if (!moves[to.Item1, to.Item2]) return MoveAttempt.Fail;
             
@@ -84,11 +86,11 @@ namespace Backend.Board
             PieceColor color = Map[to.Item1, to.Item2].Item2;
             PieceColor oppositeColor = Util.OppositeColor(color);
 
-            LegalMoveSet opposingMoveSet = new(this, oppositeColor);
-            if (opposingMoveSet.Count == 0) return MoveAttempt.Checkmate;
+            MoveList opposingMoveList = new(this, oppositeColor);
+            if (opposingMoveList.Count == 0) return MoveAttempt.Checkmate;
 
             BitBoard kingLoc = KingLoc(oppositeColor);
-            return LegalMoveSet.UnderAttack(this, kingLoc, color) ? 
+            return MoveList.UnderAttack(this, kingLoc, color) ? 
                 MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
         }
 
@@ -216,15 +218,15 @@ namespace Backend.Board
             Map = History.Pop();
         }
 
-        public DataBoard Clone()
+        public Board Clone()
         {
-            return new DataBoard(this);
+            return new Board(this);
         }
 
         public void HighlightMoves((int, int) from)
         {
-            LegalMoveSet moveSet = new(this, from);
-            HighlightedMoves = moveSet.Get();
+            MoveList moveList = new(this, from);
+            HighlightedMoves = moveList.Get();
         }
 
         public void HighlightMoves(PieceColor color)
@@ -232,8 +234,8 @@ namespace Backend.Board
             if (color == PieceColor.None) 
                 throw new InvalidOperationException("Cannot highlight moves for no color.");
 
-            LegalMoveSet moveSet = new(this, color);
-            HighlightedMoves = moveSet.Get();
+            MoveList moveList = new(this, color);
+            HighlightedMoves = moveList.Get();
         }
 
         public override string ToString()

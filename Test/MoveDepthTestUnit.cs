@@ -1,5 +1,6 @@
-﻿using Backend.Move;
-using Backend.Perft;
+﻿using Backend;
+using Backend.Data.Move;
+using Backend.Data.Struct;
 using NUnit.Framework;
 
 namespace Test
@@ -13,7 +14,7 @@ namespace Test
         [SetUp]
         public void SetUp()
         {
-            LegalMoveSet.SetUp();
+            MoveList.SetUp();
         }
 
         [Test]

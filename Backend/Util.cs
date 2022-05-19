@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using Backend.Board;
+using Backend.Data.Enum;
 
 namespace Backend
 {

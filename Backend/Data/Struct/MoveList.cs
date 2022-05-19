@@ -3,13 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
-using Backend.Board;
+using Backend.Data.Enum;
+using Backend.Data.Move;
 using Backend.Exception;
 
-namespace Backend.Move
+namespace Backend.Data.Struct
 {
 
-    public class LegalMoveSet : IEnumerable<(int, int)>
+    public struct MoveList : IEnumerable<(int, int)>
     {
         
         private static readonly BitBoard[,] WhitePawnAttacks = {
@@ -124,13 +125,13 @@ namespace Backend.Move
         
         private static readonly BitBoard[] SlidingMoves = new BitBoard[87988];
         
-        private readonly DataBoard Board;
+        private readonly Board Board;
         private readonly BitBoard From;
         private readonly int H;
         private readonly int V;
         
         public int Count => Moves.Count;
-        private BitBoard Moves = BitBoard.Default;
+        private BitBoard Moves;
 
         public static void SetUp()
         {
@@ -140,7 +141,7 @@ namespace Backend.Move
         }
         
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public static bool UnderAttack(DataBoard board, BitBoard safety, PieceColor by)
+        public static bool UnderAttack(Board board, BitBoard safety, PieceColor by)
         {
             foreach ((int h, int v) in safety) {
                 BitBoard pawnAttack = by == PieceColor.White ? BlackPawnAttacks[v, h] : WhitePawnAttacks[v, h];
@@ -190,8 +191,8 @@ namespace Backend.Move
                     throw new InvalidDataException("No magic table found.")
             };
             
-            for (int h = 0; h < DataBoard.UBOUND; h++)
-            for (int v = 0; v < DataBoard.UBOUND; v++) {
+            for (int h = 0; h < Board.UBOUND; h++)
+            for (int v = 0; v < Board.UBOUND; v++) {
                 BitBoard mask = ~args.Item1[v, h].Item2;
                 
                 BitBoard occupied = BitBoard.Default;
@@ -221,10 +222,11 @@ namespace Backend.Move
             }
         }
 
-        public LegalMoveSet(DataBoard board, (int, int) from, bool verify = true)
+        public MoveList(Board board, (int, int) from, bool verify = true)
         {
             Board = board;
             From = from;
+            Moves = BitBoard.Default;
 
             (H, V) = from;
             
@@ -261,14 +263,18 @@ namespace Backend.Move
             VerifyMoves(color);
         }
 
-        public LegalMoveSet(DataBoard board, PieceColor color)
+        public MoveList(Board board, PieceColor color)
         {
             Board = board;
+            Moves = BitBoard.Default;
+            From = BitBoard.Default;
+            H = 0;
+            V = 0;
 
             BitBoard colored = board.All(color);
             foreach ((int h, int v) in colored) {
-                LegalMoveSet moveSet = new(board, (h, v));
-                Moves |= moveSet.Get();
+                MoveList moveList = new(board, (h, v));
+                Moves |= moveList.Get();
             }
         }
 

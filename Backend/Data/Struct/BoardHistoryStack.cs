@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Backend.Board
+namespace Backend.Data.Struct
 {
 
     public struct BoardHistoryStack

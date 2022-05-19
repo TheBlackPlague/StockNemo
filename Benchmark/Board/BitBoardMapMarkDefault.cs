@@ -1,4 +1,5 @@
-﻿using Backend.Board;
+﻿using Backend.Data.Enum;
+using Backend.Data.Struct;
 using BenchmarkDotNet.Attributes;
 
 namespace Benchmark.Board

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace Backend.Board
+namespace Backend.Data.Struct
 {
 
     public struct BitBoard : IEnumerable<(int, int)>
@@ -218,9 +218,9 @@ namespace Backend.Board
         public override string ToString()
         {
             string final = "";
-            for (int v = 7; v > DataBoard.LBOUND; v--) {
+            for (int v = 7; v > Board.LBOUND; v--) {
                 string bitString = "";
-                for (int h = 0; h < DataBoard.UBOUND; h++) {
+                for (int h = 0; h < Board.UBOUND; h++) {
                     bitString += (this[h, v] ? 1 : "*") + " ";
                 }
 

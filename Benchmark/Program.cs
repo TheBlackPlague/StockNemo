@@ -1,4 +1,5 @@
-﻿using Backend.Move;
+﻿using Backend.Data.Move;
+using Backend.Data.Struct;
 using Benchmark.Move;
 using BenchmarkDotNet.Running;
 
@@ -10,7 +11,7 @@ namespace Benchmark
 
         public static void Main()
         {
-            LegalMoveSet.SetUp();
+            MoveList.SetUp();
             
             // BenchmarkRunner.Run<BoardmarkDefault>();
             // BenchmarkRunner.Run<BoardMarkKiwipete>();

@@ -1,8 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.Serialization;
-using Backend.Board;
-using Backend.Move;
 
 namespace Backend.Exception
 {
@@ -10,7 +8,7 @@ namespace Backend.Exception
     public class InvalidMoveAttemptException : InvalidOperationException
     {
 
-        public static InvalidMoveAttemptException FromBoard(DataBoard board, string? message)
+        public static InvalidMoveAttemptException FromBoard(Board board, string? message)
         {
             InvalidMoveAttemptException e = new("\n"+ board + message);
             return e;

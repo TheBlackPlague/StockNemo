@@ -1,5 +1,5 @@
 ﻿using System;
-using Backend.Board;
+using Backend.Data.Struct;
 using NUnit.Framework;
 
 namespace Test

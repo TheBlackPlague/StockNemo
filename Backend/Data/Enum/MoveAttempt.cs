@@ -1,4 +1,4 @@
-﻿namespace Backend.Board
+﻿namespace Backend.Data.Enum
 {
 
     public enum MoveAttempt

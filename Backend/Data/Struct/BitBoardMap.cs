@@ -3,8 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Backend.Data.Enum;
 
-namespace Backend.Board
+namespace Backend.Data.Struct
 {
 
     public struct BitBoardMap
@@ -100,10 +101,10 @@ namespace Backend.Board
             BKB = BitBoard.Default;
             
             string[] expandedBoardData = boardFen.Split(FEN_SPR).Reverse().ToArray();
-            if (expandedBoardData.Length != DataBoard.UBOUND) 
+            if (expandedBoardData.Length != Board.UBOUND) 
                 throw new InvalidDataException("Wrong board data provided: " + boardFen);
 
-            for (int v = 0; v < DataBoard.UBOUND; v++) {
+            for (int v = 0; v < Board.UBOUND; v++) {
                 string rankData = expandedBoardData[v];
                 int h = 0;
                 foreach (char p in rankData) {
@@ -339,14 +340,14 @@ namespace Backend.Board
 
         internal string GenerateBoardFen()
         {
-            string[] expandedBoardData = new string[DataBoard.UBOUND];
-            for (int v = 0; v < DataBoard.UBOUND; v++) {
+            string[] expandedBoardData = new string[Board.UBOUND];
+            for (int v = 0; v < Board.UBOUND; v++) {
                 string rankData = "";
-                for (int h = 0; h < DataBoard.UBOUND; h++) {
+                for (int h = 0; h < Board.UBOUND; h++) {
                     (Piece piece, PieceColor color) = this[h, v];
                     if (piece == Piece.Empty) {
                         int c = 1;
-                        for (int i = h + 1; i < DataBoard.UBOUND; i++) {
+                        for (int i = h + 1; i < Board.UBOUND; i++) {
                             if (this[i, v].Item1 == Piece.Empty) c++;
                             else break;
                         }

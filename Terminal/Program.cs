@@ -3,9 +3,9 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Backend;
-using Backend.Board;
-using Backend.Move;
-using Backend.Perft;
+using Backend.Data.Enum;
+using Backend.Data.Move;
+using Backend.Data.Struct;
 using Version = Backend.Version;
 
 namespace Terminal
@@ -14,21 +14,21 @@ namespace Terminal
     internal static class Program
     {
 
-        private static DataBoard Board;
+        private static Board Board;
 
         private static void Main(string[] args)
         {
             OutputTitle();
-            LegalMoveSet.SetUp();
+            MoveList.SetUp();
             switch (args.Length) {
                 case > 0 when args[0] == "perft":
                     RunPerft();
                     return;
                 case > 0 when args[0] == "fen":
-                    Board = DataBoard.FromFen(args[1]);
+                    Board = Board.FromFen(args[1]);
                     break;
                 default:
-                    Board = DataBoard.Default();
+                    Board = Board.Default();
                     break;
             }
 
