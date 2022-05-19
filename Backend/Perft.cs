@@ -18,6 +18,11 @@ namespace Backend
         private const ulong D5 = 4865609;
         private const ulong D6 = 119060324;
         private const ulong D7 = 3195901860;
+
+        private readonly ParallelOptions ParallelOptions = new()
+        {
+            MaxDegreeOfParallelism = 4
+        };
         
         // ReSharper disable once FieldCanBeMadeReadOnly.Local
         private Board Board = Board.Default();
@@ -129,7 +134,7 @@ namespace Backend
                     }
                 }
             } else {
-                Parallel.ForEach(colored, from =>
+                Parallel.ForEach(colored, ParallelOptions, from =>
                 {
                     MoveList moveList = new(board, from);
                     if (moveList.Count == 0) return;
