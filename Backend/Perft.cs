@@ -29,15 +29,15 @@ namespace Backend
 
         private int SelectedDepth;
 
-        private static void LogNodeCount((int, int) piece, (int, int) move, ulong nodeC)
+        private static void LogNodeCount(Square piece, Square move, ulong nodeC)
         {
-            string fullMove = Util.TupleToChessString(piece) + Util.TupleToChessString(move);
+            string fullMove = piece.ToString() + move;
             Console.WriteLine(fullMove.ToLower() + ": " + nodeC);
         }
         
-        private static void LogNodeCount((int, int) piece, int nodeC)
+        private static void LogNodeCount(Square piece, int nodeC)
         {
-            Console.WriteLine(Util.TupleToChessString(piece).ToLower() + ": " + nodeC);
+            Console.WriteLine(piece.ToString().ToLower() + ": " + nodeC);
         }
 
         public Perft()
@@ -109,7 +109,7 @@ namespace Backend
          
             BitBoard colored = board.All(color);
             if (depth < 5) {
-                foreach ((int, int) from in colored) {
+                foreach (Square from in colored) {
                     MoveList moveList = new(board, from);
                     if (depth == 1) {
                         count += (ulong)moveList.Count;
@@ -121,7 +121,7 @@ namespace Backend
                         if (moveList.Count == 0) continue;
 
                         BitBoardMap originalState = board.GetCurrentState;
-                        foreach ((int, int) move in moveList) {
+                        foreach (Square move in moveList) {
                             board.Move(from, move);
                             ulong nextCount = MoveGeneration(board, nextDepth, oppositeColor);
                             count += nextCount;
@@ -144,7 +144,7 @@ namespace Backend
                     BitBoard moves = moveList.Get();
                     
                     BitBoardMap originalState = next.GetCurrentState;
-                    foreach ((int, int) move in moves) {
+                    foreach (Square move in moves) {
                         next.Move(from, move);
                         ulong nextCount = MoveGeneration(next, depth - 1, Util.OppositeColor(color));
                         Interlocked.Add(ref count, nextCount);
