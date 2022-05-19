@@ -2,7 +2,6 @@
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
-using Backend.Data.Move;
 using Backend.Data.Struct;
 using Backend.Exception;
 using BetterConsoles.Core;
@@ -26,8 +25,6 @@ namespace Backend
         
         private BitBoardMap Map;
 
-        private BoardHistoryStack History;
-
         private BitBoard HighlightedMoves = BitBoard.Default;
         
         internal BitBoard EnPassantTarget => Map.EnPassantTarget;
@@ -46,15 +43,14 @@ namespace Backend
         private Board(Board board)
         {
             Map = board.Map;
-            History = board.History.Clone();
         }
 
         private Board(string boardData, string turnData, string castlingData, string enPassantTargetData)
         {
             Map = new BitBoardMap(boardData, turnData, castlingData, enPassantTargetData);
-            
-            History = new BoardHistoryStack(256);
         }
+
+        public BitBoardMap GetCurrentState => Map;
         
         public (bool, bool) CastlingRight(PieceColor color) => color == PieceColor.White ? 
             (Map.WhiteQCastle, Map.WhiteKCastle) : (Map.BlackQCastle, Map.BlackKCastle);
@@ -110,8 +106,6 @@ namespace Backend
             if (colorF == colorT) {
                 throw InvalidMoveAttemptException.FromBoard(this, "Cannot move to same color.");
             }
-            
-            History.Push(Map);
             
             if (EnPassantTarget && to == EnPassantTarget && pieceF == Piece.Pawn) {
                 int vA = colorF == PieceColor.White ? vT - 1 : vT + 1;
@@ -211,11 +205,9 @@ namespace Backend
             Map.WhiteTurn = !WhiteTurn;
         }
 
-        public void UndoMove()
+        public void UndoMove(ref BitBoardMap map)
         {
-            if (History.Count < 1) return;
-
-            Map = History.Pop();
+            Map = map;
         }
 
         public Board Clone()

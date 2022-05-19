@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend.Data.Enum;
-using Backend.Data.Move;
 using Backend.Data.Struct;
 
 namespace Backend
@@ -41,10 +40,8 @@ namespace Backend
             Console.WriteLine(Board.ToString());
             
             // Involve JIT.
-            SelectedDepth = 0;
-            MoveGeneration(Board, 0, verbose: false);
-            SelectedDepth = 1;
-            MoveGeneration(Board, 1, verbose: false);
+            SelectedDepth = 4;
+            MoveGeneration(Board, 4, verbose: false);
         }
         
         public (ulong, ulong) Depth0()
@@ -80,13 +77,13 @@ namespace Backend
         public (ulong, ulong) Depth5()
         {
             SelectedDepth = 5;
-            return (D5, MoveGeneration(Board, 5));
+            return (D5, MoveGeneration(Board.Clone(), 5));
         }
         
         public (ulong, ulong) Depth6()
         {
             SelectedDepth = 6;
-            return (D6, MoveGeneration(Board, 6));
+            return (D6, MoveGeneration(Board.Clone(), 6));
         }
         
         public (ulong, ulong) Depth7()
@@ -116,12 +113,13 @@ namespace Backend
                         if (verbose) LogNodeCount(from, moveList.Count);
                     } else {
                         if (moveList.Count == 0) continue;
-            
+
+                        BitBoardMap originalState = board.GetCurrentState;
                         foreach ((int, int) move in moveList) {
                             board.Move(from, move);
                             ulong nextCount = MoveGeneration(board, nextDepth, oppositeColor);
                             count += nextCount;
-                            board.UndoMove();
+                            board.UndoMove(ref originalState);
                         
                             if (depth != SelectedDepth) continue;
                         
@@ -139,11 +137,12 @@ namespace Backend
                 
                     BitBoard moves = moveList.Get();
                     
+                    BitBoardMap originalState = board.GetCurrentState;
                     foreach ((int, int) move in moves) {
                         next.Move(from, move);
                         ulong nextCount = MoveGeneration(next, depth - 1, Util.OppositeColor(color));
                         Interlocked.Add(ref count, nextCount);
-                        next.UndoMove();
+                        next.UndoMove(ref originalState);
                         
                         if (depth != SelectedDepth) continue;
                         
