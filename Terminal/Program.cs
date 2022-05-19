@@ -172,7 +172,7 @@ namespace Terminal
         {
             Console.WriteLine("Running PERFT tests: ");
 
-            MoveDepthTest test = new();
+            Perft test = new();
             
             Console.WriteLine("Running Depth 0: ");
             Stopwatch watch = new();

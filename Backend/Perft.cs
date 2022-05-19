@@ -8,7 +8,7 @@ using Backend.Data.Struct;
 namespace Backend
 {
 
-    public class MoveDepthTest
+    public class Perft
     {
 
         private const ulong D0 = 1;
@@ -35,7 +35,7 @@ namespace Backend
             Console.WriteLine(Util.TupleToChessString(piece).ToLower() + ": " + nodeC);
         }
 
-        public MoveDepthTest()
+        public Perft()
         {
             // Draw the board being tested.
             Console.WriteLine(Board.ToString());

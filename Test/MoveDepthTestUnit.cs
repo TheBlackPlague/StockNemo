@@ -9,7 +9,7 @@ namespace Test
     public class MoveDepthTestUnit
     {
 
-        private readonly MoveDepthTest Test = new();
+        private readonly Perft Test = new();
         
         [SetUp]
         public void SetUp()
