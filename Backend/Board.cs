@@ -113,7 +113,7 @@ namespace Backend
                 Map.Empty(epPiece);
             }
 
-            if (pieceF == Piece.Pawn && Math.Abs(to - from) == 2) {
+            if (pieceF == Piece.Pawn && Math.Abs(to - from) == 16) {
                 Map.EnPassantTarget = colorF == PieceColor.White ? from + 8 : from - 8;
             } else Map.EnPassantTarget = Square.Na;
             

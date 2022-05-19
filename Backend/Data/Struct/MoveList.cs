@@ -245,36 +245,36 @@ namespace Backend.Data.Struct
         {
             PieceColor oppositeColor = Util.OppositeColor(color);
             BitBoard from = From;
+            BitBoard opposite = Board.All(oppositeColor);
             
             if (!checkMovesOnly) {
                 // Normal
                 // 1 Push
                 Moves |= (color == PieceColor.White ? from << 8 : from >> 8) & Board.All(PieceColor.None);
                 
-                if ((int)From is > 7 and < 15 && Moves) {
+                if (((int)From is > 7 and < 16 || (int)From is > 47 and < 56) && Moves) {
                     // 2 Push
                     Moves |= color == PieceColor.White ? from << 16 : from >> 16;
                 }
 
-                Moves &= ~Board.All(oppositeColor);
+                Moves &= ~opposite;
 
                 // En Passant
                 if (Board.EnPassantTarget != Square.Na) {
-                    BitBoard ep = Board.EnPassantTarget;
-                    BitBoard target = color == PieceColor.White ? ep >> 8 : ep << 8;
-                    BitBoard allOpposingPawns = Board.All(Piece.Pawn, oppositeColor);
-                    
-                    BitBoard pieceExistCheck = color == PieceColor.White ? 
-                        BlackPawnAttacks[(int)Board.EnPassantTarget] : WhitePawnAttacks[(int)Board.EnPassantTarget];
-
-                    if (target & allOpposingPawns && pieceExistCheck[From]) Moves |= ep;
+                    Square epPieceSq = color == PieceColor.White ? 
+                        Board.EnPassantTarget - 8 : Board.EnPassantTarget + 8;
+                    bool epTargetPieceExists = Board.All(Piece.Pawn, oppositeColor)[epPieceSq];
+                    BitBoard reverseCorner = color == PieceColor.White
+                        ? BlackPawnAttacks[(int)Board.EnPassantTarget]
+                        : WhitePawnAttacks[(int)Board.EnPassantTarget];
+                    if (epTargetPieceExists & reverseCorner[From]) Moves |= Board.EnPassantTarget;
                 }
             }
             
             // Attack Moves
             BitBoard attack = color == PieceColor.White ? WhitePawnAttacks[(int)From] : BlackPawnAttacks[(int)From];
 
-            Moves |= attack & Board.All(oppositeColor);
+            Moves |= attack & opposite;
             Moves &= ~Board.All(color);
         }
 
