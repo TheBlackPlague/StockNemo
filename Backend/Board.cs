@@ -206,6 +206,7 @@ namespace Backend
             Map.WhiteTurn = !WhiteTurn;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UndoMove(ref BitBoardMap map)
         {
             Map = map;
@@ -213,6 +214,7 @@ namespace Backend
         
         #endregion
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Board Clone()
         {
             return new Board(this);

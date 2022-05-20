@@ -72,12 +72,14 @@ namespace Backend.Data.Struct
         
         public Square EnPassantTarget;
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Move(ref BitBoard board, Square from, Square to)
         {
             board[from] = false;
             board[to] = true;
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Move(ref BitBoard fromBoard, ref BitBoard toBoard, Square from, Square to)
         {
             fromBoard[from] = false;
@@ -179,6 +181,7 @@ namespace Backend.Data.Struct
         [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
         public (Piece, PieceColor) this[Square sq]
         {
+            [MethodImpl(MethodImplOptions.AggressiveOptimization)]
             get
             {
                 if (White[sq]) {
@@ -201,7 +204,7 @@ namespace Backend.Data.Struct
             }
         }
 
-        public BitBoard this[PieceColor color]
+        public readonly BitBoard this[PieceColor color]
         {
             [MethodImpl(MethodImplOptions.AggressiveOptimization)]
             get
@@ -216,8 +219,9 @@ namespace Backend.Data.Struct
             }
         }
 
-        public BitBoard this[Piece piece, PieceColor color]
+        public readonly BitBoard this[Piece piece, PieceColor color]
         {
+            [MethodImpl(MethodImplOptions.AggressiveOptimization)]
             get
             {
                 return color switch
@@ -247,6 +251,7 @@ namespace Backend.Data.Struct
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public void Move(Square from, Square to)
         {
             ref BitBoard fromBoard = ref WPB;
@@ -314,6 +319,7 @@ namespace Backend.Data.Struct
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public void Empty(Square sq)
         {
             if (White[sq]) {

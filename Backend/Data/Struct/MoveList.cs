@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
@@ -10,7 +8,7 @@ using Backend.Exception;
 namespace Backend.Data.Struct
 {
 
-    public struct MoveList : IEnumerable<Square>
+    public ref struct MoveList
     {
 
         #region Attack Tables
@@ -94,7 +92,7 @@ namespace Backend.Data.Struct
         
         private readonly Board Board;
         private readonly Square From;
-        
+
         public int Count => Moves.Count;
         private BitBoard Moves;
 
@@ -184,6 +182,7 @@ namespace Backend.Data.Struct
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public MoveList(Board board, Square from, bool verify = true)
         {
             Board = board;
@@ -236,11 +235,10 @@ namespace Backend.Data.Struct
             }
         }
 
-        public BitBoard Get()
-        {
-            return Moves;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public BitBoard Get() => Moves;
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private void LegalPawnMoveSet(PieceColor color, bool checkMovesOnly = false)
         {
             PieceColor oppositeColor = Util.OppositeColor(color);
@@ -278,6 +276,7 @@ namespace Backend.Data.Struct
             Moves &= ~Board.All(color);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void LegalRookMoveSet(PieceColor color)
         {
             int mIndex = BlackMagicBitBoard.GetMagicIndex(Piece.Rook, ~Board.All(PieceColor.None), From);
@@ -285,12 +284,14 @@ namespace Backend.Data.Struct
             Moves &= ~Board.All(color);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void LegalKnightMoveSet(PieceColor color)
         {
             Moves |= KnightMoves[(int)From];
             Moves &= ~Board.All(color);
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void LegalBishopMoveSet(PieceColor color)
         {
             int mIndex = BlackMagicBitBoard.GetMagicIndex(Piece.Bishop, ~Board.All(PieceColor.None), From);
@@ -298,12 +299,14 @@ namespace Backend.Data.Struct
             Moves &= ~Board.All(color);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void LegalQueenMoveSet(PieceColor color)
         {
             LegalRookMoveSet(color);
             LegalBishopMoveSet(color);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private void LegalKingMoveSet(PieceColor color, bool checkMovesOnly = false)
         {
             // Normal
@@ -345,6 +348,7 @@ namespace Backend.Data.Struct
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private void VerifyMoves(PieceColor color)
         {
             PieceColor oppositeColor = Util.OppositeColor(color);
@@ -361,16 +365,6 @@ namespace Backend.Data.Struct
             }
 
             Moves = verifiedMoves;
-        }
-
-        public IEnumerator<Square> GetEnumerator()
-        {
-            return Moves.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
 
     }

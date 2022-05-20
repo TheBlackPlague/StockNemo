@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
 
@@ -88,6 +89,7 @@ namespace Backend.Data.Move
             GenerateBishopMagicTable();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetMagicIndex(Piece piece, BitBoard occupied, Square sq)
         {
             ((BitBoard, BitBoard, int)[], int) args = piece switch
