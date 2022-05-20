@@ -147,13 +147,12 @@ namespace Backend.Data.Struct
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Square(BitBoard bitBoard)
         {
-            return bitBoard.Square;
+            return (Square)BitOperations.TrailingZeroCount(bitBoard.Internal);
         }
         
         #endregion
         
         public int Count => BitOperations.PopCount(Internal); // Number of set bits.
-        public Square Square => (Square)BitOperations.TrailingZeroCount(Internal);
 
         private ulong Internal;
         
