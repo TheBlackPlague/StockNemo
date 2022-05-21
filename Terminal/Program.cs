@@ -171,24 +171,14 @@ namespace Terminal
             Console.WriteLine("Running PERFT tests: ");
 
             Perft test = new();
-            
-            Console.WriteLine("Running Depth 0: ");
+
+            Console.WriteLine("Running Depth 1: ");
             Stopwatch watch = new();
             watch.Start();
-            (ulong, ulong) result = test.Depth0();
+            (ulong, ulong) result = test.Depth1();
             watch.Stop();
             
-            string output = "Searched " + result.Item2.ToString("N0") + " nodes (" + 
-                            watch.ElapsedMilliseconds + " ms).";
-            Console.WriteLine(output);
-            
-            Console.WriteLine("Running Depth 1: ");
-            watch = new Stopwatch();
-            watch.Start();
-            result = test.Depth1();
-            watch.Stop();
-            
-            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+            string output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
             Console.WriteLine(output);
             
             Console.WriteLine("Running Depth 2: ");

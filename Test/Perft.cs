@@ -15,13 +15,6 @@ namespace Test
         }
 
         [Test]
-        public void Depth0()
-        {
-            (ulong, ulong) test = Test.Depth0();
-            Assert.AreEqual(test.Item1, test.Item2);
-        }
-        
-        [Test]
         public void Depth1()
         {
             (ulong, ulong) test = Test.Depth1();

@@ -48,11 +48,6 @@ namespace Backend
             MoveGeneration(Board, 4, verbose: false);
         }
         
-        public (ulong, ulong) Depth0()
-        {
-            return (D0, MoveGeneration(Board, 0));
-        }
-        
         public (ulong, ulong) Depth1()
         {
             return (D1, MoveGeneration(Board, 1));
@@ -94,7 +89,6 @@ namespace Backend
             bool verbose = true
             )
         {
-            if (depth == 0) return 1;
             ulong count = 0;
 
             PieceColor color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
@@ -102,7 +96,7 @@ namespace Backend
             int nextDepth = depth - 1;
          
             BitBoard colored = board.All(color);
-            if (depth < 8) {
+            if (depth < 5) {
                 BitBoardIterator coloredIterator = colored.GetEnumerator();
                 Square from = coloredIterator.Current;
                 BitBoardMap originalState = board.GetCurrentState;
@@ -155,12 +149,13 @@ namespace Backend
                 Parallel.ForEach((Square[])colored, ParallelOptions, from =>
                 {
                     MoveList moveList = new(board, from, false);
-                    if (moveList.Count == 0) return;
+                    BitBoard moves = moveList.Get();
+                    if (moves == BitBoard.Default) return;
                     
                     Board next = board.Clone();
                     BitBoardMap originalState = next.GetCurrentState;
 
-                    BitBoardIterator iterator = moveList.Get().GetEnumerator();
+                    BitBoardIterator iterator = moves.GetEnumerator();
                     Square move = iterator.Current;
                     while (iterator.MoveNext()) {
                         next.Move(from, move);
