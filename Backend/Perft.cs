@@ -91,56 +91,91 @@ namespace Backend
         public static ulong MoveGeneration(
             Board board, 
             int depth, 
-            PieceColor color = PieceColor.White, 
             bool verbose = true
             )
         {
             if (depth == 0) return 1;
             ulong count = 0;
-            
+
+            PieceColor color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
             PieceColor oppositeColor = Util.OppositeColor(color);
             int nextDepth = depth - 1;
          
             BitBoard colored = board.All(color);
-            if (depth < 5) {
-                foreach (Square from in colored) {
-                    MoveList moveList = new(board, from);
-                    if (depth == 1) {
-                        count += (ulong)moveList.Count;
-
-                        if (verbose) LogNodeCount(from, moveList.Count);
-                    } else {
-                        if (moveList.Count == 0) continue;
-
-                        BitBoardMap originalState = board.GetCurrentState;
-                        foreach (Square move in moveList.Get()) {
+            if (depth < 8) {
+                BitBoardIterator coloredIterator = colored.GetEnumerator();
+                Square from = coloredIterator.Current;
+                BitBoardMap originalState = board.GetCurrentState;
+                if (depth == 1) {
+                    while (coloredIterator.MoveNext()) {
+                        MoveList moveList = new(board, from, false);
+                        BitBoardIterator moveListIterator = moveList.Get().GetEnumerator();
+                        Square move = moveListIterator.Current;
+                        while (moveListIterator.MoveNext()) {
                             board.Move(from, move);
-                            ulong nextCount = MoveGeneration(board, nextDepth, oppositeColor, false);
-                            count += nextCount;
+                            
+                            BitBoard kingSafety = board.KingLoc(color);
+                            if (!MoveList.UnderAttack(board, kingSafety, oppositeColor)) {
+                                count += 1UL;
+                                if (verbose) LogNodeCount(from, moveList.Count);
+                            }
+                            
                             board.UndoMove(ref originalState);
-                        
-                            if (verbose) LogNodeCount(from, move, nextCount);
+
+                            move = moveListIterator.Current;
                         }
+
+                        from = coloredIterator.Current;
+                    }
+                } else {
+                    while (coloredIterator.MoveNext()) {
+                        MoveList moveList = new(board, from, false);
+                        BitBoardIterator moveListIterator = moveList.Get().GetEnumerator();
+                        Square move = moveListIterator.Current;
+                        while (moveListIterator.MoveNext()) {
+                            board.Move(from, move);
+                            
+                            BitBoard kingSafety = board.KingLoc(color);
+                            if (!MoveList.UnderAttack(board, kingSafety, oppositeColor)) {
+                                ulong nextCount = MoveGeneration(board, nextDepth, false);
+                                count += nextCount;
+                                
+                                if (verbose) LogNodeCount(from, move, nextCount);
+                            }
+                            
+                            board.UndoMove(ref originalState);
+
+                            move = moveListIterator.Current;
+                        }
+
+                        from = coloredIterator.Current;
                     }
                 }
             } else {
-                Parallel.ForEach(colored, ParallelOptions, from =>
+                Parallel.ForEach((Square[])colored, ParallelOptions, from =>
                 {
-                    MoveList moveList = new(board, from);
+                    MoveList moveList = new(board, from, false);
                     if (moveList.Count == 0) return;
                     
                     Board next = board.Clone();
-                
-                    BitBoard moves = moveList.Get();
-                    
                     BitBoardMap originalState = next.GetCurrentState;
-                    foreach (Square move in moves) {
+
+                    BitBoardIterator iterator = moveList.Get().GetEnumerator();
+                    Square move = iterator.Current;
+                    while (iterator.MoveNext()) {
                         next.Move(from, move);
-                        ulong nextCount = MoveGeneration(next, depth - 1, Util.OppositeColor(color), false);
-                        Interlocked.Add(ref count, nextCount);
+                            
+                        BitBoard kingSafety = next.KingLoc(color);
+                        if (!MoveList.UnderAttack(next, kingSafety, oppositeColor)) {
+                            ulong nextCount = MoveGeneration(next, depth - 1, false);
+                            Interlocked.Add(ref count, nextCount);
+                                
+                            if (verbose) LogNodeCount(from, move, nextCount);
+                        }
+                            
                         next.UndoMove(ref originalState);
-                        
-                        if (verbose) LogNodeCount(from, move, nextCount);
+
+                        move = iterator.Current;
                     }
                 });
             }

@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 
 namespace Backend.Data.Struct
 {
 
-    public struct BitBoard : IEnumerable<Square>
+    public struct BitBoard
     {
 
         public static readonly BitBoard Default = new(ulong.MinValue);
@@ -149,6 +146,20 @@ namespace Backend.Data.Struct
         {
             return (Square)BitOperations.TrailingZeroCount(bitBoard.Internal);
         }
+
+        public static explicit operator Square[](BitBoard bitBoard)
+        {
+            int c = bitBoard.Count;
+            BitBoardIterator iterator = new(bitBoard.Internal, c);
+            Square[] a = new Square[c];
+            int i = 0;
+            while (i != c) {
+                a[i++] = iterator.Current;
+                iterator.MoveNext();
+            }
+
+            return a;
+        }
         
         #endregion
         
@@ -194,9 +205,9 @@ namespace Backend.Data.Struct
         
         #endregion
 
-        public IEnumerator<Square> GetEnumerator()
+        public BitBoardIterator GetEnumerator()
         {
-            return new BitBoardEnumerator(Internal, Count);
+            return new BitBoardIterator(Internal, Count);
         }
 
         public override bool Equals(object obj)
@@ -224,11 +235,6 @@ namespace Backend.Data.Struct
             return final;
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
         private bool Equals(BitBoard other)
         {
             return Internal == other.Internal;
@@ -236,7 +242,7 @@ namespace Backend.Data.Struct
 
     }
 
-    public class BitBoardEnumerator : IEnumerator<Square>
+    public struct BitBoardIterator
     {
         
         private readonly int Count;
@@ -244,10 +250,11 @@ namespace Backend.Data.Struct
         private ulong Value;
         private int Iteration;
 
-        public BitBoardEnumerator(ulong value, int count)
+        public BitBoardIterator(ulong value, int count)
         {
             Value = value;
             Count = count;
+            Iteration = 0;
         }
 
         public bool MoveNext()
@@ -255,13 +262,6 @@ namespace Backend.Data.Struct
             Iteration++;
             return Iteration <= Count;
         }
-
-        public void Reset()
-        {
-            Iteration = 0;
-        }
-
-        object IEnumerator.Current => Current;
 
         public Square Current
         {
@@ -272,11 +272,6 @@ namespace Backend.Data.Struct
 
                 return (Square)i;
             }
-        }
-
-        public void Dispose()
-        {
-            GC.SuppressFinalize(this);
         }
 
     }

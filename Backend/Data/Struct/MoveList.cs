@@ -193,7 +193,7 @@ namespace Backend.Data.Struct
             // Generate Pseudo-Legal Moves
             switch (piece) {
                 case Piece.Pawn:
-                    LegalPawnMoveSet(color, !verify);
+                    LegalPawnMoveSet(color);
                     break;
                 case Piece.Rook:
                     LegalRookMoveSet(color);
@@ -208,7 +208,7 @@ namespace Backend.Data.Struct
                     LegalQueenMoveSet(color);
                     break;
                 case Piece.King:
-                    LegalKingMoveSet(color, !verify);
+                    LegalKingMoveSet(color);
                     break;
                 case Piece.Empty:
                 default:
@@ -239,13 +239,13 @@ namespace Backend.Data.Struct
         public BitBoard Get() => Moves;
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        private void LegalPawnMoveSet(PieceColor color, bool checkMovesOnly = false)
+        private void LegalPawnMoveSet(PieceColor color)
         {
             PieceColor oppositeColor = Util.OppositeColor(color);
             BitBoard from = From;
             BitBoard opposite = Board.All(oppositeColor);
             
-            if (!checkMovesOnly) {
+            if (true) {
                 // Normal
                 // 1 Push
                 Moves |= (color == PieceColor.White ? from << 8 : from >> 8) & Board.All(PieceColor.None);
@@ -307,13 +307,11 @@ namespace Backend.Data.Struct
         }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        private void LegalKingMoveSet(PieceColor color, bool checkMovesOnly = false)
+        private void LegalKingMoveSet(PieceColor color)
         {
             // Normal
             Moves |= KingMoves[(int)From];
             Moves &= ~Board.All(color);
-
-            if (checkMovesOnly) return;
 
             PieceColor oppositeColor = Util.OppositeColor(color);
             if (UnderAttack(Board, From, oppositeColor)) return;
@@ -355,14 +353,36 @@ namespace Backend.Data.Struct
             
             BitBoard verifiedMoves = BitBoard.Default;
             BitBoardMap originalState = Board.GetCurrentState;
-            foreach (Square sq in Moves) {
+            BitBoardIterator iterator = Moves.GetEnumerator();
+            Square sq = iterator.Current;
+            while (iterator.MoveNext()) {
                 Board.Move(From, sq);
 
                 BitBoard kingSafety = Board.KingLoc(color);
                 if (!UnderAttack(Board, kingSafety, oppositeColor)) verifiedMoves[sq] = true;
-                
+
                 Board.UndoMove(ref originalState);
+
+                sq = iterator.Current;
             }
+
+            // for (Square sq = iterator.Current; iterator.MoveNext(); sq = iterator.Current) {
+            //     Board.Move(From, sq);
+            //     
+            //     BitBoard kingSafety = Board.KingLoc(color);
+            //     if (!UnderAttack(Board, kingSafety, oppositeColor)) verifiedMoves[sq] = true;
+            //     
+            //     Board.UndoMove(ref originalState);
+            // }
+
+            // foreach (Square sq in Moves) {
+            //     Board.Move(From, sq);
+            //
+            //     BitBoard kingSafety = Board.KingLoc(color);
+            //     if (!UnderAttack(Board, kingSafety, oppositeColor)) verifiedMoves[sq] = true;
+            //     
+            //     Board.UndoMove(ref originalState);
+            // }
 
             Moves = verifiedMoves;
         }
