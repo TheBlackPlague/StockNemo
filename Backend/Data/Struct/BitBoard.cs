@@ -242,7 +242,7 @@ namespace Backend.Data.Struct
 
     }
 
-    public struct BitBoardIterator
+    public ref struct BitBoardIterator
     {
         
         private readonly int Count;
@@ -257,6 +257,7 @@ namespace Backend.Data.Struct
             Iteration = 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool MoveNext()
         {
             Iteration++;
@@ -265,6 +266,7 @@ namespace Backend.Data.Struct
 
         public Square Current
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 int i = BitOperations.TrailingZeroCount(Value);
