@@ -7,11 +7,13 @@ using Backend.Data.Struct;
 namespace Backend.Data.Move
 {
 
-    internal static class BlackMagicBitBoard
+    internal static class BlackMagicBitBoardFactory
     {
 
         public const int ROOK = 12;
         public const int BISHOP = 9;
+
+        #region Magic Data
 
         private static readonly (BitBoard, int)[] RookMagicData = {
             (0x80280013FF84FFFF, 10890), (0x5FFBFEFDFEF67FFF, 50579), (0xFFEFFAFFEFFDFFFF, 62020),
@@ -79,9 +81,15 @@ namespace Backend.Data.Move
             (0xFFF1FFFFFFF7FFC1, 57058), (0x0878040000FFE01F, 58912), (0x945E388000801012, 22194),
             (0x0840800080200FDA, 70880), (0x100000C05F582008, 11140)
         };
-        
+
+        #endregion
+
+        #region Magic Providers
+
         public static readonly (BitBoard, BitBoard, int)[] RookMagic = new (BitBoard, BitBoard, int)[64];
         public static readonly (BitBoard, BitBoard, int)[] BishopMagic = new (BitBoard, BitBoard, int)[64];
+
+        #endregion
 
         public static void SetUp()
         {

@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Backend;
 using Backend.Data.Enum;
-using Backend.Data.Struct;
+using Backend.Data.Move;
 using Version = Backend.Version;
 
 namespace Terminal
@@ -17,7 +17,7 @@ namespace Terminal
         private static void Main(string[] args)
         {
             OutputTitle();
-            MoveList.SetUp();
+            AttackTable.SetUp();
             switch (args.Length) {
                 case > 0 when args[0] == "perft":
                     RunPerft();

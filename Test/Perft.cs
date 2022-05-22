@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using Backend.Data.Move;
+using NUnit.Framework;
 
 namespace Test
 {
@@ -11,7 +12,7 @@ namespace Test
         [SetUp]
         public void SetUp()
         {
-            Backend.Data.Struct.MoveList.SetUp();
+            AttackTable.SetUp();
         }
 
         [Test]
