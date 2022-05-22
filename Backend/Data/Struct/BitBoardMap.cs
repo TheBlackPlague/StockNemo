@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -178,7 +177,6 @@ namespace Backend.Data.Struct
             Black = BPB | BRB | BNB | BBB | BQB | BKB;
         }
 
-        [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
         public (Piece, PieceColor) this[Square sq]
         {
             [MethodImpl(MethodImplOptions.AggressiveOptimization)]
