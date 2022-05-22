@@ -1,7 +1,4 @@
-﻿using Backend.Data.Move;
-using Backend.Data.Struct;
-using Benchmark.Move;
-using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Running;
 
 namespace Benchmark
 {
@@ -11,12 +8,33 @@ namespace Benchmark
 
         public static void Main()
         {
-            MoveList.SetUp();
-            
-            // BenchmarkRunner.Run<BoardmarkDefault>();
-            // BenchmarkRunner.Run<BoardMarkKiwipete>();
-            // BenchmarkRunner.Run<BitBoardMapMarkDefault>();
-            BenchmarkRunner.Run<LegalMoveSetMark>();
+            PreMark();
+            BitBoardMapRunner();
+            MoveListRunner();
+            PerftRunner();
+        }
+
+        public static void BitBoardMapRunner()
+        {
+            PreMark();
+            BenchmarkRunner.Run<BitBoardMap>();
+        }
+
+        public static void MoveListRunner()
+        {
+            PreMark();
+            BenchmarkRunner.Run<MoveList>();
+        }
+        
+        public static void PerftRunner()
+        {
+            PreMark();
+            BenchmarkRunner.Run<Perft>();
+        }
+
+        private static void PreMark()
+        {
+            Backend.Data.Struct.MoveList.SetUp();
         }
 
     }

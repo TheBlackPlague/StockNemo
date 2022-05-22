@@ -27,7 +27,7 @@ namespace Backend
 
         private BitBoard HighlightedMoves = BitBoard.Default;
         
-        internal BitBoard EnPassantTarget => Map.EnPassantTarget;
+        internal Square EnPassantTarget => Map.EnPassantTarget;
         
         public static Board Default()
         {
@@ -50,13 +50,16 @@ namespace Backend
             Map = new BitBoardMap(boardData, turnData, castlingData, enPassantTargetData);
         }
 
+        #region Readonly Properties
+        
         public BitBoardMap GetCurrentState => Map;
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (bool, bool) CastlingRight(PieceColor color) => color == PieceColor.White ? 
             (Map.WhiteQCastle, Map.WhiteKCastle) : (Map.BlackQCastle, Map.BlackKCastle);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public (Piece, PieceColor) At((int, int) loc) => Map[loc.Item1, loc.Item2];
+        public (Piece, PieceColor) At(Square sq) => Map[sq];
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public BitBoard All(PieceColor color) => Map[color];
@@ -68,18 +71,22 @@ namespace Backend
         public BitBoard KingLoc(PieceColor color) => Map[Piece.King, color];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool EmptyAt((int, int) loc) => Map[loc.Item1, loc.Item2].Item1 == Piece.Empty;
+        public bool EmptyAt(Square sq) => Map[sq].Item1 == Piece.Empty;
+        
+        #endregion
 
-        public MoveAttempt SecureMove((int, int) from, (int, int) to)
+        #region Move
+        
+        public MoveAttempt SecureMove(Square from, Square to)
         {
             MoveList moveList = new(this, from);
             BitBoard moves = moveList.Get();
 
-            if (!moves[to.Item1, to.Item2]) return MoveAttempt.Fail;
+            if (!moves[to]) return MoveAttempt.Fail;
             
             Move(from, to);
 
-            PieceColor color = Map[to.Item1, to.Item2].Item2;
+            PieceColor color = Map[to].Item2;
             PieceColor oppositeColor = Util.OppositeColor(color);
 
             MoveList opposingMoveList = new(this, oppositeColor);
@@ -91,30 +98,24 @@ namespace Backend
         }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public void Move((int, int) from, (int, int) to)
+        public void Move(Square from, Square to)
         {
-            (int hF, int vF) = from;
-            (int hT, int vT) = to;
-
-            if (hT is < 0 or >= UBOUND || vT is < 0 or >= UBOUND)
-                throw new InvalidOperationException("Cannot move to " + Util.TupleToChessString(to) + ".");
-
-            (Piece pieceF, PieceColor colorF) = Map[hF, vF];
-            (Piece pieceT, PieceColor colorT) = Map[hT, vT];
+            (Piece pieceF, PieceColor colorF) = Map[from];
+            (Piece pieceT, PieceColor colorT) = Map[to];
             
             // Can't move same color.
             if (colorF == colorT) {
                 throw InvalidMoveAttemptException.FromBoard(this, "Cannot move to same color.");
             }
-            
-            if (EnPassantTarget && to == EnPassantTarget && pieceF == Piece.Pawn) {
-                int vA = colorF == PieceColor.White ? vT - 1 : vT + 1;
-                Map.Empty(hT, vA);
+
+            if (EnPassantTarget == to && pieceF == Piece.Pawn) {
+                Square epPiece = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
+                Map.Empty(epPiece);
             }
 
-            if (pieceF == Piece.Pawn && Math.Abs(vT - vF) == 2) {
-                Map.EnPassantTarget = colorF == PieceColor.White ? (hF, vT - 1) : (hF, vT + 1);
-            } else Map.EnPassantTarget = BitBoard.Default;
+            if (pieceF == Piece.Pawn && Math.Abs(to - from) == 16) {
+                Map.EnPassantTarget = colorF == PieceColor.White ? from + 8 : from - 8;
+            } else Map.EnPassantTarget = Square.Na;
             
             Map.Move(from, to);
 
@@ -123,7 +124,7 @@ namespace Backend
                 case Piece.Rook:
                     switch (colorF) {
                         case PieceColor.White:
-                            switch (hF) {
+                            switch ((int)from % 8) {
                                 case 0:
                                     Map.WhiteQCastle = false;
                                     break;
@@ -134,7 +135,7 @@ namespace Backend
 
                             break;
                         case PieceColor.Black:
-                            switch (hF) {
+                            switch ((int)from % 8) {
                                 case 0:
                                     Map.BlackQCastle = false;
                                     break;
@@ -168,10 +169,10 @@ namespace Backend
                     }
 
                     // Castling.
-                    int d = Math.Abs(hT - hF);
+                    int d = Math.Abs(to - from);
                     if (d == 2) {
-                        if (hT > hF) Map.Move((7, vF), (hT - 1, vF)); // King-side
-                        else Map.Move((0, vF), (hT + 1, vF)); // Queen-side
+                        if (to > from) Map.Move(to + 1, to - 1); // King-side
+                        else Map.Move(to - 2, to + 1); // Queen-side
                     }
 
                     break;
@@ -189,11 +190,11 @@ namespace Backend
             if (pieceT == Piece.Rook) {
                 switch (colorT) {
                     case PieceColor.White:
-                        if (hT == 7) Map.WhiteKCastle = false;
+                        if ((int)to % 8 == 7) Map.WhiteKCastle = false;
                         else Map.WhiteQCastle = false;
                         break;
                     case PieceColor.Black:
-                        if (hT == 7) Map.BlackKCastle = false;
+                        if ((int)to % 8 == 7) Map.BlackKCastle = false;
                         else Map.BlackQCastle = false;
                         break;
                     case PieceColor.None:
@@ -205,17 +206,21 @@ namespace Backend
             Map.WhiteTurn = !WhiteTurn;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UndoMove(ref BitBoardMap map)
         {
             Map = map;
         }
+        
+        #endregion
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Board Clone()
         {
             return new Board(this);
         }
 
-        public void HighlightMoves((int, int) from)
+        public void HighlightMoves(Square from)
         {
             MoveList moveList = new(this, from);
             HighlightedMoves = moveList.Get();
@@ -252,11 +257,10 @@ namespace Backend
             for (int v = UBOUND - 1; v > LBOUND; v--) {
                 // Count: Rank column + Files columns (1 + 8)
                 ICell[] cells = new ICell[UBOUND + 1];
+                cells[0] = new TableCell((v + 1).ToString());
                 for (int h = 0; h < UBOUND; h++) {
-                    // Set rank column value
-                    cells[0] = new TableCell((v + 1).ToString());
-
-                    (Piece piece, PieceColor color) = Map[h, v];
+                    Square sq = (Square)(v * 8 + h);
+                    (Piece piece, PieceColor color) = Map[sq];
                     string pieceRepresentation = piece switch
                     {
                         Piece.Empty => "   ",
@@ -271,9 +275,9 @@ namespace Backend
                         _ => Color.Gray
                     };
 
-                    if (HighlightedMoves[h, v]) {
+                    if (HighlightedMoves[sq]) {
                         uiColor = piece == Piece.Empty ? Color.Yellow : Color.Red;
-                        if (piece == Piece.Empty && EnPassantTarget && EnPassantTarget[h, v]) 
+                        if (piece == Piece.Empty && sq == EnPassantTarget) 
                             uiColor = Color.Red; 
                     }
 
@@ -320,8 +324,8 @@ namespace Backend
             
             EnPassantFill:
             string enPassantTarget = "-";
-            if (EnPassantTarget) {
-                enPassantTarget = Util.TupleToChessString(((int, int))EnPassantTarget).ToLower();
+            if (EnPassantTarget != Square.Na) {
+                enPassantTarget = EnPassantTarget.ToString().ToLower();
             }
 
             string[] fen = { boardData, turnData, castlingRight, enPassantTarget };

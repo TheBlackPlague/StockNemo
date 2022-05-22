@@ -70,19 +70,21 @@ namespace Backend.Data.Struct
         public bool BlackKCastle;
         public bool BlackQCastle;
         
-        public BitBoard EnPassantTarget;
+        public Square EnPassantTarget;
         
-        private static void Move(ref BitBoard board, (int, int) from, (int, int) to)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void Move(ref BitBoard board, Square from, Square to)
         {
-            board[from.Item1, from.Item2] = false;
-            board[to.Item1, to.Item2] = true;
+            board[from] = false;
+            board[to] = true;
         }
         
-        private static void Move(ref BitBoard fromBoard, ref BitBoard toBoard, (int, int) from, (int, int) to)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void Move(ref BitBoard fromBoard, ref BitBoard toBoard, Square from, Square to)
         {
-            fromBoard[from.Item1, from.Item2] = false;
-            toBoard[to.Item1, to.Item2] = false;
-            fromBoard[to.Item1, to.Item2] = true;
+            fromBoard[from] = false;
+            toBoard[to] = false;
+            fromBoard[to] = true;
         }
 
         public BitBoardMap(string boardFen, string turnData, string castlingData, string enPassantTargetData)
@@ -116,43 +118,43 @@ namespace Backend.Data.Struct
                     if (char.IsUpper(p)) {
                         switch (p) {
                             case 'P':
-                                WPB[h, v] = true;
+                                WPB[v * 8 + h] = true;
                                 break;
                             case 'R':
-                                WRB[h, v] = true;
+                                WRB[v * 8 + h] = true;
                                 break;
                             case 'N':
-                                WNB[h, v] = true;
+                                WNB[v * 8 + h] = true;
                                 break;
                             case 'B':
-                                WBB[h, v] = true;
+                                WBB[v * 8 + h] = true;
                                 break;
                             case 'Q':
-                                WQB[h, v] = true;
+                                WQB[v * 8 + h] = true;
                                 break;
                             case 'K':
-                                WKB[h, v] = true;
+                                WKB[v * 8 + h] = true;
                                 break;
                         }
                     } else {
                         switch (p) {
                             case 'p':
-                                BPB[h, v] = true;
+                                BPB[v * 8 + h] = true;
                                 break;
                             case 'r':
-                                BRB[h, v] = true;
+                                BRB[v * 8 + h] = true;
                                 break;
                             case 'n':
-                                BNB[h, v] = true;
+                                BNB[v * 8 + h] = true;
                                 break;
                             case 'b':
-                                BBB[h, v] = true;
+                                BBB[v * 8 + h] = true;
                                 break;
                             case 'q':
-                                BQB[h, v] = true;
+                                BQB[v * 8 + h] = true;
                                 break;
                             case 'k':
-                                BKB[h, v] = true;
+                                BKB[v * 8 + h] = true;
                                 break;
                         }
                     }
@@ -166,11 +168,10 @@ namespace Backend.Data.Struct
             WhiteQCastle = castlingData.Contains("Q");
             BlackKCastle = castlingData.Contains("k");
             BlackQCastle = castlingData.Contains("q");
-            EnPassantTarget = BitBoard.Default;
+            EnPassantTarget = Square.Na;
             
             if (enPassantTargetData.Length == 2) {
-                (int h, int v) = Util.ChessStringToTuple(enPassantTargetData.ToUpper());
-                EnPassantTarget[h, v] = true;
+                EnPassantTarget = System.Enum.Parse<Square>(enPassantTargetData, true);
             }
 
             White = WPB | WRB | WNB | WBB | WQB | WKB;
@@ -178,31 +179,32 @@ namespace Backend.Data.Struct
         }
 
         [SuppressMessage("ReSharper", "ConvertIfStatementToReturnStatement")]
-        public (Piece, PieceColor) this[int h, int v]
+        public (Piece, PieceColor) this[Square sq]
         {
+            [MethodImpl(MethodImplOptions.AggressiveOptimization)]
             get
             {
-                if (White[h, v]) {
-                    if (WPB[h, v]) return Wp;
-                    if (WRB[h, v]) return Wr;
-                    if (WNB[h, v]) return Wn;
-                    if (WBB[h, v]) return Wb;
-                    if (WQB[h, v]) return Wq;
-                    if (WKB[h, v]) return Wk;
-                } else if (Black[h, v]) {
-                    if (BPB[h, v]) return Bp;
-                    if (BRB[h, v]) return Br;
-                    if (BNB[h, v]) return Bn;
-                    if (BBB[h, v]) return Bb;
-                    if (BQB[h, v]) return Bq;
-                    if (BKB[h, v]) return Bk;
+                if (White[sq]) {
+                    if (WPB[sq]) return Wp;
+                    if (WRB[sq]) return Wr;
+                    if (WNB[sq]) return Wn;
+                    if (WBB[sq]) return Wb;
+                    if (WQB[sq]) return Wq;
+                    if (WKB[sq]) return Wk;
+                } else if (Black[sq]) {
+                    if (BPB[sq]) return Bp;
+                    if (BRB[sq]) return Br;
+                    if (BNB[sq]) return Bn;
+                    if (BBB[sq]) return Bb;
+                    if (BQB[sq]) return Bq;
+                    if (BKB[sq]) return Bk;
                 }
 
                 return E;
             }
         }
 
-        public BitBoard this[PieceColor color]
+        public readonly BitBoard this[PieceColor color]
         {
             [MethodImpl(MethodImplOptions.AggressiveOptimization)]
             get
@@ -217,8 +219,9 @@ namespace Backend.Data.Struct
             }
         }
 
-        public BitBoard this[Piece piece, PieceColor color]
+        public readonly BitBoard this[Piece piece, PieceColor color]
         {
+            [MethodImpl(MethodImplOptions.AggressiveOptimization)]
             get
             {
                 return color switch
@@ -248,7 +251,8 @@ namespace Backend.Data.Struct
             }
         }
 
-        public void Move((int, int) from, (int, int) to)
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        public void Move(Square from, Square to)
         {
             ref BitBoard fromBoard = ref WPB;
             ref BitBoard toBoard = ref WPB;
@@ -256,85 +260,86 @@ namespace Backend.Data.Struct
             PieceColor f = PieceColor.White;
             PieceColor t = PieceColor.White;
             
-            if (White[from.Item1, from.Item2]) {
+            if (White[from]) {
                 // White
-                if (WPB[from.Item1, from.Item2]) fromBoard = ref WPB;
-                if (WRB[from.Item1, from.Item2]) fromBoard = ref WRB;
-                if (WNB[from.Item1, from.Item2]) fromBoard = ref WNB;
-                if (WBB[from.Item1, from.Item2]) fromBoard = ref WBB;
-                if (WQB[from.Item1, from.Item2]) fromBoard = ref WQB;
-                if (WKB[from.Item1, from.Item2]) fromBoard = ref WKB;
-            } else if (Black[from.Item1, from.Item2]) {
+                if (WPB[from]) fromBoard = ref WPB;
+                if (WRB[from]) fromBoard = ref WRB;
+                if (WNB[from]) fromBoard = ref WNB;
+                if (WBB[from]) fromBoard = ref WBB;
+                if (WQB[from]) fromBoard = ref WQB;
+                if (WKB[from]) fromBoard = ref WKB;
+            } else if (Black[from]) {
                 // Black
                 f = PieceColor.Black;
-                if (BPB[from.Item1, from.Item2]) fromBoard = ref BPB;
-                if (BRB[from.Item1, from.Item2]) fromBoard = ref BRB;
-                if (BNB[from.Item1, from.Item2]) fromBoard = ref BNB;
-                if (BBB[from.Item1, from.Item2]) fromBoard = ref BBB;
-                if (BQB[from.Item1, from.Item2]) fromBoard = ref BQB;
-                if (BKB[from.Item1, from.Item2]) fromBoard = ref BKB;
+                if (BPB[from]) fromBoard = ref BPB;
+                if (BRB[from]) fromBoard = ref BRB;
+                if (BNB[from]) fromBoard = ref BNB;
+                if (BBB[from]) fromBoard = ref BBB;
+                if (BQB[from]) fromBoard = ref BQB;
+                if (BKB[from]) fromBoard = ref BKB;
             } else {
                 Console.WriteLine("White:\n" + this[PieceColor.White] + "\n");
                 Console.WriteLine("Black:\n" + this[PieceColor.Black] + "\n");
                 throw new InvalidOperationException("Cannot move empty piece: " + from);
             }
             
-            if (White[to.Item1, to.Item2]) {
+            if (White[to]) {
                 toBoardSet = true;
                 // White
-                if (WRB[to.Item1, to.Item2]) toBoard = ref WRB;
-                if (WNB[to.Item1, to.Item2]) toBoard = ref WNB;
-                if (WPB[to.Item1, to.Item2]) toBoard = ref WPB;
-                if (WBB[to.Item1, to.Item2]) toBoard = ref WBB;
-                if (WQB[to.Item1, to.Item2]) toBoard = ref WQB;
-                if (WKB[to.Item1, to.Item2]) toBoard = ref WKB;
-            } else if (Black[to.Item1, to.Item2]) {
+                if (WRB[to]) toBoard = ref WRB;
+                if (WNB[to]) toBoard = ref WNB;
+                if (WPB[to]) toBoard = ref WPB;
+                if (WBB[to]) toBoard = ref WBB;
+                if (WQB[to]) toBoard = ref WQB;
+                if (WKB[to]) toBoard = ref WKB;
+            } else if (Black[to]) {
                 toBoardSet = true;
                 // Black
                 t = PieceColor.Black;
-                if (BPB[to.Item1, to.Item2]) toBoard = ref BPB;
-                if (BRB[to.Item1, to.Item2]) toBoard = ref BRB;
-                if (BNB[to.Item1, to.Item2]) toBoard = ref BNB;
-                if (BBB[to.Item1, to.Item2]) toBoard = ref BBB;
-                if (BQB[to.Item1, to.Item2]) toBoard = ref BQB;
-                if (BKB[to.Item1, to.Item2]) toBoard = ref BKB;
+                if (BPB[to]) toBoard = ref BPB;
+                if (BRB[to]) toBoard = ref BRB;
+                if (BNB[to]) toBoard = ref BNB;
+                if (BBB[to]) toBoard = ref BBB;
+                if (BQB[to]) toBoard = ref BQB;
+                if (BKB[to]) toBoard = ref BKB;
             }
 
             if (toBoardSet) {
                 Move(ref fromBoard, ref toBoard, from, to);
-                if (t == PieceColor.White) White[to.Item1, to.Item2] = false;
-                else Black[to.Item1, to.Item2] = false;
+                if (t == PieceColor.White) White[to] = false;
+                else Black[to] = false;
             } else Move(ref fromBoard, from, to);
 
             if (f == PieceColor.White) {
-                White[from.Item1, from.Item2] = false;
-                White[to.Item1, to.Item2] = true;
+                White[from] = false;
+                White[to] = true;
             } else {
-                Black[from.Item1, from.Item2] = false;
-                Black[to.Item1, to.Item2] = true;
+                Black[from] = false;
+                Black[to] = true;
             }
         }
 
-        public void Empty(int h, int v)
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        public void Empty(Square sq)
         {
-            if (White[h, v]) {
+            if (White[sq]) {
                 // White
-                White[h, v] = false;
-                if (WPB[h, v]) WPB[h, v] = false;
-                if (WRB[h, v]) WRB[h, v] = false;
-                if (WNB[h, v]) WNB[h, v] = false;
-                if (WBB[h, v]) WBB[h, v] = false;
-                if (WQB[h, v]) WQB[h, v] = false;
-                if (WKB[h, v]) WKB[h, v] = false;
-            } else if (Black[h, v]) {
+                White[sq] = false;
+                if (WPB[sq]) WPB[sq] = false;
+                if (WRB[sq]) WRB[sq] = false;
+                if (WNB[sq]) WNB[sq] = false;
+                if (WBB[sq]) WBB[sq] = false;
+                if (WQB[sq]) WQB[sq] = false;
+                if (WKB[sq]) WKB[sq] = false;
+            } else if (Black[sq]) {
                 // Black
-                Black[h, v] = false;
-                if (BPB[h, v]) BPB[h, v] = false;
-                if (BRB[h, v]) BRB[h, v] = false;
-                if (BNB[h, v]) BNB[h, v] = false;
-                if (BBB[h, v]) BBB[h, v] = false;
-                if (BQB[h, v]) BQB[h, v] = false;
-                if (BKB[h, v]) BKB[h, v] = false;
+                Black[sq] = false;
+                if (BPB[sq]) BPB[sq] = false;
+                if (BRB[sq]) BRB[sq] = false;
+                if (BNB[sq]) BNB[sq] = false;
+                if (BBB[sq]) BBB[sq] = false;
+                if (BQB[sq]) BQB[sq] = false;
+                if (BKB[sq]) BKB[sq] = false;
             } else throw new InvalidOperationException("Attempting to set already empty piece empty.");
         }
 
@@ -344,11 +349,11 @@ namespace Backend.Data.Struct
             for (int v = 0; v < Board.UBOUND; v++) {
                 string rankData = "";
                 for (int h = 0; h < Board.UBOUND; h++) {
-                    (Piece piece, PieceColor color) = this[h, v];
+                    (Piece piece, PieceColor color) = this[(Square)(v * 8 + h)];
                     if (piece == Piece.Empty) {
                         int c = 1;
                         for (int i = h + 1; i < Board.UBOUND; i++) {
-                            if (this[i, v].Item1 == Piece.Empty) c++;
+                            if (this[(Square)(v * 8 + i)].Item1 == Piece.Empty) c++;
                             else break;
                         }
 

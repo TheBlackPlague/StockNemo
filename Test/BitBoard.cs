@@ -1,11 +1,10 @@
-﻿using System;
-using Backend.Data.Struct;
+﻿using Backend.Data.Enum;
 using NUnit.Framework;
 
 namespace Test
 {
 
-    public class BitBoardTestUnit
+    public class BitBoard
     {
 
         [Test]
@@ -14,7 +13,7 @@ namespace Test
             bool success = true;
             for (int h = 0; h < 8; h++)
             for (int v = 0; v < 8; v++) {
-                bool lookup = !BitBoard.Default[h, v];
+                bool lookup = !Backend.Data.Struct.BitBoard.Default[v * 8 + h];
                 if (lookup) continue;
                 
                 success = false;
@@ -26,36 +25,36 @@ namespace Test
         }
 
         [Test]
-        public void Mark0X0AsTrue()
+        public void MarkA1AsTrue()
         {
-            BitBoard useBoard = new(BitBoard.Default)
+            Backend.Data.Struct.BitBoard useBoard = new(Backend.Data.Struct.BitBoard.Default)
             {
-                [0, 0] = true
+                [Square.A1] = true
             };
             
-            Assert.IsTrue(useBoard[0, 0]);
+            Assert.IsTrue(useBoard[Square.A1]);
         }
 
         [Test]
         public void MarkWhiteAsTrue()
         {
-            BitBoard useBoard = new(BitBoard.Default);
+            Backend.Data.Struct.BitBoard useBoard = new(Backend.Data.Struct.BitBoard.Default);
             
             for (int h = 0; h < 8; h++)
             for (int v = 0; v < 8; v++) {
-                if (v < 2) useBoard[h, v] = true;
+                if (v < 2) useBoard[v * 8 + h] = true;
             }
 
             bool success = true;
             for (int h = 0; h < 8; h++)
             for (int v = 0; v < 8; v++) {
                 if (v < 2) {
-                    if (useBoard[h, v]) continue;
+                    if (useBoard[v * 8 + h]) continue;
                     success = false;
                     goto AssertionTest;
                 }
 
-                if (!useBoard[h, v]) continue;
+                if (!useBoard[v * 8 + h]) continue;
                 success = false;
                 goto AssertionTest;
             }
@@ -67,22 +66,22 @@ namespace Test
         [Test]
         public void MarkBlackAndWhiteAsTrue()
         {
-            BitBoard whiteBoard = new(BitBoard.Default);
-            BitBoard blackBoard = new(BitBoard.Default);
+            Backend.Data.Struct.BitBoard whiteBoard = new(Backend.Data.Struct.BitBoard.Default);
+            Backend.Data.Struct.BitBoard blackBoard = new(Backend.Data.Struct.BitBoard.Default);
             
             for (int h = 0; h < 8; h++)
             for (int v = 0; v < 8; v++) {
                 switch (v) {
                     case < 2:
-                        whiteBoard[h, v] = true;
+                        whiteBoard[v * 8 + h] = true;
                         break;
                     case > 5:
-                        blackBoard[h, v] = true;
+                        blackBoard[v * 8 + h] = true;
                         break;
                 }
             }
 
-            BitBoard final = whiteBoard | blackBoard;
+            Backend.Data.Struct.BitBoard final = whiteBoard | blackBoard;
 
             bool success = true;
             for (int h = 0; h < 8; h++)
@@ -90,13 +89,13 @@ namespace Test
                 switch (v) {
                     case < 2:
                     case > 5:
-                        if (!final[h, v]) {
+                        if (!final[v * 8 + h]) {
                             success = false;
                             goto AssertionTest;
                         }
                         break;
                     default:
-                        if (final[h, v]) {
+                        if (final[v * 8 + h]) {
                             success = false;
                             goto AssertionTest;
                         }
@@ -105,19 +104,6 @@ namespace Test
             }
             
             AssertionTest:
-            Assert.IsTrue(success);
-        }
-
-        [Test]
-        public void InvalidIndex()
-        {
-            bool success = false;
-            try {
-                bool unused = BitBoard.Default[8, 0];
-            } catch (IndexOutOfRangeException) {
-                success = true;
-            }
-            
             Assert.IsTrue(success);
         }
         

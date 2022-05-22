@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
 using Backend;
 using Backend.Data.Enum;
-using Backend.Data.Move;
 using Backend.Data.Struct;
 using Version = Backend.Version;
 
@@ -40,8 +38,8 @@ namespace Terminal
             while (true) {
                 Draw();
                 
-                (int, int) from;
-                (int, int) to;
+                Square from;
+                Square to;
                 
                 FromSelection:
                 Console.Write("Select piece to move (or enter full move in AN): ");
@@ -63,8 +61,8 @@ namespace Terminal
                         }
                         case 4:
                         {
-                            from = Util.ChessStringToTuple(toMove[..2]);
-                            to = Util.ChessStringToTuple(toMove[2..]);
+                            from = Enum.Parse<Square>(toMove[..2]);
+                            to = Enum.Parse<Square>(toMove[2..]);
                         
                             if (!VerifyTurn(from)) goto FromSelection;
                             goto Move;
@@ -75,7 +73,7 @@ namespace Terminal
                     goto FromSelection;
                 }
 
-                from = Util.ChessStringToTuple(toMove);
+                from = Enum.Parse<Square>(toMove);
                 
                 if (Board.EmptyAt(from)) {
                     Console.WriteLine("Cannot be moving empty space.");
@@ -102,7 +100,7 @@ namespace Terminal
                     goto ToSelection;
                 }
 
-                to = Util.ChessStringToTuple(moveTo);
+                to = Enum.Parse<Square>(moveTo);
                 
                 Move:
                 MoveAttempt result = Board.SecureMove(from, to);
@@ -152,7 +150,7 @@ namespace Terminal
             Console.WriteLine(board);
         }
 
-        private static bool VerifyTurn((int, int) from)
+        private static bool VerifyTurn(Square from)
         {
             if (Board.WhiteTurn && Board.At(from).Item2 == PieceColor.Black) {
                 Console.WriteLine("It's White Turn.");
@@ -173,24 +171,14 @@ namespace Terminal
             Console.WriteLine("Running PERFT tests: ");
 
             Perft test = new();
-            
-            Console.WriteLine("Running Depth 0: ");
+
+            Console.WriteLine("Running Depth 1: ");
             Stopwatch watch = new();
             watch.Start();
-            (ulong, ulong) result = test.Depth0();
+            (ulong, ulong) result = test.Depth1();
             watch.Stop();
             
-            string output = "Searched " + result.Item2.ToString("N0") + " nodes (" + 
-                            watch.ElapsedMilliseconds + " ms).";
-            Console.WriteLine(output);
-            
-            Console.WriteLine("Running Depth 1: ");
-            watch = new Stopwatch();
-            watch.Start();
-            result = test.Depth1();
-            watch.Stop();
-            
-            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+            string output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
             Console.WriteLine(output);
             
             Console.WriteLine("Running Depth 2: ");

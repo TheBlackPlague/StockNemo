@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend.Data.Enum;
@@ -19,7 +20,7 @@ namespace Backend
         private const ulong D6 = 119060324;
         private const ulong D7 = 3195901860;
 
-        private readonly ParallelOptions ParallelOptions = new()
+        private static readonly ParallelOptions ParallelOptions = new()
         {
             MaxDegreeOfParallelism = 4
         };
@@ -27,17 +28,15 @@ namespace Backend
         // ReSharper disable once FieldCanBeMadeReadOnly.Local
         private Board Board = Board.Default();
 
-        private int SelectedDepth;
-
-        private static void LogNodeCount((int, int) piece, (int, int) move, ulong nodeC)
+        private static void LogNodeCount(Square piece, Square move, ulong nodeC)
         {
-            string fullMove = Util.TupleToChessString(piece) + Util.TupleToChessString(move);
+            string fullMove = piece.ToString() + move;
             Console.WriteLine(fullMove.ToLower() + ": " + nodeC);
         }
         
-        private static void LogNodeCount((int, int) piece, int nodeC)
+        private static void LogNodeCount(Square piece, int nodeC)
         {
-            Console.WriteLine(Util.TupleToChessString(piece).ToLower() + ": " + nodeC);
+            Console.WriteLine(piece.ToString().ToLower() + ": " + nodeC);
         }
 
         public Perft()
@@ -46,113 +45,132 @@ namespace Backend
             Console.WriteLine(Board.ToString());
             
             // Involve JIT.
-            SelectedDepth = 4;
             MoveGeneration(Board, 4, verbose: false);
-        }
-        
-        public (ulong, ulong) Depth0()
-        {
-            SelectedDepth = 0;
-            return (D0, MoveGeneration(Board, 0));
         }
         
         public (ulong, ulong) Depth1()
         {
-            SelectedDepth = 1;
             return (D1, MoveGeneration(Board, 1));
         }
         
         public (ulong, ulong) Depth2()
         {
-            SelectedDepth = 2;
             return (D2, MoveGeneration(Board, 2));
         }
 
         public (ulong, ulong) Depth3()
         {
-            SelectedDepth = 3;
             return (D3, MoveGeneration(Board, 3));
         }
 
         public (ulong, ulong) Depth4()
         {
-            SelectedDepth = 4;
             return (D4, MoveGeneration(Board, 4));
         }
         
         public (ulong, ulong) Depth5()
         {
-            SelectedDepth = 5;
             return (D5, MoveGeneration(Board, 5));
         }
         
         public (ulong, ulong) Depth6()
         {
-            SelectedDepth = 6;
             return (D6, MoveGeneration(Board, 6));
         }
         
         public (ulong, ulong) Depth7()
         {
-            SelectedDepth = 7;
             return (D7, MoveGeneration(Board, 7));
         }
         
-        private ulong MoveGeneration(Board board, int depth, PieceColor color = PieceColor.White, bool verbose = true)
+        public static ulong MoveGeneration(
+            Board board, 
+            int depth, 
+            bool verbose = true
+            )
         {
-            if (depth == 0) return 1;
             ulong count = 0;
-            
-            if (depth == SelectedDepth) color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
+
+            PieceColor color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
             PieceColor oppositeColor = Util.OppositeColor(color);
             int nextDepth = depth - 1;
          
             BitBoard colored = board.All(color);
             if (depth < 5) {
-                foreach ((int, int) from in colored) {
-                    MoveList moveList = new(board, from);
-                    if (depth == 1) {
-                        count += (ulong)moveList.Count;
-                    
-                        if (depth != SelectedDepth) continue;
-                    
-                        if (verbose) LogNodeCount(from, moveList.Count);
-                    } else {
-                        if (moveList.Count == 0) continue;
-
-                        BitBoardMap originalState = board.GetCurrentState;
-                        foreach ((int, int) move in moveList) {
+                BitBoardIterator coloredIterator = colored.GetEnumerator();
+                Square from = coloredIterator.Current;
+                BitBoardMap originalState = board.GetCurrentState;
+                if (depth == 1) {
+                    while (coloredIterator.MoveNext()) {
+                        MoveList moveList = new(board, from, false);
+                        BitBoardIterator moveListIterator = moveList.Get().GetEnumerator();
+                        Square move = moveListIterator.Current;
+                        while (moveListIterator.MoveNext()) {
                             board.Move(from, move);
-                            ulong nextCount = MoveGeneration(board, nextDepth, oppositeColor);
-                            count += nextCount;
+                            
+                            BitBoard kingSafety = board.KingLoc(color);
+                            if (!MoveList.UnderAttack(board, kingSafety, oppositeColor)) {
+                                count += 1UL;
+                                if (verbose) LogNodeCount(from, moveList.Count);
+                            }
+                            
                             board.UndoMove(ref originalState);
-                        
-                            if (depth != SelectedDepth) continue;
-                        
-                            if (verbose) LogNodeCount(from, move, nextCount);
+
+                            move = moveListIterator.Current;
                         }
+
+                        from = coloredIterator.Current;
+                    }
+                } else {
+                    while (coloredIterator.MoveNext()) {
+                        MoveList moveList = new(board, from, false);
+                        BitBoardIterator moveListIterator = moveList.Get().GetEnumerator();
+                        Square move = moveListIterator.Current;
+                        while (moveListIterator.MoveNext()) {
+                            board.Move(from, move);
+                            
+                            BitBoard kingSafety = board.KingLoc(color);
+                            if (!MoveList.UnderAttack(board, kingSafety, oppositeColor)) {
+                                ulong nextCount = MoveGeneration(board, nextDepth, false);
+                                count += nextCount;
+                                
+                                if (verbose) LogNodeCount(from, move, nextCount);
+                            }
+                            
+                            board.UndoMove(ref originalState);
+
+                            move = moveListIterator.Current;
+                        }
+
+                        from = coloredIterator.Current;
                     }
                 }
             } else {
-                Parallel.ForEach(colored, ParallelOptions, from =>
+                Parallel.ForEach((Square[])colored, ParallelOptions, from =>
                 {
-                    MoveList moveList = new(board, from);
-                    if (moveList.Count == 0) return;
+                    MoveList moveList = new(board, from, false);
+                    BitBoard moves = moveList.Get();
+                    if (moves == BitBoard.Default) return;
                     
                     Board next = board.Clone();
-                
-                    BitBoard moves = moveList.Get();
-                    
                     BitBoardMap originalState = next.GetCurrentState;
-                    foreach ((int, int) move in moves) {
+
+                    BitBoardIterator iterator = moves.GetEnumerator();
+                    Square move = iterator.Current;
+                    while (iterator.MoveNext()) {
                         next.Move(from, move);
-                        ulong nextCount = MoveGeneration(next, depth - 1, Util.OppositeColor(color));
-                        Interlocked.Add(ref count, nextCount);
+                            
+                        BitBoard kingSafety = next.KingLoc(color);
+                        if (!MoveList.UnderAttack(next, kingSafety, oppositeColor)) {
+                            ulong nextCount = MoveGeneration(next, depth - 1, false);
+                            Interlocked.Add(ref count, nextCount);
+                                
+                            if (verbose) LogNodeCount(from, move, nextCount);
+                        }
+                            
                         next.UndoMove(ref originalState);
-                        
-                        if (depth != SelectedDepth) continue;
-                        
-                        if (verbose) LogNodeCount(from, move, nextCount);
+
+                        move = iterator.Current;
                     }
                 });
             }

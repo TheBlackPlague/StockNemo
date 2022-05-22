@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.CompilerServices;
+using Backend.Data.Enum;
 
 namespace Backend.Data.Struct
 {
 
-    public struct BitBoard : IEnumerable<(int, int)>
+    public struct BitBoard
     {
 
         public static readonly BitBoard Default = new(ulong.MinValue);
@@ -33,32 +31,8 @@ namespace Backend.Data.Struct
         };
         public static readonly BitBoard Edged = Hs[0] | Hs[7] | Vs[0] | Vs[7];
 
-        private static readonly int[][] OneD = {
-            new [] {0, 1, 2, 3, 4, 5, 6, 7},
-            new [] {8, 9, 10, 11, 12, 13, 14, 15},
-            new [] {16, 17, 18, 19, 20, 21, 22, 23},
-            new [] {24, 25, 26, 27, 28, 29, 30, 31},
-            new [] {32, 33, 34, 35, 36, 37, 38, 39},
-            new [] {40, 41, 42, 43, 44, 45, 46, 47},
-            new [] {48, 49, 50, 51, 52, 53, 54, 55},
-            new [] {56, 57, 58, 59, 60, 61, 62, 63}
-        };
-
-        public static readonly (int, int)[] TwoD = {
-            (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0),
-            (0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1),
-            (0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2),
-            (0, 3), (1, 3), (2, 3), (3, 3), (4, 3), (5, 3), (6, 3), (7, 3),
-            (0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4),
-            (0, 5), (1, 5), (2, 5), (3, 5), (4, 5), (5, 5), (6, 5), (7, 5),
-            (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6),
-            (0, 7), (1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7)
-        };
+        #region Operators
         
-        public int Count => BitOperations.PopCount(Internal); // Number of set bits.
-
-        private ulong Internal;
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BitBoard operator +(BitBoard left, BitBoard right)
         {
@@ -160,23 +134,38 @@ namespace Backend.Data.Struct
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator BitBoard((int, int) from)
+        public static implicit operator BitBoard(Square sq)
         {
             BitBoard a = Default;
-            a[from.Item1, from.Item2] = true;
+            a[sq] = true;
             return a;
         }
 
-        public static explicit operator (int, int)(BitBoard bitBoard)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Square(BitBoard bitBoard)
         {
-            if (bitBoard.Count != 1) 
-                throw new InvalidOperationException("Cannot convert this bitboard to tuple.");
-
-            ulong value = bitBoard.Internal;
-            int i = BitOperations.TrailingZeroCount(value);
-
-            return TwoD[i];
+            return (Square)BitOperations.TrailingZeroCount(bitBoard.Internal);
         }
+
+        public static explicit operator Square[](BitBoard bitBoard)
+        {
+            int c = bitBoard.Count;
+            BitBoardIterator iterator = new(bitBoard.Internal, c);
+            Square[] a = new Square[c];
+            int i = 0;
+            while (i != c) {
+                a[i++] = iterator.Current;
+                iterator.MoveNext();
+            }
+
+            return a;
+        }
+        
+        #endregion
+        
+        public int Count => BitOperations.PopCount(Internal); // Number of set bits.
+
+        private ulong Internal;
         
         public BitBoard(BitBoard from)
         {
@@ -188,21 +177,37 @@ namespace Backend.Data.Struct
             Internal = from;
         }
 
-        public bool this[int h, int v]
+        #region Indexers
+
+        public bool this[Square sq]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (Internal >> OneD[v][h] & 1UL) == 1UL;
+            get => (Internal >> (int)sq & 1UL) == 1UL;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
-                if (value) Internal |= 1UL << OneD[v][h];
-                else Internal &= ~(1UL << OneD[v][h]);
+                if (value) Internal |= 1UL << (int)sq;
+                else Internal &= ~(1UL << (int)sq);
             }
         }
 
-        public IEnumerator<(int, int)> GetEnumerator()
+        public bool this[int i]
         {
-            return new BitBoardEnumerator(Internal, Count);
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (Internal >> i & 1UL) == 1UL;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set
+            {
+                if (value) Internal |= 1UL << i;
+                else Internal &= ~(1UL << i);
+            }
+        }
+        
+        #endregion
+
+        public BitBoardIterator GetEnumerator()
+        {
+            return new BitBoardIterator(Internal, Count);
         }
 
         public override bool Equals(object obj)
@@ -221,18 +226,13 @@ namespace Backend.Data.Struct
             for (int v = 7; v > Board.LBOUND; v--) {
                 string bitString = "";
                 for (int h = 0; h < Board.UBOUND; h++) {
-                    bitString += (this[h, v] ? 1 : "*") + " ";
+                    bitString += (this[v * 8 + h] ? 1 : "*") + " ";
                 }
 
                 final += bitString + "\n";
             }
 
             return final;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
 
         private bool Equals(BitBoard other)
@@ -242,7 +242,7 @@ namespace Backend.Data.Struct
 
     }
 
-    public class BitBoardEnumerator : IEnumerator<(int, int)>
+    public ref struct BitBoardIterator
     {
         
         private readonly int Count;
@@ -250,39 +250,30 @@ namespace Backend.Data.Struct
         private ulong Value;
         private int Iteration;
 
-        public BitBoardEnumerator(ulong value, int count)
+        public BitBoardIterator(ulong value, int count)
         {
             Value = value;
             Count = count;
+            Iteration = 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool MoveNext()
         {
             Iteration++;
             return Iteration <= Count;
         }
 
-        public void Reset()
+        public Square Current
         {
-            Iteration = 0;
-        }
-
-        object IEnumerator.Current => Current;
-
-        public (int, int) Current
-        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 int i = BitOperations.TrailingZeroCount(Value);
                 Value &= Value - 1;
 
-                return BitBoard.TwoD[i];
+                return (Square)i;
             }
-        }
-
-        public void Dispose()
-        {
-            GC.SuppressFinalize(this);
         }
 
     }
