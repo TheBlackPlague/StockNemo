@@ -42,7 +42,7 @@ namespace Backend
 
         private Board(Board board)
         {
-            Map = board.Map;
+            Map = board.Map.Copy();
         }
 
         private Board(string boardData, string turnData, string castlingData, string enPassantTargetData)
@@ -98,7 +98,7 @@ namespace Backend
         }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public void Move(Square from, Square to)
+        public RevertMove Move(Square from, Square to)
         {
             (Piece pieceF, PieceColor colorF) = Map[from];
             (Piece pieceT, PieceColor colorT) = Map[to];
@@ -107,17 +107,29 @@ namespace Backend
             if (colorF == colorT) {
                 throw InvalidMoveAttemptException.FromBoard(this, "Cannot move to same color.");
             }
+            
+            RevertMove rv = RevertMove.FromBitBoardMap(ref Map);
+            if (pieceT != Piece.Empty) {
+                rv.CapturedPiece = pieceT;
+                rv.CapturedColor = colorT;
+            }
 
             if (EnPassantTarget == to && pieceF == Piece.Pawn) {
                 Square epPiece = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
                 Map.Empty(epPiece);
+
+                rv.EnPassant = true;
+                rv.CapturedColor = Util.OppositeColor(colorF);
             }
 
             if (pieceF == Piece.Pawn && Math.Abs(to - from) == 16) {
                 Map.EnPassantTarget = colorF == PieceColor.White ? from + 8 : from - 8;
             } else Map.EnPassantTarget = Square.Na;
-            
+
             Map.Move(from, to);
+
+            rv.From = from;
+            rv.To = to;
 
             switch (pieceF) {
                 // Castling rights update on rook move
@@ -171,8 +183,15 @@ namespace Backend
                     // Castling.
                     int d = Math.Abs(to - from);
                     if (d == 2) {
-                        if (to > from) Map.Move(to + 1, to - 1); // King-side
-                        else Map.Move(to - 2, to + 1); // Queen-side
+                        if (to > from) { // King-side
+                            rv.SecondaryFrom = to + 1;
+                            rv.SecondaryTo = to - 1;
+                        } else { // Queen-side
+                            rv.SecondaryFrom = to - 2;
+                            rv.SecondaryTo = to + 1;
+                        }
+                        
+                        Map.Move(rv.SecondaryFrom, rv.SecondaryTo);
                     }
 
                     break;
@@ -204,12 +223,45 @@ namespace Backend
             }
 
             Map.WhiteTurn = !WhiteTurn;
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UndoMove(ref BitBoardMap map)
+            return rv;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        public void UndoMove(ref RevertMove rv)
         {
-            Map = map;
+            // Castling rights
+            Map.WhiteKCastle = rv.WhiteKCastle;
+            Map.WhiteQCastle = rv.WhiteQCastle;
+            Map.BlackKCastle = rv.BlackKCastle;
+            Map.BlackQCastle = rv.BlackQCastle;
+            
+            // EP target
+            Map.EnPassantTarget = rv.EnPassantTarget;
+            
+            // Flip turns
+            Map.WhiteTurn = rv.WhiteTurn;
+
+            // Move piece back
+            Map.Move(rv.To, rv.From);
+            
+            // If it was an E.P move, reset target and insert pawn
+            if (rv.EnPassant) {
+                Square insertion = rv.CapturedColor == PieceColor.White ? rv.To + 8 : rv.To - 8;
+                Map.InsertPiece(insertion, Piece.Pawn, rv.CapturedColor);
+                
+                return;
+            }
+
+            // If capture happened, insert piece at captured location
+            if (rv.CapturedPiece != Piece.Empty) {
+                Map.InsertPiece(rv.To, rv.CapturedPiece, rv.CapturedColor);
+                
+                return;
+            }
+
+            // If there was a secondary move (castling), revert the secondary move.
+            if (rv.SecondaryFrom != Square.Na) Map.Move(rv.SecondaryTo, rv.SecondaryFrom);
         }
         
         #endregion

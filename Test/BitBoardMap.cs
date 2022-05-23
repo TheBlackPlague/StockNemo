@@ -1,4 +1,5 @@
-﻿using Backend.Data.Enum;
+﻿using System;
+using Backend.Data.Enum;
 using Backend.Data.Struct;
 using NUnit.Framework;
 
@@ -41,7 +42,7 @@ namespace Test
         [Test]
         public void MoveWhitePawn()
         {
-            Backend.Data.Struct.BitBoardMap useMap = Map;
+            Backend.Data.Struct.BitBoardMap useMap = Map.Copy();
             
             useMap.Move(Square.A2, Square.A4);
             Assert.AreEqual((Piece.Pawn, PieceColor.White), useMap[Square.A4]);
@@ -50,7 +51,7 @@ namespace Test
         [Test]
         public void MoveWhitePawnInEnemy()
         {
-            Backend.Data.Struct.BitBoardMap useMap = Map;
+            Backend.Data.Struct.BitBoardMap useMap = Map.Copy();
             
             useMap.Move(Square.A2, Square.A7);
 
@@ -62,7 +63,7 @@ namespace Test
         [Test]
         public void RemoveWhitePawn()
         {
-            Backend.Data.Struct.BitBoardMap useMap = Map;
+            Backend.Data.Struct.BitBoardMap useMap = Map.Copy();
             
             useMap.Empty(Square.A2);
             Assert.AreEqual((Piece.Empty, PieceColor.None), useMap[Square.A2]);
@@ -75,6 +76,14 @@ namespace Test
             
             useMap.Move(Square.B1, Square.A3);
             Assert.AreEqual((Piece.Knight, PieceColor.White), useMap[Square.A3]);
+        }
+
+        [Test]
+        public void ConfirmBoardState()
+        {
+            string fen = Map.GenerateBoardFen();
+            Console.WriteLine(fen);
+            Assert.AreEqual("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", fen);
         }
 
     }

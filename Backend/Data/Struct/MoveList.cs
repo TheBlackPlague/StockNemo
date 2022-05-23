@@ -205,16 +205,15 @@ namespace Backend.Data.Struct
             PieceColor oppositeColor = Util.OppositeColor(color);
             
             BitBoard verifiedMoves = BitBoard.Default;
-            BitBoardMap originalState = Board.GetCurrentState;
             BitBoardIterator iterator = Moves.GetEnumerator();
             Square sq = iterator.Current;
             while (iterator.MoveNext()) {
-                Board.Move(From, sq);
+                RevertMove rv = Board.Move(From, sq);
 
                 BitBoard kingSafety = Board.KingLoc(color);
                 if (!UnderAttack(Board, kingSafety, oppositeColor)) verifiedMoves[sq] = true;
 
-                Board.UndoMove(ref originalState);
+                Board.UndoMove(ref rv);
 
                 sq = iterator.Current;
             }

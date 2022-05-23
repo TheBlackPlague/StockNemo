@@ -33,11 +33,6 @@ namespace Backend
             string fullMove = piece.ToString() + move;
             Console.WriteLine(fullMove.ToLower() + ": " + nodeC);
         }
-        
-        private static void LogNodeCount(Square piece, int nodeC)
-        {
-            Console.WriteLine(piece.ToString().ToLower() + ": " + nodeC);
-        }
 
         public Perft()
         {
@@ -99,22 +94,21 @@ namespace Backend
             if (depth < 5) {
                 BitBoardIterator coloredIterator = colored.GetEnumerator();
                 Square from = coloredIterator.Current;
-                BitBoardMap originalState = board.GetCurrentState;
                 if (depth == 1) {
                     while (coloredIterator.MoveNext()) {
                         MoveList moveList = new(board, from, false);
                         BitBoardIterator moveListIterator = moveList.Get().GetEnumerator();
                         Square move = moveListIterator.Current;
                         while (moveListIterator.MoveNext()) {
-                            board.Move(from, move);
+                            RevertMove rv = board.Move(from, move);
                             
                             BitBoard kingSafety = board.KingLoc(color);
                             if (!MoveList.UnderAttack(board, kingSafety, oppositeColor)) {
                                 count += 1UL;
-                                if (verbose) LogNodeCount(from, moveList.Count);
+                                if (verbose) LogNodeCount(from, move, (ulong)moveList.Count);
                             }
                             
-                            board.UndoMove(ref originalState);
+                            board.UndoMove(ref rv);
 
                             move = moveListIterator.Current;
                         }
@@ -127,7 +121,7 @@ namespace Backend
                         BitBoardIterator moveListIterator = moveList.Get().GetEnumerator();
                         Square move = moveListIterator.Current;
                         while (moveListIterator.MoveNext()) {
-                            board.Move(from, move);
+                            RevertMove rv = board.Move(from, move);
                             
                             BitBoard kingSafety = board.KingLoc(color);
                             if (!MoveList.UnderAttack(board, kingSafety, oppositeColor)) {
@@ -137,7 +131,7 @@ namespace Backend
                                 if (verbose) LogNodeCount(from, move, nextCount);
                             }
                             
-                            board.UndoMove(ref originalState);
+                            board.UndoMove(ref rv);
 
                             move = moveListIterator.Current;
                         }
@@ -153,12 +147,11 @@ namespace Backend
                     if (moves == BitBoard.Default) return;
                     
                     Board next = board.Clone();
-                    BitBoardMap originalState = next.GetCurrentState;
 
                     BitBoardIterator iterator = moves.GetEnumerator();
                     Square move = iterator.Current;
                     while (iterator.MoveNext()) {
-                        next.Move(from, move);
+                        RevertMove rv = next.Move(from, move);
                             
                         BitBoard kingSafety = next.KingLoc(color);
                         if (!MoveList.UnderAttack(next, kingSafety, oppositeColor)) {
@@ -168,7 +161,7 @@ namespace Backend
                             if (verbose) LogNodeCount(from, move, nextCount);
                         }
                             
-                        next.UndoMove(ref originalState);
+                        next.UndoMove(ref rv);
 
                         move = iterator.Current;
                     }

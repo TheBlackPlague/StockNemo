@@ -12,52 +12,11 @@ namespace Backend.Data.Struct
         
         private const string FEN_SPR = "/";
 
-        // White
-        private static readonly (Piece, PieceColor) Wp = (Piece.Pawn, PieceColor.White);
-        private static readonly (Piece, PieceColor) Wr = (Piece.Rook, PieceColor.White);
-        private static readonly (Piece, PieceColor) Wn = (Piece.Knight, PieceColor.White);
-        private static readonly (Piece, PieceColor) Wb = (Piece.Bishop, PieceColor.White);
-        private static readonly (Piece, PieceColor) Wq = (Piece.Queen, PieceColor.White);
-        private static readonly (Piece, PieceColor) Wk = (Piece.King, PieceColor.White);
-        
-        // Black
-        private static readonly (Piece, PieceColor) Bp = (Piece.Pawn, PieceColor.Black);
-        private static readonly (Piece, PieceColor) Br = (Piece.Rook, PieceColor.Black);
-        private static readonly (Piece, PieceColor) Bn = (Piece.Knight, PieceColor.Black);
-        private static readonly (Piece, PieceColor) Bb = (Piece.Bishop, PieceColor.Black);
-        private static readonly (Piece, PieceColor) Bq = (Piece.Queen, PieceColor.Black);
-        private static readonly (Piece, PieceColor) Bk = (Piece.King, PieceColor.Black);
-        
         // Empty
         private static readonly (Piece, PieceColor) E = (Piece.Empty, PieceColor.None);
 
-        // White
-        // ReSharper disable once InconsistentNaming
-        private BitBoard WPB;
-        // ReSharper disable once InconsistentNaming
-        private BitBoard WRB;
-        // ReSharper disable once InconsistentNaming
-        private BitBoard WNB;
-        // ReSharper disable once InconsistentNaming
-        private BitBoard WBB;
-        // ReSharper disable once InconsistentNaming
-        private BitBoard WQB;
-        // ReSharper disable once InconsistentNaming
-        private BitBoard WKB;
-        
-        // Black
-        // ReSharper disable once InconsistentNaming
-        private BitBoard BPB;
-        // ReSharper disable once InconsistentNaming
-        private BitBoard BRB;
-        // ReSharper disable once InconsistentNaming
-        private BitBoard BNB;
-        // ReSharper disable once InconsistentNaming
-        private BitBoard BBB;
-        // ReSharper disable once InconsistentNaming
-        private BitBoard BQB;
-        // ReSharper disable once InconsistentNaming
-        private BitBoard BKB;
+        private BitBoard[][] Bb;
+        private byte[] PiecesAndColors;
 
         private BitBoard White;
         private BitBoard Black;
@@ -70,37 +29,23 @@ namespace Backend.Data.Struct
         public bool BlackQCastle;
         
         public Square EnPassantTarget;
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Move(ref BitBoard board, Square from, Square to)
-        {
-            board[from] = false;
-            board[to] = true;
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Move(ref BitBoard fromBoard, ref BitBoard toBoard, Square from, Square to)
-        {
-            fromBoard[from] = false;
-            toBoard[to] = false;
-            fromBoard[to] = true;
-        }
 
         public BitBoardMap(string boardFen, string turnData, string castlingData, string enPassantTargetData)
         {
-            WPB = BitBoard.Default;
-            WRB = BitBoard.Default;
-            WNB = BitBoard.Default;
-            WBB = BitBoard.Default;
-            WQB = BitBoard.Default;
-            WKB = BitBoard.Default;
-            BPB = BitBoard.Default;
-            BRB = BitBoard.Default;
-            BNB = BitBoard.Default;
-            BBB = BitBoard.Default;
-            BQB = BitBoard.Default;
-            BKB = BitBoard.Default;
-            
+            PiecesAndColors = new byte[64];
+            for (int i = 0; i < 64; i++) PiecesAndColors[i] = 0x20;
+
+            Bb = new[] {
+                new [] {
+                    BitBoard.Default, BitBoard.Default, BitBoard.Default, 
+                    BitBoard.Default, BitBoard.Default, BitBoard.Default
+                },
+                new [] {
+                    BitBoard.Default, BitBoard.Default, BitBoard.Default, 
+                    BitBoard.Default, BitBoard.Default, BitBoard.Default
+                }
+            };
+
             string[] expandedBoardData = boardFen.Split(FEN_SPR).Reverse().ToArray();
             if (expandedBoardData.Length != Board.UBOUND) 
                 throw new InvalidDataException("Wrong board data provided: " + boardFen);
@@ -117,43 +62,55 @@ namespace Backend.Data.Struct
                     if (char.IsUpper(p)) {
                         switch (p) {
                             case 'P':
-                                WPB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.White][(int)Piece.Pawn][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x0;
                                 break;
                             case 'R':
-                                WRB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.White][(int)Piece.Rook][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x1;
                                 break;
                             case 'N':
-                                WNB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.White][(int)Piece.Knight][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x2;
                                 break;
                             case 'B':
-                                WBB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.White][(int)Piece.Bishop][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x3;
                                 break;
                             case 'Q':
-                                WQB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.White][(int)Piece.Queen][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x4;
                                 break;
                             case 'K':
-                                WKB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.White][(int)Piece.King][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x5;
                                 break;
                         }
                     } else {
                         switch (p) {
                             case 'p':
-                                BPB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.Black][(int)Piece.Pawn][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x10;
                                 break;
                             case 'r':
-                                BRB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.Black][(int)Piece.Rook][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x11;
                                 break;
                             case 'n':
-                                BNB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.Black][(int)Piece.Knight][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x12;
                                 break;
                             case 'b':
-                                BBB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.Black][(int)Piece.Bishop][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x13;
                                 break;
                             case 'q':
-                                BQB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.Black][(int)Piece.Queen][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x14;
                                 break;
                             case 'k':
-                                BKB[v * 8 + h] = true;
+                                Bb[(int)PieceColor.Black][(int)Piece.King][v * 8 + h] = true;
+                                PiecesAndColors[v * 8 + h] = 0x15;
                                 break;
                         }
                     }
@@ -173,38 +130,54 @@ namespace Backend.Data.Struct
                 EnPassantTarget = System.Enum.Parse<Square>(enPassantTargetData, true);
             }
 
-            White = WPB | WRB | WNB | WBB | WQB | WKB;
-            Black = BPB | BRB | BNB | BBB | BQB | BKB;
+            White = Bb[(int)PieceColor.White][(int)Piece.Pawn] | Bb[(int)PieceColor.White][(int)Piece.Rook] | 
+                    Bb[(int)PieceColor.White][(int)Piece.Knight] | Bb[(int)PieceColor.White][(int)Piece.Bishop] | 
+                    Bb[(int)PieceColor.White][(int)Piece.Queen] | Bb[(int)PieceColor.White][(int)Piece.King];
+            Black = Bb[(int)PieceColor.Black][(int)Piece.Pawn] | Bb[(int)PieceColor.Black][(int)Piece.Rook] | 
+                    Bb[(int)PieceColor.Black][(int)Piece.Knight] | Bb[(int)PieceColor.Black][(int)Piece.Bishop] | 
+                    Bb[(int)PieceColor.Black][(int)Piece.Queen] | Bb[(int)PieceColor.Black][(int)Piece.King];
+        }
+
+        // ReSharper disable once SuggestBaseTypeForParameterInConstructor
+        private BitBoardMap(BitBoardMap map, BitBoard[][] bb, byte[] piecesAndColors)
+        {
+            White = map.White;
+            Black = map.Black;
+            WhiteKCastle = map.WhiteKCastle;
+            WhiteQCastle = map.WhiteQCastle;
+            BlackKCastle = map.BlackKCastle;
+            BlackQCastle = map.BlackQCastle;
+            WhiteTurn = map.WhiteTurn;
+            EnPassantTarget = map.EnPassantTarget;
+            
+            PiecesAndColors = new byte[64];
+            Bb = new BitBoard[2][];
+
+            for (int i = 0; i < 2; i++) {
+                Bb[i] = new BitBoard[6];
+                Array.Copy(bb[i], Bb[i], 6);
+            }
+            Array.Copy(piecesAndColors, PiecesAndColors, 64);
         }
 
         public (Piece, PieceColor) this[Square sq]
         {
-            [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (White[sq]) {
-                    if (WPB[sq]) return Wp;
-                    if (WRB[sq]) return Wr;
-                    if (WNB[sq]) return Wn;
-                    if (WBB[sq]) return Wb;
-                    if (WQB[sq]) return Wq;
-                    if (WKB[sq]) return Wk;
-                } else if (Black[sq]) {
-                    if (BPB[sq]) return Bp;
-                    if (BRB[sq]) return Br;
-                    if (BNB[sq]) return Bn;
-                    if (BBB[sq]) return Bb;
-                    if (BQB[sq]) return Bq;
-                    if (BKB[sq]) return Bk;
-                }
-
-                return E;
+                byte r = PiecesAndColors[(int)sq];
+                return r switch
+                {
+                    < 0x6 => ((Piece)r, PieceColor.White),
+                    < 0x16 => ((Piece)(r - 0x10), PieceColor.Black),
+                    _ => E
+                };
             }
         }
 
         public readonly BitBoard this[PieceColor color]
         {
-            [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 return color switch
@@ -219,96 +192,30 @@ namespace Backend.Data.Struct
 
         public readonly BitBoard this[Piece piece, PieceColor color]
         {
-            [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-            get
-            {
-                return color switch
-                {
-                    PieceColor.White => piece switch
-                    {
-                        Piece.Pawn => WPB,
-                        Piece.Rook => WRB,
-                        Piece.Knight => WNB,
-                        Piece.Bishop => WBB,
-                        Piece.Queen => WQB,
-                        Piece.King => WKB,
-                        Piece.Empty or _ => throw new InvalidOperationException("Must provide a piece type.")
-                    },
-                    PieceColor.Black => piece switch
-                    {
-                        Piece.Pawn => BPB,
-                        Piece.Rook => BRB,
-                        Piece.Knight => BNB,
-                        Piece.Bishop => BBB,
-                        Piece.Queen => BQB,
-                        Piece.King => BKB,
-                        Piece.Empty or _ => throw new InvalidOperationException("Must provide a piece type.")
-                    },
-                    _ or PieceColor.None => throw new InvalidOperationException("Must provide a color.")
-                };
-            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Bb[(int)color][(int)piece];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public void Move(Square from, Square to)
         {
-            ref BitBoard fromBoard = ref WPB;
-            ref BitBoard toBoard = ref WPB;
-            bool toBoardSet = false;
-            PieceColor f = PieceColor.White;
-            PieceColor t = PieceColor.White;
-            
-            if (White[from]) {
-                // White
-                if (WPB[from]) fromBoard = ref WPB;
-                if (WRB[from]) fromBoard = ref WRB;
-                if (WNB[from]) fromBoard = ref WNB;
-                if (WBB[from]) fromBoard = ref WBB;
-                if (WQB[from]) fromBoard = ref WQB;
-                if (WKB[from]) fromBoard = ref WKB;
-            } else if (Black[from]) {
-                // Black
-                f = PieceColor.Black;
-                if (BPB[from]) fromBoard = ref BPB;
-                if (BRB[from]) fromBoard = ref BRB;
-                if (BNB[from]) fromBoard = ref BNB;
-                if (BBB[from]) fromBoard = ref BBB;
-                if (BQB[from]) fromBoard = ref BQB;
-                if (BKB[from]) fromBoard = ref BKB;
-            } else {
-                Console.WriteLine("White:\n" + this[PieceColor.White] + "\n");
-                Console.WriteLine("Black:\n" + this[PieceColor.Black] + "\n");
-                throw new InvalidOperationException("Cannot move empty piece: " + from);
-            }
-            
-            if (White[to]) {
-                toBoardSet = true;
-                // White
-                if (WRB[to]) toBoard = ref WRB;
-                if (WNB[to]) toBoard = ref WNB;
-                if (WPB[to]) toBoard = ref WPB;
-                if (WBB[to]) toBoard = ref WBB;
-                if (WQB[to]) toBoard = ref WQB;
-                if (WKB[to]) toBoard = ref WKB;
-            } else if (Black[to]) {
-                toBoardSet = true;
-                // Black
-                t = PieceColor.Black;
-                if (BPB[to]) toBoard = ref BPB;
-                if (BRB[to]) toBoard = ref BRB;
-                if (BNB[to]) toBoard = ref BNB;
-                if (BBB[to]) toBoard = ref BBB;
-                if (BQB[to]) toBoard = ref BQB;
-                if (BKB[to]) toBoard = ref BKB;
-            }
+            (Piece pF, PieceColor cF) = this[from];
+            (Piece pT, PieceColor cT) = this[to];
 
-            if (toBoardSet) {
-                Move(ref fromBoard, ref toBoard, from, to);
-                if (t == PieceColor.White) White[to] = false;
+            if (pT != Piece.Empty) {
+                Bb[(int)cT][(int)pT][to] = false;
+                
+                if (cT == PieceColor.White) White[to] = false;
                 else Black[to] = false;
-            } else Move(ref fromBoard, from, to);
+            }
+            
+            Bb[(int)cF][(int)pF][from] = false;
+            Bb[(int)cF][(int)pF][to] = true;
 
-            if (f == PieceColor.White) {
+            PiecesAndColors[(int)to] = PiecesAndColors[(int)from];
+            PiecesAndColors[(int)from] = 0x20;
+
+            if (cF == PieceColor.White) {
                 White[from] = false;
                 White[to] = true;
             } else {
@@ -317,31 +224,32 @@ namespace Backend.Data.Struct
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Empty(Square sq)
         {
-            if (White[sq]) {
-                // White
-                White[sq] = false;
-                if (WPB[sq]) WPB[sq] = false;
-                if (WRB[sq]) WRB[sq] = false;
-                if (WNB[sq]) WNB[sq] = false;
-                if (WBB[sq]) WBB[sq] = false;
-                if (WQB[sq]) WQB[sq] = false;
-                if (WKB[sq]) WKB[sq] = false;
-            } else if (Black[sq]) {
-                // Black
-                Black[sq] = false;
-                if (BPB[sq]) BPB[sq] = false;
-                if (BRB[sq]) BRB[sq] = false;
-                if (BNB[sq]) BNB[sq] = false;
-                if (BBB[sq]) BBB[sq] = false;
-                if (BQB[sq]) BQB[sq] = false;
-                if (BKB[sq]) BKB[sq] = false;
-            } else throw new InvalidOperationException("Attempting to set already empty piece empty.");
+            (Piece p, PieceColor c) = this[sq];
+            Bb[(int)c][(int)p][sq] = false;
+            PiecesAndColors[(int)sq] = 0x20;
+
+            if (c == PieceColor.White) White[sq] = false;
+            else Black[sq] = false;
         }
 
-        internal string GenerateBoardFen()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InsertPiece(Square sq, Piece piece, PieceColor color)
+        {
+            Bb[(int)color][(int)piece][sq] = true;
+            if (color == PieceColor.White) White[sq] = true;
+            else Black[sq] = true;
+            
+            int offset = color == PieceColor.White ? 0x0 : 0x10;
+            PiecesAndColors[(int)sq] = (byte)((int)piece + offset);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public BitBoardMap Copy() => new(this, Bb, PiecesAndColors);
+
+        public string GenerateBoardFen()
         {
             string[] expandedBoardData = new string[Board.UBOUND];
             for (int v = 0; v < Board.UBOUND; v++) {

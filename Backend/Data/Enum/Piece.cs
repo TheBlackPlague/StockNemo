@@ -3,14 +3,14 @@
 
     public enum Piece
     {
-
-        Empty,
+        
         Pawn,
-        Knight,
         Rook,
+        Knight,
         Bishop,
         Queen,
-        King
+        King,
+        Empty
 
     }
 
