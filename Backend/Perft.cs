@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend.Data.Enum;
@@ -10,8 +9,7 @@ namespace Backend
 
     public class Perft
     {
-
-        private const ulong D0 = 1;
+        
         private const ulong D1 = 20;
         private const ulong D2 = 400;
         private const ulong D3 = 8902;
