@@ -51,9 +51,7 @@ namespace Backend
         }
 
         #region Readonly Properties
-        
-        public BitBoardMap GetCurrentState => Map;
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (bool, bool) CastlingRight(PieceColor color) => color == PieceColor.White ? 
             (Map.WhiteQCastle, Map.WhiteKCastle) : (Map.BlackQCastle, Map.BlackKCastle);
