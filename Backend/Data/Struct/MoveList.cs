@@ -98,28 +98,26 @@ namespace Backend.Data.Struct
             BitBoard from = From;
             BitBoard opposite = Board.All(oppositeColor);
             
-            if (true) {
-                // Normal
-                // 1 Push
-                Moves |= (color == PieceColor.White ? from << 8 : from >> 8) & Board.All(PieceColor.None);
+            // Normal
+            // 1 Push
+            Moves |= (color == PieceColor.White ? from << 8 : from >> 8) & Board.All(PieceColor.None);
                 
-                if (((int)From is > 7 and < 16 || (int)From is > 47 and < 56) && Moves) {
-                    // 2 Push
-                    Moves |= color == PieceColor.White ? from << 16 : from >> 16;
-                }
+            if (((int)From is > 7 and < 16 || (int)From is > 47 and < 56) && Moves) {
+                // 2 Push
+                Moves |= color == PieceColor.White ? from << 16 : from >> 16;
+            }
 
-                Moves &= ~opposite;
+            Moves &= ~opposite;
 
-                // En Passant
-                if (Board.EnPassantTarget != Square.Na) {
-                    Square epPieceSq = color == PieceColor.White ? 
-                        Board.EnPassantTarget - 8 : Board.EnPassantTarget + 8;
-                    bool epTargetPieceExists = Board.All(Piece.Pawn, oppositeColor)[epPieceSq];
-                    BitBoard reverseCorner = color == PieceColor.White
-                        ? AttackTable.BlackPawnAttacks[(int)Board.EnPassantTarget]
-                        : AttackTable.WhitePawnAttacks[(int)Board.EnPassantTarget];
-                    if (epTargetPieceExists & reverseCorner[From]) Moves |= Board.EnPassantTarget;
-                }
+            // En Passant
+            if (Board.EnPassantTarget != Square.Na) {
+                Square epPieceSq = color == PieceColor.White ? 
+                    Board.EnPassantTarget - 8 : Board.EnPassantTarget + 8;
+                bool epTargetPieceExists = Board.All(Piece.Pawn, oppositeColor)[epPieceSq];
+                BitBoard reverseCorner = color == PieceColor.White
+                    ? AttackTable.BlackPawnAttacks[(int)Board.EnPassantTarget]
+                    : AttackTable.WhitePawnAttacks[(int)Board.EnPassantTarget];
+                if (epTargetPieceExists & reverseCorner[From]) Moves |= Board.EnPassantTarget;
             }
             
             // Attack Moves
