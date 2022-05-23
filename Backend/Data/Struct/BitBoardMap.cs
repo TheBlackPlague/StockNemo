@@ -15,8 +15,8 @@ namespace Backend.Data.Struct
         // Empty
         private static readonly (Piece, PieceColor) E = (Piece.Empty, PieceColor.None);
 
-        private BitBoard[][] Bb;
-        private byte[] PiecesAndColors;
+        private readonly BitBoard[][] Bb;
+        private readonly byte[] PiecesAndColors;
 
         private BitBoard White;
         private BitBoard Black;
