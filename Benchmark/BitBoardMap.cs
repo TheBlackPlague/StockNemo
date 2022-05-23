@@ -4,6 +4,7 @@ using BenchmarkDotNet.Attributes;
 namespace Benchmark
 {
 
+    [DisassemblyDiagnoser]
     public class BitBoardMap
     {
 
