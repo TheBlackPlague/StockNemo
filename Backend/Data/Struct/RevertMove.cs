@@ -1,4 +1,5 @@
-﻿using Backend.Data.Enum;
+﻿using System.Runtime.CompilerServices;
+using Backend.Data.Enum;
 
 namespace Backend.Data.Struct
 {
@@ -29,6 +30,7 @@ namespace Backend.Data.Struct
 
         #region BitBoardMap based Constructor
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RevertMove FromBitBoardMap(ref BitBoardMap map)
         {
             return new RevertMove
