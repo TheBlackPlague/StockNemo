@@ -12,7 +12,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: 5.0.207
+          dotnet-version: 6.0.300
       - name: Build for Windows 10/11. (x64)
         run: |
           cd Terminal
@@ -45,7 +45,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: 5.0.207
+          dotnet-version: 6.0.300
       - name: Build for Linux. (x64)
         run: |
           cd Terminal
@@ -78,7 +78,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: 5.0.207
+          dotnet-version: 6.0.300
       - name: Build for MacOS Mojave. (x64)
         run: |
           cd Terminal
