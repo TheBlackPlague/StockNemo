@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 using Backend;
 using Backend.Data.Enum;
 using Backend.Data.Move;
@@ -15,6 +16,9 @@ internal static class Program
 
     private static void Main(string[] args)
     {
+        TaskFactory factory = new();
+        Task hardwareInitializationTask = factory.StartNew(HardwareInitializer.Setup);
+        
         OutputTitle();
         AttackTable.SetUp();
         switch (args.Length) {
@@ -28,6 +32,8 @@ internal static class Program
                 Board = Board.Default();
                 break;
         }
+
+        hardwareInitializationTask.Wait();
 
         OperationLoop();
     }
@@ -136,15 +142,19 @@ internal static class Program
     {
         Console.WriteLine("StockNemo v" + Version.Get());
         Console.WriteLine("Copyright (c) Shaheryar Sohail. All rights reserved.");
-        Console.WriteLine("┌───────────────────┐");
-        Console.WriteLine("│  Chess Board CLI  │");
-        Console.WriteLine("└───────────────────┘");
     }
 
     private static void Draw()
     {
         Console.Clear();
         OutputTitle();
+        
+        HardwareInfoDisplay display = HardwareInitializer.Display();
+        
+        Console.WriteLine("┌───────────────────┐  ┌" + display.CpuDash + "┐");
+        Console.WriteLine("│  Chess Board CLI  │  │  " + display.CpuName + "  │");
+        Console.WriteLine("└───────────────────┘  └" + display.CpuDash + "┘");
+        
         string board = Board.ToString();
         Console.WriteLine(board);
     }
