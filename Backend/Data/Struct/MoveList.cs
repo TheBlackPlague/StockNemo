@@ -125,7 +125,7 @@ namespace Backend.Data.Struct
             // Push pawn once.
             Moves |= (color == PieceColor.White ? from << 8 : from >> 8) & Board.All(PieceColor.None);
             
-            if (((int)From is > 7 and < 16 || (int)From is > 47 and < 56) && Moves) {
+            if (From is > Square.H1 and < Square.A3 or > Square.H6 and < Square.A8 && Moves) {
                 // If we are on the starting pawn position & the first pawn push was successful.
                 // Push once more.
                 Moves |= color == PieceColor.White ? from << 16 : from >> 16;
