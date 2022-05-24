@@ -192,6 +192,8 @@ namespace Backend
                         if (!MoveList.UnderAttack(next, kingSafety, oppositeColor)) {
                             // If our king is safe, that move is legal and we can calculate moves at lesser
                             // depth recursively, but we shouldn't divide at lesser depth.
+                            // We don't use a pre-calculated depth since getting the resources from the main thread
+                            // is actually more expensive than just doing the calculation here.
                             ulong nextCount = MoveGeneration(next, depth - 1, false);
                             
                             // Add the number of moves calculated at the lesser depth. Since we're going to be adding
