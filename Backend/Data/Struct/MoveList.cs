@@ -9,6 +9,11 @@ namespace Backend.Data.Struct
     public ref struct MoveList
     {
 
+        private const ulong WHITE_KING_CASTLE = 0x60;
+        private const ulong BLACK_KING_CASTLE = WHITE_KING_CASTLE << 56;
+        private const ulong WHITE_QUEEN_CASTLE = 0xE;
+        private const ulong BLACK_QUEEN_CASTLE = WHITE_QUEEN_CASTLE << 56;
+
         private readonly Board Board;
         private readonly Square From;
 
@@ -230,12 +235,7 @@ namespace Backend.Data.Struct
             // Make sure castling close-path isn't under attack.
             if (q && !UnderAttack(Board, From - 1, oppositeColor)) {
                 // Generate path of castle queen-side.
-                BitBoard path = new(BitBoard.Default)
-                {
-                    [From - 3] = true,
-                    [From - 2] = true,
-                    [From - 1] = true
-                };
+                BitBoard path = color == PieceColor.White ? WHITE_QUEEN_CASTLE : BLACK_QUEEN_CASTLE;
                 
                 // If path is empty, we can castle.
                 BitBoard all = ~Board.All(PieceColor.None);
@@ -248,11 +248,7 @@ namespace Backend.Data.Struct
             // Make sure castling close-path isn't under attack.
             if (k && !UnderAttack(Board, From + 1, oppositeColor)) {
                 // Generate path of castle king-side.
-                BitBoard path = new(BitBoard.Default)
-                {
-                    [From + 2] = true,
-                    [From + 1] = true
-                };
+                BitBoard path = color == PieceColor.White ? WHITE_KING_CASTLE : BLACK_KING_CASTLE;
                 
                 // If path is empty, we can castle.
                 BitBoard all = ~Board.All(PieceColor.None);
