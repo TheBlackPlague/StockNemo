@@ -19,19 +19,41 @@ namespace Backend.Data.Struct
         public static bool UnderAttack(Board board, Square sq, PieceColor by)
         {
             int s = (int)sq;
+            
+            // First, we check if the square is being attacked by pawns.
+            // To do this, we generate a reverse attack mask, letting our square act as a pawn and seeing if opposing
+            // pawns exist on the squares in the mask. If so, our square can be attacked by pawns.
             BitBoard pawnAttack = by == PieceColor.White ? 
                 AttackTable.BlackPawnAttacks[s] : AttackTable.WhitePawnAttacks[s];
             if (pawnAttack & board.All(Piece.Pawn, by)) return true;
+            
+            // Then, we check if the square is being attacked by knights.
+            // To do this, we generate a reverse attack mask, letting our square act as a knight and seeing if opposing
+            // knights exist on the squares in the mask. If so, our square can be attacked by knights.
             if (AttackTable.KnightMoves[s] & board.All(Piece.Knight, by)) return true;
+            
+            // Next, we check if the square is being attacked by sliding pieces.
+            // To do this, first we need to find all occupied squares (by our and opposing pieces).
             BitBoard occupied = ~board.All(PieceColor.None);
+            
+            // We should check queen along with rook/bishop as queen moves are (rook moves | bishop moves).
             BitBoard queen = board.All(Piece.Queen, by);
                 
+            // Generate a reverse attack mask for rook, letting our square act as a rook and seeing if opposing rook or
+            // queen exist on the squares in the mask. If so, our square can be attacked by either rook or queen.
             int mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, occupied, sq);
             if (AttackTable.SlidingMoves[mIndex] & (queen | board.All(Piece.Rook, by))) return true;
                 
+            // Generate a reverse attack mask for bishop, letting our square act as a rook and seeing if opposing
+            // bishop or queen exist on the squares in the mask. If so, our square can be attacked by either bishop
+            // or queen.
             mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, occupied, sq);
             if (AttackTable.SlidingMoves[mIndex] & (queen | board.All(Piece.Bishop, by))) return true;
                 
+            // Lastly, we check if our square is being attacked by a king.
+            // We generate a reverse attack mask, letting our square act as king and then check if there if opposing
+            // king exists on the squares in the mask. If so, our square can be attacked by king.
+            // Otherwise, this square is completely safe from all pieces.
             return AttackTable.KingMoves[s] & board.All(Piece.King, by);
         }
 

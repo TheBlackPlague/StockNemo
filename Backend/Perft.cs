@@ -38,7 +38,7 @@ namespace Backend
             Console.WriteLine(Board.ToString());
             
             // Involve JIT.
-            MoveGeneration(Board, 4, verbose: false);
+            MoveGeneration(Board, 4, divide: false);
         }
         
         public (ulong, ulong) Depth1()
@@ -79,33 +79,46 @@ namespace Backend
         public static ulong MoveGeneration(
             Board board, 
             int depth, 
-            bool verbose = true
+            bool divide = true
             )
         {
+            // Store the count in a uint64.
             ulong count = 0;
 
+            // Figure out color and opposite color from the one set in the board.
             PieceColor color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
             PieceColor oppositeColor = Util.OppositeColor(color);
-            int nextDepth = depth - 1;
-         
+
+            // Get all squares occupied by our color.
             BitBoard colored = board.All(color);
             if (depth < 5) {
+                // If depth is less than 5 (1 - 4), we should do PERFT synchronously as it's fast enough that the cost
+                // of pushing to other threads actually slows it down.
                 BitBoardIterator coloredIterator = colored.GetEnumerator();
                 Square from = coloredIterator.Current;
                 if (depth == 1) {
+                    // If depth is 1, then we don't need to do any further recursion and can just do +1 to the count.
                     while (coloredIterator.MoveNext()) {
+                        // Generate all pseudo-legal moves for our square iteration.
                         MoveList moveList = new(board, from, false);
                         BitBoardIterator moveListIterator = moveList.Get().GetEnumerator();
                         Square move = moveListIterator.Current;
+                        
                         while (moveListIterator.MoveNext()) {
+                            // Make our move iteration for our square iteration. Save the revert move for reverting
+                            // in future.
                             RevertMove rv = board.Move(from, move);
                             
                             BitBoard kingSafety = board.KingLoc(color);
                             if (!MoveList.UnderAttack(board, kingSafety, oppositeColor)) {
-                                count += 1UL;
-                                if (verbose) LogNodeCount(from, move, (ulong)moveList.Count);
+                                // If our king is safe, that move is legal and can be added to the count.
+                                count++;
+                                
+                                // If we're dividing at this depth, log the move with the count.
+                                if (divide) LogNodeCount(from, move, (ulong)moveList.Count);
                             }
                             
+                            // Revert the move to get back to original state.
                             board.UndoMove(ref rv);
 
                             move = moveListIterator.Current;
@@ -114,21 +127,35 @@ namespace Backend
                         from = coloredIterator.Current;
                     }
                 } else {
+                    // If depth is > 1, then we need to do recursion at depth = depth - 1.
+                    // Pre-figure our next depth to avoid calculations inside loop.
+                    int nextDepth = depth - 1;
+                    
                     while (coloredIterator.MoveNext()) {
+                        // Generate all pseudo-legal moves for our square iteration.
                         MoveList moveList = new(board, from, false);
                         BitBoardIterator moveListIterator = moveList.Get().GetEnumerator();
                         Square move = moveListIterator.Current;
+                        
                         while (moveListIterator.MoveNext()) {
+                            // Make our move iteration for our square iteration. Save the revert move for reverting
+                            // in future.
                             RevertMove rv = board.Move(from, move);
                             
                             BitBoard kingSafety = board.KingLoc(color);
                             if (!MoveList.UnderAttack(board, kingSafety, oppositeColor)) {
+                                // If our king is safe, that move is legal and we can calculate moves at lesser
+                                // depth recursively, but we shouldn't divide at lesser depth.
                                 ulong nextCount = MoveGeneration(board, nextDepth, false);
+                                
+                                // Add the number of moves calculated at the lesser depth.
                                 count += nextCount;
                                 
-                                if (verbose) LogNodeCount(from, move, nextCount);
+                                // If we're dividing at this depth, log the move with the count.
+                                if (divide) LogNodeCount(from, move, nextCount);
                             }
                             
+                            // Revert the move to get back to original state.
                             board.UndoMove(ref rv);
 
                             move = moveListIterator.Current;
@@ -138,27 +165,45 @@ namespace Backend
                     }
                 }
             } else {
+                // If depth is more than 4, we can achieve significant performance increase by running recursive
+                // iterations in parallel.
                 Parallel.ForEach((Square[])colored, ParallelOptions, from =>
                 {
+                    // Generate all pseudo-legal moves for our square iteration.
                     MoveList moveList = new(board, from, false);
                     BitBoard moves = moveList.Get();
+                    
+                    // If there are no legal moves, we don't need to waste further resources on this iteration.
                     if (moves == BitBoard.Default) return;
                     
+                    // Clone the board to allow memory-safe operations: ensures that there are no overrides from
+                    // other threads.
                     Board next = board.Clone();
 
                     BitBoardIterator iterator = moves.GetEnumerator();
                     Square move = iterator.Current;
+                    
                     while (iterator.MoveNext()) {
+                        // Make our move iteration for our square iteration. Save the revert move for reverting
+                        // in future.
                         RevertMove rv = next.Move(from, move);
                             
                         BitBoard kingSafety = next.KingLoc(color);
                         if (!MoveList.UnderAttack(next, kingSafety, oppositeColor)) {
+                            // If our king is safe, that move is legal and we can calculate moves at lesser
+                            // depth recursively, but we shouldn't divide at lesser depth.
                             ulong nextCount = MoveGeneration(next, depth - 1, false);
+                            
+                            // Add the number of moves calculated at the lesser depth. Since we're going to be adding
+                            // from multiple threads, it's possible that race-conditions occur. That's why we have to
+                            // lock all threads while the addition is happening.
                             Interlocked.Add(ref count, nextCount);
                                 
-                            if (verbose) LogNodeCount(from, move, nextCount);
+                            // If we're dividing at this depth, log the move with the count.
+                            if (divide) LogNodeCount(from, move, nextCount);
                         }
                             
+                        // Revert the move to get back to original state.
                         next.UndoMove(ref rv);
 
                         move = iterator.Current;
