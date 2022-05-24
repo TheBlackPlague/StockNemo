@@ -144,6 +144,7 @@ namespace Backend.Data.Struct
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Square(BitBoard bitBoard)
         {
+            // Intrinsic: TZCNT
             return (Square)BitOperations.TrailingZeroCount(bitBoard.Internal);
         }
 
@@ -163,7 +164,9 @@ namespace Backend.Data.Struct
         
         #endregion
         
-        public int Count => BitOperations.PopCount(Internal); // Number of set bits.
+        // Number of set bits.
+        // Intrinsic: POPCNT
+        public int Count => BitOperations.PopCount(Internal);
 
         private ulong Internal;
         
@@ -270,6 +273,8 @@ namespace Backend.Data.Struct
             get
             {
                 int i = BitOperations.TrailingZeroCount(Value);
+                
+                // Subtract 1 and only hold set bits in that mask.
                 Value &= Value - 1;
 
                 return (Square)i;

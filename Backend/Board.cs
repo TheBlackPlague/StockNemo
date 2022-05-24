@@ -3,7 +3,6 @@ using System.Drawing;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
-using Backend.Exception;
 using BetterConsoles.Core;
 using BetterConsoles.Tables;
 using BetterConsoles.Tables.Builders;
@@ -75,24 +74,31 @@ namespace Backend
 
         #region Move
         
-        public MoveAttempt SecureMove(Square from, Square to)
+        public MoveResult SecureMove(Square from, Square to)
         {
             MoveList moveList = new(this, from);
             BitBoard moves = moveList.Get();
 
-            if (!moves[to]) return MoveAttempt.Fail;
+            // If the requested move isn't found in legal moves for our square, then we cannot make the move
+            // securely. Return a failure result.
+            if (!moves[to]) return MoveResult.Fail;
             
+            // Make the move.
             Move(from, to);
-
+            
             PieceColor color = Map[to].Item2;
             PieceColor oppositeColor = Util.OppositeColor(color);
 
+            // Get all legal moves available for opposing pieces.
             MoveList opposingMoveList = new(this, oppositeColor);
-            if (opposingMoveList.Count == 0) return MoveAttempt.Checkmate;
+            
+            // If opponent cannot make a legal move, it means they have no moves left which is a checkmate.
+            if (opposingMoveList.Count == 0) return MoveResult.Checkmate;
 
+            // If the king is under attack, it's a check. Otherwise it was just a successful move.
             BitBoard kingLoc = KingLoc(oppositeColor);
             return MoveList.UnderAttack(this, kingLoc, color) ? 
-                MoveAttempt.SuccessAndCheck : MoveAttempt.Success;
+                MoveResult.SuccessAndCheck : MoveResult.Success;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -101,36 +107,49 @@ namespace Backend
             (Piece pieceF, PieceColor colorF) = Map[from];
             (Piece pieceT, PieceColor colorT) = Map[to];
             
-            // Can't move same color.
-            if (colorF == colorT) {
-                throw InvalidMoveAttemptException.FromBoard(this, "Cannot move to same color.");
-            }
+            // This is a debug exception left in to help with debugging.
+            // In real-world scenarios, it should never occur.
+            // We cannot move a piece to the same color.
+            // if (colorF == colorT) {
+            //     throw InvalidMoveAttemptException.FromBoard(this, "Cannot move to same color.");
+            // }
             
+            // Generate a revert move before the map has been altered.
             RevertMove rv = RevertMove.FromBitBoardMap(ref Map);
+            
             if (pieceT != Piece.Empty) {
+                // If piece we're moving to isn't an empty one, we will be capturing.
+                // Thus, we need to set it in revert move to ensure we can properly revert it.
                 rv.CapturedPiece = pieceT;
                 rv.CapturedColor = colorT;
             }
 
             if (EnPassantTarget == to && pieceF == Piece.Pawn) {
+                // If the attack is an EP attack, we must empty the piece affected by EP.
                 Square epPiece = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
                 Map.Empty(epPiece);
 
+                // Set it in revert move.
                 rv.EnPassant = true;
+                
+                // We only need to reference the color.
                 rv.CapturedColor = Util.OppositeColor(colorF);
             }
 
             if (pieceF == Piece.Pawn && Math.Abs(to - from) == 16) {
+                // If the pawn push is a 2-push, the square behind it will be EP target.
                 Map.EnPassantTarget = colorF == PieceColor.White ? from + 8 : from - 8;
             } else Map.EnPassantTarget = Square.Na;
 
+            // Make the move.
             Map.Move(from, to);
 
+            // Update revert move.
             rv.From = from;
             rv.To = to;
 
             switch (pieceF) {
-                // Castling rights update on rook move
+                // If our rook moved, we must update castling rights.
                 case Piece.Rook:
                     switch (colorF) {
                         case PieceColor.White:
@@ -161,9 +180,9 @@ namespace Backend
                     }
 
                     break;
-                // Castling rights update on king move & castling
+                
+                // If our king moved, we also must update castling rights.
                 case Piece.King:
-                {
                     switch (colorF) {
                         case PieceColor.White:
                             Map.WhiteKCastle = false;
@@ -177,10 +196,11 @@ namespace Backend
                         default:
                             throw new InvalidOperationException("King cannot have no color.");
                     }
-
-                    // Castling.
+                    
                     int d = Math.Abs(to - from);
                     if (d == 2) {
+                        // In the case the king moved to castle, we must also move the rook accordingly,
+                        // making a secondary move. To ensure proper reverting, we must also update our revert move.
                         if (to > from) { // King-side
                             rv.SecondaryFrom = to + 1;
                             rv.SecondaryTo = to - 1;
@@ -189,11 +209,11 @@ namespace Backend
                             rv.SecondaryTo = to + 1;
                         }
                         
+                        // Make the secondary move.
                         Map.Move(rv.SecondaryFrom, rv.SecondaryTo);
                     }
 
                     break;
-                }
                 case Piece.Empty:
                 case Piece.Pawn:
                 case Piece.Knight:
@@ -202,9 +222,9 @@ namespace Backend
                 default:
                     break;
             }
-
-            // Castling right update on rook captured
+            
             if (pieceT == Piece.Rook) {
+                // If our rook was captured, we must also update castling rights so we don't castle with enemy piece.
                 switch (colorT) {
                     case PieceColor.White:
                         if ((int)to % 8 == 7) Map.WhiteKCastle = false;
@@ -220,6 +240,7 @@ namespace Backend
                 }
             }
 
+            // Flip the turn.
             Map.WhiteTurn = !WhiteTurn;
 
             return rv;
@@ -228,31 +249,31 @@ namespace Backend
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public void UndoMove(ref RevertMove rv)
         {
-            // Castling rights
+            // Revert to old castling rights.
             Map.WhiteKCastle = rv.WhiteKCastle;
             Map.WhiteQCastle = rv.WhiteQCastle;
             Map.BlackKCastle = rv.BlackKCastle;
             Map.BlackQCastle = rv.BlackQCastle;
             
-            // EP target
+            // Revert to the previous EP target.
             Map.EnPassantTarget = rv.EnPassantTarget;
             
-            // Flip turns
+            // Revert to previous turn.
             Map.WhiteTurn = rv.WhiteTurn;
 
-            // Move piece back
+            // Undo the move by moving the piece back.
             Map.Move(rv.To, rv.From);
             
-            // If it was an E.P move, reset target and insert pawn
             if (rv.EnPassant) {
+                // If it was an EP attack, we must insert a pawn at the affected square.
                 Square insertion = rv.CapturedColor == PieceColor.White ? rv.To + 8 : rv.To - 8;
                 Map.InsertPiece(insertion, Piece.Pawn, rv.CapturedColor);
                 
                 return;
             }
 
-            // If capture happened, insert piece at captured location
             if (rv.CapturedPiece != Piece.Empty) {
+                // If a capture happened, we must insert the piece at the relevant square.
                 Map.InsertPiece(rv.To, rv.CapturedPiece, rv.CapturedColor);
                 
                 return;

@@ -33,6 +33,7 @@ namespace Backend.Data.Struct
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RevertMove FromBitBoardMap(ref BitBoardMap map)
         {
+            // Generate a RevertMove based on the current state of the map.
             return new RevertMove
             {
                 WhiteKCastle = map.WhiteKCastle,

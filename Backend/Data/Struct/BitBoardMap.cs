@@ -120,10 +120,10 @@ namespace Backend.Data.Struct
             }
 
             WhiteTurn = turnData[0] == 'w';
-            WhiteKCastle = castlingData.Contains("K");
-            WhiteQCastle = castlingData.Contains("Q");
-            BlackKCastle = castlingData.Contains("k");
-            BlackQCastle = castlingData.Contains("q");
+            WhiteKCastle = castlingData.Contains('K');
+            WhiteQCastle = castlingData.Contains('Q');
+            BlackKCastle = castlingData.Contains('k');
+            BlackQCastle = castlingData.Contains('q');
             EnPassantTarget = Square.Na;
             
             if (enPassantTargetData.Length == 2) {
@@ -203,18 +203,25 @@ namespace Backend.Data.Struct
             (Piece pT, PieceColor cT) = this[to];
 
             if (pT != Piece.Empty) {
+                // If moving to piece isn't empty, then we capture.
                 Bb[(int)cT][(int)pT][to] = false;
                 
+                // Remove from color bitboards.
                 if (cT == PieceColor.White) White[to] = false;
                 else Black[to] = false;
             }
             
+            // We remove from original square.
             Bb[(int)cF][(int)pF][from] = false;
+            
+            // Set at next square.
             Bb[(int)cF][(int)pF][to] = true;
 
+            // Make sure to update the pieces and colors.
             PiecesAndColors[(int)to] = PiecesAndColors[(int)from];
             PiecesAndColors[(int)from] = 0x20;
 
+            // Update color bitboards.
             if (cF == PieceColor.White) {
                 White[from] = false;
                 White[to] = true;
@@ -228,9 +235,14 @@ namespace Backend.Data.Struct
         public void Empty(Square sq)
         {
             (Piece p, PieceColor c) = this[sq];
+            
+            // Remove from square.
             Bb[(int)c][(int)p][sq] = false;
+            
+            // Set empty in pieces and colors.
             PiecesAndColors[(int)sq] = 0x20;
 
+            // Remove from color bitboards.
             if (c == PieceColor.White) White[sq] = false;
             else Black[sq] = false;
         }
@@ -238,10 +250,14 @@ namespace Backend.Data.Struct
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void InsertPiece(Square sq, Piece piece, PieceColor color)
         {
+            // Insert the piece at square.
             Bb[(int)color][(int)piece][sq] = true;
+            
+            // Insert into color bitboards.
             if (color == PieceColor.White) White[sq] = true;
             else Black[sq] = true;
             
+            // Set piece in pieces and colors.
             int offset = color == PieceColor.White ? 0x0 : 0x10;
             PiecesAndColors[(int)sq] = (byte)((int)piece + offset);
         }

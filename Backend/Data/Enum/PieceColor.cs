@@ -3,6 +3,8 @@
 
     public enum PieceColor
     {
+        
+        // The color of the piece.
 
         White,
         Black,

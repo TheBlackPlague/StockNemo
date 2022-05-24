@@ -107,17 +107,29 @@ namespace Backend.Data.Move
                 Piece.Pawn or Piece.Knight or Piece.Queen or Piece.King or Piece.Empty or _ => 
                     throw new InvalidDataException("No magic table found.")
             };
+            
+            // Get magic.
             (BitBoard magic, BitBoard mask, int offset) = args.Item1[(int)sq];
+            
+            // Get the relevant occupied squares.
             BitBoard relevantOccupied = occupied | mask;
+            
+            // Get hash based on relevant occupied and magic.
             BitBoard hash = relevantOccupied * magic;
+            
+            // Return with offset.
             return offset + (int)(ulong)(hash >> (64 - args.Item2));
         }
 
         private static BitBoard GenerateRookOccupiedMask(Square sq)
         {
+            // Horizontal files inside.
             BitBoard hMoves = BitBoard.Hs[(int)sq % 8] & ~(BitBoard.Vs[0] | BitBoard.Vs[7]);
+            
+            // Vertical ranks inside.
             BitBoard vMoves = BitBoard.Vs[(int)sq / 8] & ~(BitBoard.Hs[0] | BitBoard.Hs[7]);
             
+            // Occupied inside but the square.
             return (hMoves | vMoves) & ~(BitBoard)sq;
         }
 
@@ -126,6 +138,8 @@ namespace Backend.Data.Move
             int h = (int)sq % 8;
             int v = (int)sq / 8;
             BitBoard rays = BitBoard.Default;
+            
+            // Dumb raycast.
             for (int hI = 0; hI < Board.UBOUND; hI++)
             for (int vI = 0; vI < Board.UBOUND; vI++) {
                 int hD = Math.Abs(hI - h);
@@ -134,6 +148,7 @@ namespace Backend.Data.Move
                 if (hD == vD && vD != 0) rays |= 1UL << (vI * 8 + hI);
             }
 
+            // All rays inside.
             return rays & ~BitBoard.Edged;
         }
 
@@ -143,6 +158,8 @@ namespace Backend.Data.Move
             for (int v = 0; v < Board.UBOUND; v++) {
                 Square sq = (Square)(v * 8 + h);
                 (BitBoard magic, int offset) = RookMagicData[(int)sq];
+                
+                // Flip mask for BM bitboards.
                 RookMagic[(int)sq] = (magic, ~GenerateRookOccupiedMask(sq), offset);
                 Console.WriteLine("Generated Rook Magic Entry for: " + sq);
             }
@@ -154,6 +171,8 @@ namespace Backend.Data.Move
             for (int v = 0; v < Board.UBOUND; v++) {
                 Square sq = (Square)(v * 8 + h);
                 (BitBoard magic, int offset) = BishopMagicData[(int)sq];
+                
+                // Flip mask for BM bitboards.
                 BishopMagic[(int)sq] = (magic, ~GenerateBishopOccupiedMask(sq), offset);
                 Console.WriteLine("Generated Bishop Magic Entry for: " + sq);
             }

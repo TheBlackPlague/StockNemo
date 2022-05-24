@@ -8,6 +8,8 @@ namespace Backend.Data.Move
 
     public static class AttackTable
     {
+        
+        // Attack tables & BM bitboards for fast move-generation.
 
         # region Square BitBoards (size 64)
         
@@ -96,13 +98,17 @@ namespace Backend.Data.Move
 
         public static void SetUp()
         {
+            // Setup the factory.
             BlackMagicBitBoardFactory.SetUp();
+            
+            // Generate sliding moves for sliding pieces.
             GenerateSlidingMoves(Piece.Rook);
             GenerateSlidingMoves(Piece.Bishop);
         }
         
         private static void GenerateSlidingMoves(Piece piece)
         {
+            // Arguments for loop.
             ((BitBoard, BitBoard, int)[], int) args = piece switch
             {
                 Piece.Rook => (BlackMagicBitBoardFactory.RookMagic, BlackMagicBitBoardFactory.ROOK),
@@ -110,6 +116,8 @@ namespace Backend.Data.Move
                 Piece.Pawn or Piece.Knight or Piece.Queen or Piece.King or Piece.Empty or _ => 
                     throw new InvalidDataException("No magic table found.")
             };
+            
+            // Deltas for pieces.
             (int, int)[] deltas = piece switch
             {
                 Piece.Rook => new[]
@@ -132,16 +140,20 @@ namespace Backend.Data.Move
             
             for (int h = 0; h < Board.UBOUND; h++)
             for (int v = 0; v < Board.UBOUND; v++) {
+                // Flip the mask.
                 BitBoard mask = ~args.Item1[v * 8 + h].Item2;
                 Square sq = (Square)(v * 8 + h);
                 
                 BitBoard occupied = BitBoard.Default;
                 while (true) {
                     BitBoard moves = BitBoard.Default;
+                    
+                    // Use deltas for slides.
                     foreach ((int dH, int dV) in deltas) {
                         int hI = h;
                         int vI = v;
                         
+                        // Dumb raycast.
                         while (!occupied[vI * 8 + hI]) {
                             if (hI + dH is > 7 or < 0 || vI + dV is > 7 or < 0) break;
                             
@@ -151,9 +163,13 @@ namespace Backend.Data.Move
                         }
                     }
 
+                    // Add to list with magic index.
                     SlidingMoves[BlackMagicBitBoardFactory.GetMagicIndex(piece, occupied, sq)] = moves;
 
+                    // Reset mask.
                     occupied = (occupied - mask) & mask;
+                    
+                    // If there is no occupied, we can break to next iteration.
                     if (occupied.Count == 0) break;
                 }
                 

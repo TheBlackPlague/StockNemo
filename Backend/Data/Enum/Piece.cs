@@ -4,6 +4,8 @@
     public enum Piece
     {
         
+        // The type of piece.
+        
         Pawn,
         Rook,
         Knight,

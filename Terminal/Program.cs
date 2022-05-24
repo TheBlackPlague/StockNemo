@@ -103,24 +103,24 @@ namespace Terminal
                 to = Enum.Parse<Square>(moveTo);
                 
                 Move:
-                MoveAttempt result = Board.SecureMove(from, to);
-                if (result == MoveAttempt.Fail) {
+                MoveResult result = Board.SecureMove(from, to);
+                if (result == MoveResult.Fail) {
                     Console.WriteLine("Illegal move selected.");
                     goto ToSelection;
                 }
 
-                if (result == MoveAttempt.Success) {
+                if (result == MoveResult.Success) {
                     
                 }
 
-                if (result == MoveAttempt.Checkmate) {
+                if (result == MoveResult.Checkmate) {
                     Draw();
                     string winner = Board.WhiteTurn ? "Black" : "White";
                     Console.WriteLine("CHECKMATE. " + winner + " won!");
                     break;
                 }
 
-                if (result == MoveAttempt.SuccessAndCheck) {
+                if (result == MoveResult.SuccessAndCheck) {
                     Draw();
                     string underCheck = Board.WhiteTurn ? "White" : "Black";
                     Console.WriteLine(underCheck + " is under check!");
