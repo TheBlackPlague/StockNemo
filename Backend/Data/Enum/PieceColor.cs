@@ -1,15 +1,12 @@
-﻿namespace Backend.Data.Enum
+﻿namespace Backend.Data.Enum;
+
+public enum PieceColor
 {
-
-    public enum PieceColor
-    {
         
-        // The color of the piece.
+    // The color of the piece.
 
-        White,
-        Black,
-        None
-
-    }
+    White,
+    Black,
+    None
 
 }

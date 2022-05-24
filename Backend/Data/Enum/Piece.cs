@@ -1,19 +1,16 @@
-﻿namespace Backend.Data.Enum
+﻿namespace Backend.Data.Enum;
+
+public enum Piece
 {
-
-    public enum Piece
-    {
         
-        // The type of piece.
+    // The type of piece.
         
-        Pawn,
-        Rook,
-        Knight,
-        Bishop,
-        Queen,
-        King,
-        Empty
-
-    }
+    Pawn,
+    Rook,
+    Knight,
+    Bishop,
+    Queen,
+    King,
+    Empty
 
 }

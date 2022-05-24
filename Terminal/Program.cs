@@ -6,236 +6,233 @@ using Backend.Data.Enum;
 using Backend.Data.Move;
 using Version = Backend.Version;
 
-namespace Terminal
+namespace Terminal;
+
+internal static class Program
 {
 
-    internal static class Program
+    private static Board Board;
+
+    private static void Main(string[] args)
     {
-
-        private static Board Board;
-
-        private static void Main(string[] args)
-        {
-            OutputTitle();
-            AttackTable.SetUp();
-            switch (args.Length) {
-                case > 0 when args[0] == "perft":
-                    RunPerft();
-                    return;
-                case > 0 when args[0] == "fen":
-                    Board = Board.FromFen(args[1]);
-                    break;
-                default:
-                    Board = Board.Default();
-                    break;
-            }
-
-            OperationLoop();
+        OutputTitle();
+        AttackTable.SetUp();
+        switch (args.Length) {
+            case > 0 when args[0] == "perft":
+                RunPerft();
+                return;
+            case > 0 when args[0] == "fen":
+                Board = Board.FromFen(args[1]);
+                break;
+            default:
+                Board = Board.Default();
+                break;
         }
 
-        private static void OperationLoop()
-        {
-            while (true) {
-                Draw();
-                
-                Square from;
-                Square to;
-                
-                FromSelection:
-                Console.Write("Select piece to move (or enter full move in AN): ");
-                string toMove = Console.ReadLine()?.ToUpper();
-                
-                if (toMove?.Length != 2) {
-                    switch (toMove?.Length) {
-                        case 3:
-                        {
-                            if (toMove.Equals("ALL")) {
-                                PieceColor color = Board.WhiteTurn ? PieceColor.White : PieceColor.Black;
-                                Board.HighlightMoves(color);
-                                Draw();
-                                Console.WriteLine("Highlighting moves for: " + color + "\n");
-                                goto FromSelection;
-                            }
+        OperationLoop();
+    }
 
-                            break;
+    private static void OperationLoop()
+    {
+        while (true) {
+            Draw();
+                
+            Square from;
+            Square to;
+                
+            FromSelection:
+            Console.Write("Select piece to move (or enter full move in AN): ");
+            string toMove = Console.ReadLine()?.ToUpper();
+                
+            if (toMove?.Length != 2) {
+                switch (toMove?.Length) {
+                    case 3:
+                    {
+                        if (toMove.Equals("ALL")) {
+                            PieceColor color = Board.WhiteTurn ? PieceColor.White : PieceColor.Black;
+                            Board.HighlightMoves(color);
+                            Draw();
+                            Console.WriteLine("Highlighting moves for: " + color + "\n");
+                            goto FromSelection;
                         }
-                        case 4:
-                        {
-                            from = Enum.Parse<Square>(toMove[..2]);
-                            to = Enum.Parse<Square>(toMove[2..]);
-                        
-                            if (!VerifyTurn(from)) goto FromSelection;
-                            goto Move;
-                        }
+
+                        break;
                     }
-
-                    Console.WriteLine("Please enter the file and rank.");
-                    goto FromSelection;
+                    case 4:
+                    {
+                        from = Enum.Parse<Square>(toMove[..2]);
+                        to = Enum.Parse<Square>(toMove[2..]);
+                        
+                        if (!VerifyTurn(from)) goto FromSelection;
+                        goto Move;
+                    }
                 }
 
-                from = Enum.Parse<Square>(toMove);
+                Console.WriteLine("Please enter the file and rank.");
+                goto FromSelection;
+            }
+
+            from = Enum.Parse<Square>(toMove);
                 
-                if (Board.EmptyAt(from)) {
-                    Console.WriteLine("Cannot be moving empty space.");
-                    goto FromSelection;
-                }
+            if (Board.EmptyAt(from)) {
+                Console.WriteLine("Cannot be moving empty space.");
+                goto FromSelection;
+            }
 
-                if (!VerifyTurn(from)) goto FromSelection;
+            if (!VerifyTurn(from)) goto FromSelection;
 
-                Board.HighlightMoves(from);
+            Board.HighlightMoves(from);
+            Draw();
+            Console.WriteLine("Highlighting moves for: " + toMove.ToLower() + "\n");
+                
+            ToSelection:
+            Console.Write("Choose a move from the highlighted legal moves: ");
+            string moveTo = Console.ReadLine()?.ToUpper();
+
+            if (moveTo == "Z") {
                 Draw();
-                Console.WriteLine("Highlighting moves for: " + toMove.ToLower() + "\n");
+                goto FromSelection;
+            }
+
+            if (moveTo?.Length != 2) {
+                Console.WriteLine("Please enter the file and rank.");
+                goto ToSelection;
+            }
+
+            to = Enum.Parse<Square>(moveTo);
                 
-                ToSelection:
-                Console.Write("Choose a move from the highlighted legal moves: ");
-                string moveTo = Console.ReadLine()?.ToUpper();
+            Move:
+            MoveResult result = Board.SecureMove(from, to);
+            if (result == MoveResult.Fail) {
+                Console.WriteLine("Illegal move selected.");
+                goto ToSelection;
+            }
 
-                if (moveTo == "Z") {
-                    Draw();
-                    goto FromSelection;
-                }
-
-                if (moveTo?.Length != 2) {
-                    Console.WriteLine("Please enter the file and rank.");
-                    goto ToSelection;
-                }
-
-                to = Enum.Parse<Square>(moveTo);
-                
-                Move:
-                MoveResult result = Board.SecureMove(from, to);
-                if (result == MoveResult.Fail) {
-                    Console.WriteLine("Illegal move selected.");
-                    goto ToSelection;
-                }
-
-                if (result == MoveResult.Success) {
+            if (result == MoveResult.Success) {
                     
-                }
-
-                if (result == MoveResult.Checkmate) {
-                    Draw();
-                    string winner = Board.WhiteTurn ? "Black" : "White";
-                    Console.WriteLine("CHECKMATE. " + winner + " won!");
-                    break;
-                }
-
-                if (result == MoveResult.SuccessAndCheck) {
-                    Draw();
-                    string underCheck = Board.WhiteTurn ? "White" : "Black";
-                    Console.WriteLine(underCheck + " is under check!");
-                    goto FromSelection;
-                }
-
-                // Sleep for a bit to show work being done
-                // It's funny because the program is lightning fast
-                // Thread.Sleep(200);
-            }
-        }
-
-        private static void OutputTitle()
-        {
-            Console.WriteLine("StockNemo v" + Version.Get());
-            Console.WriteLine("Copyright (c) Shaheryar Sohail. All rights reserved.");
-            Console.WriteLine("┌───────────────────┐");
-            Console.WriteLine("│  Chess Board CLI  │");
-            Console.WriteLine("└───────────────────┘");
-        }
-
-        private static void Draw()
-        {
-            Console.Clear();
-            OutputTitle();
-            string board = Board.ToString();
-            Console.WriteLine(board);
-        }
-
-        private static bool VerifyTurn(Square from)
-        {
-            if (Board.WhiteTurn && Board.At(from).Item2 == PieceColor.Black) {
-                Console.WriteLine("It's White Turn.");
-                return false;
-            }
-            // ReSharper disable once InvertIf
-            if (!Board.WhiteTurn && Board.At(from).Item2 == PieceColor.White) {
-                Console.WriteLine("It's Black Turn.");
-                return false;
             }
 
-            return true;
+            if (result == MoveResult.Checkmate) {
+                Draw();
+                string winner = Board.WhiteTurn ? "Black" : "White";
+                Console.WriteLine("CHECKMATE. " + winner + " won!");
+                break;
+            }
+
+            if (result == MoveResult.SuccessAndCheck) {
+                Draw();
+                string underCheck = Board.WhiteTurn ? "White" : "Black";
+                Console.WriteLine(underCheck + " is under check!");
+                goto FromSelection;
+            }
+
+            // Sleep for a bit to show work being done
+            // It's funny because the program is lightning fast
+            // Thread.Sleep(200);
+        }
+    }
+
+    private static void OutputTitle()
+    {
+        Console.WriteLine("StockNemo v" + Version.Get());
+        Console.WriteLine("Copyright (c) Shaheryar Sohail. All rights reserved.");
+        Console.WriteLine("┌───────────────────┐");
+        Console.WriteLine("│  Chess Board CLI  │");
+        Console.WriteLine("└───────────────────┘");
+    }
+
+    private static void Draw()
+    {
+        Console.Clear();
+        OutputTitle();
+        string board = Board.ToString();
+        Console.WriteLine(board);
+    }
+
+    private static bool VerifyTurn(Square from)
+    {
+        if (Board.WhiteTurn && Board.At(from).Item2 == PieceColor.Black) {
+            Console.WriteLine("It's White Turn.");
+            return false;
+        }
+        // ReSharper disable once InvertIf
+        if (!Board.WhiteTurn && Board.At(from).Item2 == PieceColor.White) {
+            Console.WriteLine("It's Black Turn.");
+            return false;
         }
 
-        [SuppressMessage("ReSharper", "UseStringInterpolation")]
-        private static void RunPerft()
-        {
-            Console.WriteLine("Running PERFT tests: ");
+        return true;
+    }
 
-            Perft test = new();
+    [SuppressMessage("ReSharper", "UseStringInterpolation")]
+    private static void RunPerft()
+    {
+        Console.WriteLine("Running PERFT tests: ");
 
-            Console.WriteLine("Running Depth 1: ");
-            Stopwatch watch = new();
-            watch.Start();
-            (ulong, ulong) result = test.Depth1();
-            watch.Stop();
-            
-            string output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
-            Console.WriteLine(output);
-            
-            Console.WriteLine("Running Depth 2: ");
-            watch = new Stopwatch();
-            watch.Start();
-            result = test.Depth2();
-            watch.Stop();
-            
-            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
-            Console.WriteLine(output);
+        Perft test = new();
 
-            Console.WriteLine("Running Depth 3: ");
-            watch = new Stopwatch();
-            watch.Start();
-            result = test.Depth3();
-            watch.Stop();
+        Console.WriteLine("Running Depth 1: ");
+        Stopwatch watch = new();
+        watch.Start();
+        (ulong, ulong) result = test.Depth1();
+        watch.Stop();
             
-            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
-            Console.WriteLine(output);
+        string output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+        Console.WriteLine(output);
             
-            Console.WriteLine("Running Depth 4: ");
-            watch = new Stopwatch();
-            watch.Start();
-            result = test.Depth4();
-            watch.Stop();
+        Console.WriteLine("Running Depth 2: ");
+        watch = new Stopwatch();
+        watch.Start();
+        result = test.Depth2();
+        watch.Stop();
             
-            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
-            Console.WriteLine(output);
-            
-            Console.WriteLine("Running Depth 5: ");
-            watch = new Stopwatch();
-            watch.Start();
-            result = test.Depth5();
-            watch.Stop();
-            
-            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
-            Console.WriteLine(output);
-            
-            Console.WriteLine("Running Depth 6: ");
-            watch = new Stopwatch();
-            watch.Start();
-            result = test.Depth6();
-            watch.Stop();
-            
-            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
-            Console.WriteLine(output);
-            
-            Console.WriteLine("Running Depth 7: ");
-            watch = new Stopwatch();
-            watch.Start();
-            result = test.Depth7();
-            watch.Stop();
-            
-            output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
-            Console.WriteLine(output);
-        }
+        output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+        Console.WriteLine(output);
 
+        Console.WriteLine("Running Depth 3: ");
+        watch = new Stopwatch();
+        watch.Start();
+        result = test.Depth3();
+        watch.Stop();
+            
+        output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+        Console.WriteLine(output);
+            
+        Console.WriteLine("Running Depth 4: ");
+        watch = new Stopwatch();
+        watch.Start();
+        result = test.Depth4();
+        watch.Stop();
+            
+        output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+        Console.WriteLine(output);
+            
+        Console.WriteLine("Running Depth 5: ");
+        watch = new Stopwatch();
+        watch.Start();
+        result = test.Depth5();
+        watch.Stop();
+            
+        output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+        Console.WriteLine(output);
+            
+        Console.WriteLine("Running Depth 6: ");
+        watch = new Stopwatch();
+        watch.Start();
+        result = test.Depth6();
+        watch.Stop();
+            
+        output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+        Console.WriteLine(output);
+            
+        Console.WriteLine("Running Depth 7: ");
+        watch = new Stopwatch();
+        watch.Start();
+        result = test.Depth7();
+        watch.Stop();
+            
+        output = "Searched " + result.Item2.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
+        Console.WriteLine(output);
     }
 
 }
