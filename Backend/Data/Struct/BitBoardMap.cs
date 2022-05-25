@@ -11,9 +11,6 @@ public struct BitBoardMap
         
     private const string FEN_SPR = "/";
 
-    // Empty
-    private static readonly (Piece, PieceColor) E = (Piece.Empty, PieceColor.None);
-
     private readonly BitBoard[][] Bb;
     private readonly byte[] PiecesAndColors;
 
@@ -32,7 +29,7 @@ public struct BitBoardMap
     public BitBoardMap(string boardFen, string turnData, string castlingData, string enPassantTargetData)
     {
         PiecesAndColors = new byte[64];
-        for (int i = 0; i < 64; i++) PiecesAndColors[i] = 0x20;
+        for (int i = 0; i < 64; i++) PiecesAndColors[i] = 0x26;
 
         Bb = new[] {
             new [] {
@@ -165,12 +162,7 @@ public struct BitBoardMap
         get
         {
             byte r = PiecesAndColors[(int)sq];
-            return r switch
-            {
-                < 0x6 => ((Piece)r, PieceColor.White),
-                < 0x16 => ((Piece)(r - 0x10), PieceColor.Black),
-                _ => E
-            };
+            return ((Piece)(r & 0xF), (PieceColor)(r >> 4));
         }
     }
 
@@ -218,7 +210,7 @@ public struct BitBoardMap
 
         // Make sure to update the pieces and colors.
         PiecesAndColors[(int)to] = PiecesAndColors[(int)from];
-        PiecesAndColors[(int)from] = 0x20;
+        PiecesAndColors[(int)from] = 0x26;
 
         // Update color bitboards.
         if (cF == PieceColor.White) {
@@ -239,7 +231,7 @@ public struct BitBoardMap
         Bb[(int)c][(int)p][sq] = false;
             
         // Set empty in pieces and colors.
-        PiecesAndColors[(int)sq] = 0x20;
+        PiecesAndColors[(int)sq] = 0x26;
 
         // Remove from color bitboards.
         if (c == PieceColor.White) White[sq] = false;
@@ -258,7 +250,7 @@ public struct BitBoardMap
             
         // Set piece in pieces and colors.
         int offset = color == PieceColor.White ? 0x0 : 0x10;
-        PiecesAndColors[(int)sq] = (byte)((int)piece + offset);
+        PiecesAndColors[(int)sq] = (byte)((int)piece | offset);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
