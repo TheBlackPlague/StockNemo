@@ -16,6 +16,7 @@ public ref struct RevertMove
 
     public bool WhiteTurn;
 
+    public bool Promotion;
     public bool EnPassant;
     public Square From;
     public Square To;
@@ -41,6 +42,7 @@ public ref struct RevertMove
             BlackQCastle = map.BlackQCastle,
             EnPassantTarget = map.EnPassantTarget,
             WhiteTurn = map.WhiteTurn,
+            Promotion = false,
             SecondaryFrom = Square.Na,
             SecondaryTo = Square.Na,
             CapturedPiece = Piece.Empty,

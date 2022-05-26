@@ -73,17 +73,17 @@ public class Board
 
     #region Move
         
-    public MoveResult SecureMove(Square from, Square to)
+    public MoveResult SecureMove(Square from, Square to, Promotion promotion = Promotion.None)
     {
         MoveList moveList = new(this, from);
-        BitBoard moves = moveList.Get();
+        BitBoard moves = moveList.Moves;
 
         // If the requested move isn't found in legal moves for our square, then we cannot make the move
         // securely. Return a failure result.
         if (!moves[to]) return MoveResult.Fail;
             
         // Make the move.
-        Move(from, to);
+        Move(from, to, promotion);
             
         PieceColor color = Map[to].Item2;
         PieceColor oppositeColor = Util.OppositeColor(color);
@@ -101,7 +101,7 @@ public class Board
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public RevertMove Move(Square from, Square to)
+    public RevertMove Move(Square from, Square to, Promotion promotion = Promotion.None)
     {
         (Piece pieceF, PieceColor colorF) = Map[from];
         (Piece pieceT, PieceColor colorT) = Map[to];
@@ -142,6 +142,12 @@ public class Board
 
         // Make the move.
         Map.Move(from, to);
+
+        if (promotion != Promotion.None) {
+            Map.Empty(to);
+            Map.InsertPiece(to, (Piece)promotion, colorF);
+            rv.Promotion = true;
+        }
 
         // Update revert move.
         rv.From = from;
@@ -226,12 +232,14 @@ public class Board
             // If our rook was captured, we must also update castling rights so we don't castle with enemy piece.
             switch (colorT) {
                 case PieceColor.White:
-                    if ((int)to % 8 == 7) Map.WhiteKCastle = false;
-                    else Map.WhiteQCastle = false;
+                    // ReSharper disable once ConvertIfStatementToSwitchStatement
+                    if (to == Square.H1) Map.WhiteKCastle = false;
+                    else if (to == Square.A1) Map.WhiteQCastle = false;
                     break;
                 case PieceColor.Black:
-                    if ((int)to % 8 == 7) Map.BlackKCastle = false;
-                    else Map.BlackQCastle = false;
+                    // ReSharper disable once ConvertIfStatementToSwitchStatement
+                    if (to == Square.H8) Map.BlackKCastle = false;
+                    else if (to == Square.A8) Map.BlackQCastle = false;
                     break;
                 case PieceColor.None:
                 default:
@@ -259,6 +267,12 @@ public class Board
             
         // Revert to previous turn.
         Map.WhiteTurn = rv.WhiteTurn;
+
+        if (rv.Promotion) {
+            PieceColor color = Map[rv.To].Item2;
+            Map.Empty(rv.To);
+            Map.InsertPiece(rv.To, Piece.Pawn, color);
+        }
 
         // Undo the move by moving the piece back.
         Map.Move(rv.To, rv.From);
@@ -293,7 +307,7 @@ public class Board
     public void HighlightMoves(Square from)
     {
         MoveList moveList = new(this, from);
-        HighlightedMoves = moveList.Get();
+        HighlightedMoves = moveList.Moves;
     }
 
     public void HighlightMoves(PieceColor color)
@@ -302,7 +316,7 @@ public class Board
             throw new InvalidOperationException("Cannot highlight moves for no color.");
 
         MoveList moveList = new(this, color);
-        HighlightedMoves = moveList.Get();
+        HighlightedMoves = moveList.Moves;
     }
 
     public override string ToString()

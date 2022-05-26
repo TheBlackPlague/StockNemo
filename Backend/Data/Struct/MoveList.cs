@@ -17,7 +17,8 @@ public ref struct MoveList
     private readonly Square From;
 
     public int Count => Moves.Count;
-    private BitBoard Moves;
+    public BitBoard Moves { get; private set; }
+    public bool Promotion { get; private set; }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static bool UnderAttack(Board board, Square sq, PieceColor by)
@@ -67,6 +68,7 @@ public ref struct MoveList
         Board = board;
         From = from;
         Moves = BitBoard.Default;
+        Promotion = false;
             
         (Piece piece, PieceColor color) = Board.At(from);
         // Generate Pseudo-Legal Moves
@@ -106,16 +108,14 @@ public ref struct MoveList
         Board = board;
         Moves = BitBoard.Default;
         From = Square.Na;
+        Promotion = false;
 
         BitBoard colored = board.All(color);
         foreach (Square sq in colored) {
             MoveList moveList = new(board, sq);
-            Moves |= moveList.Get();
+            Moves |= moveList.Moves;
         }
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public BitBoard Get() => Moves;
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void LegalPawnMoveSet(PieceColor color)
@@ -124,7 +124,7 @@ public ref struct MoveList
         BitBoard from = From;
         BitBoard opposite = Board.All(oppositeColor);
 
-        #region Normal moves.
+        #region Normal moves
 
         // Push pawn once.
         Moves |= (color == PieceColor.White ? from << 8 : from >> 8) & Board.All(PieceColor.None);
@@ -134,6 +134,10 @@ public ref struct MoveList
             // Push once more.
             Moves |= color == PieceColor.White ? from << 16 : from >> 16;
         }
+        
+        // If we're at rank 7 for white or rank 1 for black, we should set the promotion flag to true.
+        Promotion = (color == PieceColor.White && From is > Square.H6 and < Square.A8) || 
+                    (color == PieceColor.Black && From is > Square.H1 and < Square.A3);
 
         // Make sure our pushes are not stepping on to enemy pieces.
         // These are normal moves, not attack moves so we can't capture.
@@ -141,7 +145,7 @@ public ref struct MoveList
 
         #endregion
 
-        #region Attack moves.
+        #region Attack moves
 
         // En Passant
         if (Board.EnPassantTarget != Square.Na) {
@@ -270,6 +274,8 @@ public ref struct MoveList
         Square sq = iterator.Current;
         while (iterator.MoveNext()) {
             // To verify a move as legal from pseudo-legal, we first must make the move.
+            // We don't need to check whether making a promotion is legal or not, because if moving piece is legal,
+            // promotion is also legal.
             RevertMove rv = Board.Move(From, sq);
 
             // Verify that our king isn't under attack.

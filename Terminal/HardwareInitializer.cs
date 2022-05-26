@@ -22,8 +22,8 @@ public static class HardwareInitializer
 public struct HardwareInfoDisplay
 {
 
-    public string CpuDash;
-    public string CpuName;
+    public readonly string CpuDash;
+    public readonly string CpuName;
 
     public HardwareInfoDisplay(string cpuName)
     {

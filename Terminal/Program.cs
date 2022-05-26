@@ -70,7 +70,7 @@ internal static class Program
                         to = Enum.Parse<Square>(toMove[2..]);
                         
                         if (!VerifyTurn(from)) goto FromSelection;
-                        goto Move;
+                        goto PreMove;
                     }
                 }
 
@@ -107,35 +107,66 @@ internal static class Program
 
             to = Enum.Parse<Square>(moveTo);
                 
+            PreMove:
+            Promotion promotion = Promotion.None;
+            (Piece piece, PieceColor discoveredColor) = Board.At(from);
+            if (piece == Piece.Pawn) {
+                switch (discoveredColor) {
+                    case PieceColor.White when from is > Square.H6 and < Square.A8:
+                    case PieceColor.Black when from is > Square.H1 and < Square.A3:
+                        goto PromotionSelection;
+                    case PieceColor.None:
+                    default:
+                        goto Move;
+                }
+
+                PromotionSelection:
+                Console.WriteLine("Enter promotion out of [R, N, B, Q]: ");
+                
+                string promotionInput = Console.ReadLine()?.ToUpper();
+                if (promotionInput == "Z") {
+                    Draw();
+                    goto FromSelection;
+                }
+
+                promotion = promotionInput switch
+                {
+                    "R" => Promotion.Rook,
+                    "N" => Promotion.Knight,
+                    "B" => Promotion.Bishop,
+                    "Q" => Promotion.Queen,
+                    _ => Promotion.None
+                };
+            }
+            
             Move:
-            MoveResult result = Board.SecureMove(from, to);
-            if (result == MoveResult.Fail) {
-                Console.WriteLine("Illegal move selected.");
-                goto ToSelection;
-            }
-
-            if (result == MoveResult.Success) {
-                    
-            }
-
-            if (result == MoveResult.Checkmate) {
-                Draw();
-                string winner = Board.WhiteTurn ? "Black" : "White";
-                Console.WriteLine("CHECKMATE. " + winner + " won!");
-                break;
-            }
-
-            if (result == MoveResult.SuccessAndCheck) {
-                Draw();
-                string underCheck = Board.WhiteTurn ? "White" : "Black";
-                Console.WriteLine(underCheck + " is under check!");
-                goto FromSelection;
+            MoveResult result = Board.SecureMove(from, to, promotion);
+            switch (result) {
+                case MoveResult.Fail:
+                    Console.WriteLine("Illegal move selected.");
+                    goto ToSelection;
+                case MoveResult.Success:
+                    break;
+                case MoveResult.Checkmate:
+                    Draw();
+                    string winner = Board.WhiteTurn ? "Black" : "White";
+                    Console.WriteLine("CHECKMATE. " + winner + " won!");
+                    goto Exit;
+                case MoveResult.SuccessAndCheck:
+                    Draw();
+                    string underCheck = Board.WhiteTurn ? "White" : "Black";
+                    Console.WriteLine(underCheck + " is under check!");
+                    goto FromSelection;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             // Sleep for a bit to show work being done
             // It's funny because the program is lightning fast
             // Thread.Sleep(200);
         }
+
+        Exit: ;
     }
 
     private static void OutputTitle()
