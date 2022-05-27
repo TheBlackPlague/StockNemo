@@ -103,6 +103,9 @@ public static class AttackTable
         // Generate sliding moves for sliding pieces.
         GenerateSlidingMoves(Piece.Rook);
         GenerateSlidingMoves(Piece.Bishop);
+        
+        // Generate between table.
+        EssentialTable.GenerateBetweenTable();
     }
         
     private static void GenerateSlidingMoves(Piece piece)

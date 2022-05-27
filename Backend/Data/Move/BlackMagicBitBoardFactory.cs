@@ -123,10 +123,10 @@ internal static class BlackMagicBitBoardFactory
     private static BitBoard GenerateRookOccupiedMask(Square sq)
     {
         // Horizontal files inside.
-        BitBoard hMoves = BitBoard.Hs[(int)sq % 8] & ~(BitBoard.Vs[0] | BitBoard.Vs[7]);
+        BitBoard hMoves = EssentialTable.Hs[(int)sq % 8] & ~(EssentialTable.Vs[0] | EssentialTable.Vs[7]);
             
         // Vertical ranks inside.
-        BitBoard vMoves = BitBoard.Vs[(int)sq / 8] & ~(BitBoard.Hs[0] | BitBoard.Hs[7]);
+        BitBoard vMoves = EssentialTable.Vs[(int)sq / 8] & ~(EssentialTable.Hs[0] | EssentialTable.Hs[7]);
             
         // Occupied inside but the square.
         return (hMoves | vMoves) & ~(BitBoard)sq;
@@ -148,7 +148,7 @@ internal static class BlackMagicBitBoardFactory
         }
 
         // All rays inside.
-        return rays & ~BitBoard.Edged;
+        return rays & ~EssentialTable.Edged;
     }
 
     private static void GenerateRookMagicTable()
