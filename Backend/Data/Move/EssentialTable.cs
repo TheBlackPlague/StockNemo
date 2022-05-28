@@ -92,10 +92,6 @@ public static class EssentialTable
                 }
             }
         }
-        
-        Console.WriteLine(Between[(int)Square.A1][(int)Square.A8].ToString());
-        Console.WriteLine(Between[(int)Square.A1][(int)Square.H8].ToString());
-        Console.WriteLine(Between[(int)Square.A1][(int)Square.H1].ToString());
     }
 
 }
