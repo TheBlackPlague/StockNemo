@@ -1,5 +1,4 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using Backend;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
@@ -13,7 +12,7 @@ namespace Terminal;
 
 internal class DisplayBoard : Board
 {
-    
+
     private BitBoard HighlightedMoves = BitBoard.Default;
     
     public new static DisplayBoard Default()
@@ -33,15 +32,6 @@ internal class DisplayBoard : Board
     public void HighlightMoves(Square from)
     {
         MoveList moveList = new(this, from);
-        HighlightedMoves = moveList.Moves;
-    }
-
-    public void HighlightMoves(PieceColor color)
-    {
-        if (color == PieceColor.None) 
-            throw new InvalidOperationException("Cannot highlight moves for no color.");
-
-        MoveList moveList = new(this, color);
         HighlightedMoves = moveList.Moves;
     }
     
