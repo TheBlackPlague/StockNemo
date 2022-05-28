@@ -135,7 +135,7 @@ public ref struct MoveList
         
         // Unlike for all other boards and checks, we don't use a fully occupied board. We want our paths to go through
         // our pieces so we only consider board occupied by opposing.
-        BitBoard byBoard = board.All(by);
+        BitBoard byBoard = board.All(Util.OppositeColor(by));
 
         // We will reference the queen along with rooks and bishops for the checks.
         BitBoard queen = board.All(Piece.Queen, by);

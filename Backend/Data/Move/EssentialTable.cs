@@ -41,31 +41,21 @@ public static class EssentialTable
                 Between[(int)fromSq][(int)toSq] = BitBoard.Default;
                 // It's the same square so we can skip.
                 if (fromSq == toSq) continue;
+
+                BitBoard occ;
+                int mFrom;
+                int mTo;
                 
                 (int toH, int toV) = ((int)toSq % 8, (int)toSq / 8);
 
                 if (fromH == toH || fromV == toV) {
                     // We calculate rook (straight) squares here.
 
-                    Square high;
-                    Square low;
-                    int delta;
+                    occ = (BitBoard)fromSq | toSq;
+                    mFrom = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, occ, fromSq);
+                    mTo = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, occ, toSq);
+                    Between[(int)fromSq][(int)toSq] = AttackTable.SlidingMoves[mFrom] & AttackTable.SlidingMoves[mTo];
                     
-                    if (fromH != toH) {
-                        // We have a horizontal delta.
-                        high = fromSq > toSq ? fromSq : toSq;
-                        low = high == fromSq ? toSq : fromSq;
-                        delta = 1;
-                    } else {
-                        // We have a vertical delta.
-                        high = fromSq > toSq ? fromSq : toSq;
-                        low = high == fromSq ? toSq : fromSq;
-                        delta = 8;
-                    }
-                    
-                    for (Square sq = high - delta; sq > low; sq -= delta) Between[(int)fromSq][(int)toSq][sq] = true;
-                    
-                    // No need to calculate abs values.
                     continue;
                 }
 
@@ -74,22 +64,10 @@ public static class EssentialTable
                 if (absH != absV) continue;
 
                 // We calculate bishop (diagonal) squares between here.
-                int[] highs = {
-                    fromH > toH ? fromH : toH,
-                    fromV > toV ? fromV : toV
-                };
-                int[] lows = {
-                    highs[0] == fromH ? toH : fromH,
-                    highs[1] == fromV ? toV : fromV
-                };
-                    
-                for (int h = highs[0] - 1; h > lows[0]; h--)
-                for (int v = highs[1] - 1; v > lows[1]; v--) {
-                    if (highs[0] - h != highs[1] - v) continue;
-                    
-                    int sq = v * 8 + h;
-                    Between[(int)fromSq][(int)toSq][sq] = true;
-                }
+                occ = (BitBoard)fromSq | toSq;
+                mFrom = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, occ, fromSq);
+                mTo = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, occ, toSq);
+                Between[(int)fromSq][(int)toSq] = AttackTable.SlidingMoves[mFrom] & AttackTable.SlidingMoves[mTo];
             }
         }
     }
