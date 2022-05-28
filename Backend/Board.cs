@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Drawing;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
-using BetterConsoles.Core;
-using BetterConsoles.Tables;
-using BetterConsoles.Tables.Builders;
-using BetterConsoles.Tables.Configuration;
-using BetterConsoles.Tables.Models;
 
 namespace Backend;
 
@@ -17,15 +11,13 @@ public class Board
     public const short UBOUND = 8;
     public const short LBOUND = -1;
         
-    private const string DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    protected const string DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     public bool WhiteTurn => Map.WhiteTurn;
         
-    private BitBoardMap Map;
-
-    private BitBoard HighlightedMoves = BitBoard.Default;
+    protected BitBoardMap Map;
         
-    internal Square EnPassantTarget => Map.EnPassantTarget;
+    public Square EnPassantTarget => Map.EnPassantTarget;
         
     public static Board Default()
     {
@@ -38,12 +30,12 @@ public class Board
         return new Board(parts[0], parts[1], parts[2], parts[3]);
     }
 
-    private Board(Board board)
+    protected Board(Board board)
     {
         Map = board.Map.Copy();
     }
 
-    private Board(string boardData, string turnData, string castlingData, string enPassantTargetData)
+    protected Board(string boardData, string turnData, string castlingData, string enPassantTargetData)
     {
         Map = new BitBoardMap(boardData, turnData, castlingData, enPassantTargetData);
     }
@@ -304,92 +296,12 @@ public class Board
         return new Board(this);
     }
 
-    public void HighlightMoves(Square from)
-    {
-        MoveList moveList = new(this, from);
-        HighlightedMoves = moveList.Moves;
-    }
-
-    public void HighlightMoves(PieceColor color)
-    {
-        if (color == PieceColor.None) 
-            throw new InvalidOperationException("Cannot highlight moves for no color.");
-
-        MoveList moveList = new(this, color);
-        HighlightedMoves = moveList.Moves;
-    }
-
     public override string ToString()
     {
-        string board = DrawBoardCli().ToString().Trim(' ');
-        string fen = "FEN: " + GenerateFen() + "\n";
-        return board + fen;
+        return "FEN: " + GenerateFen() + "\n";
     }
 
-    private Table DrawBoardCli()
-    {
-        TableBuilder builder = new(new CellFormat(Alignment.Center));
-            
-        // Add rank column
-        builder.AddColumn("*");
-            
-        // Add columns for files
-        for (int h = 0; h < UBOUND; h++) builder.AddColumn(((char)(65 + h)).ToString());
-
-        Table table = builder.Build();
-
-        for (int v = UBOUND - 1; v > LBOUND; v--) {
-            // Count: Rank column + Files columns (1 + 8)
-            ICell[] cells = new ICell[UBOUND + 1];
-            cells[0] = new TableCell((v + 1).ToString());
-            for (int h = 0; h < UBOUND; h++) {
-                Square sq = (Square)(v * 8 + h);
-                (Piece piece, PieceColor color) = Map[sq];
-                string pieceRepresentation = piece switch
-                {
-                    Piece.Empty => "   ",
-                    Piece.Knight => "N",
-                    _ => piece.ToString()[0].ToString()
-                };
-
-                Color uiColor = color switch
-                {
-                    PieceColor.White => Color.AntiqueWhite,
-                    PieceColor.Black => Color.Coral,
-                    _ => Color.Gray
-                };
-
-                if (HighlightedMoves[sq]) {
-                    uiColor = piece == Piece.Empty ? Color.Yellow : Color.Red;
-                    if (piece == Piece.Empty && sq == EnPassantTarget) 
-                        uiColor = Color.Red; 
-                }
-
-                // Set piece value for file
-                cells[h + 1] = new TableCell(
-                    pieceRepresentation,
-                    new CellFormat(
-                        fontStyle: FontStyleExt.Bold,
-                        foregroundColor: Color.Black,
-                        backgroundColor: uiColor,
-                        alignment: Alignment.Center
-                    )
-                );
-            }
-
-            // Add rank row
-            table.AddRow(cells);
-        }
-            
-        table.Config = TableConfig.Unicode();
-        table.Config.hasInnerRows = true;
-
-        HighlightedMoves = BitBoard.Default;
-
-        return table;
-    }
-
-    private string GenerateFen()
+    protected string GenerateFen()
     {
         string boardData = Map.GenerateBoardFen();
         string turnData = WhiteTurn ? "w" : "b";

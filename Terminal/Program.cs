@@ -12,7 +12,7 @@ namespace Terminal;
 internal static class Program
 {
 
-    private static Board Board;
+    private static DisplayBoard Board;
 
     private static void Main(string[] args)
     {
@@ -26,10 +26,10 @@ internal static class Program
                 RunPerft();
                 return;
             case > 0 when args[0] == "fen":
-                Board = Board.FromFen(args[1]);
+                Board = DisplayBoard.FromFen(args[1]);
                 break;
             default:
-                Board = Board.Default();
+                Board = DisplayBoard.Default();
                 break;
         }
 
