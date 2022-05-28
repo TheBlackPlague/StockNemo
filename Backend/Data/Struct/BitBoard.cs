@@ -8,6 +8,7 @@ public struct BitBoard
 {
 
     public static readonly BitBoard Default = new(ulong.MinValue);
+    public static readonly BitBoard Filled = new(ulong.MaxValue);
 
     #region Operators
         

@@ -85,7 +85,7 @@ public static class EssentialTable
                     
                 for (int h = highs[0] - 1; h > lows[0]; h--)
                 for (int v = highs[1] - 1; v > lows[1]; v--) {
-                    if (h != v) continue;
+                    if (highs[0] - h != highs[1] - v) continue;
                     
                     int sq = v * 8 + h;
                     Between[(int)fromSq][(int)toSq][sq] = true;

@@ -99,7 +99,7 @@ public class Perft
                 // If depth is 1, then we don't need to do any further recursion and can just do +1 to the count.
                 while (coloredIterator.MoveNext()) {
                     // Generate all pseudo-legal moves for our square iteration.
-                    MoveList moveList = new(board, from, false);
+                    MoveList moveList = MoveList.WithoutProvidedPins(board, from);
                     BitBoardIterator moveListIterator = moveList.Moves.GetEnumerator();
                     Square move = moveListIterator.Current;
                         
@@ -133,7 +133,7 @@ public class Perft
                     
                 while (coloredIterator.MoveNext()) {
                     // Generate all pseudo-legal moves for our square iteration.
-                    MoveList moveList = new(board, from, false);
+                    MoveList moveList = MoveList.WithoutProvidedPins(board, from);
                     BitBoardIterator moveListIterator = moveList.Moves.GetEnumerator();
                     Square move = moveListIterator.Current;
                         
@@ -195,7 +195,7 @@ public class Perft
             Parallel.ForEach((Square[])colored, ParallelOptions, from =>
             {
                 // Generate all pseudo-legal moves for our square iteration.
-                MoveList moveList = new(board, from, false);
+                MoveList moveList = MoveList.WithoutProvidedPins(board, from);
                 BitBoard moves = moveList.Moves;
                     
                 // If there are no legal moves, we don't need to waste further resources on this iteration.

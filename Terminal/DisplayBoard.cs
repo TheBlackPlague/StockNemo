@@ -31,7 +31,7 @@ internal class DisplayBoard : Board
     
     public void HighlightMoves(Square from)
     {
-        MoveList moveList = new(this, from);
+        MoveList moveList = MoveList.WithoutProvidedPins(this, from);
         HighlightedMoves = moveList.Moves;
     }
     

@@ -67,7 +67,7 @@ public class Board
         
     public MoveResult SecureMove(Square from, Square to, Promotion promotion = Promotion.None)
     {
-        MoveList moveList = new(this, from);
+        MoveList moveList = MoveList.WithoutProvidedPins(this, from);
         BitBoard moves = moveList.Moves;
 
         // If the requested move isn't found in legal moves for our square, then we cannot make the move
@@ -288,6 +288,16 @@ public class Board
         if (rv.SecondaryFrom != Square.Na) Map.Move(rv.SecondaryTo, rv.SecondaryFrom);
     }
         
+    #endregion
+
+    #region Insert/Remove
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void InsertPiece(Square sq, Piece piece, PieceColor color) => Map.InsertPiece(sq, piece, color);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void RemovePiece(Square sq) => Map.Empty(sq);
+
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
