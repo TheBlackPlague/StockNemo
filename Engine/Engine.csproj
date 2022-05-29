@@ -7,4 +7,8 @@
         <Company>StockNemo</Company>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Backend\Backend.csproj" />
+    </ItemGroup>
+
 </Project>

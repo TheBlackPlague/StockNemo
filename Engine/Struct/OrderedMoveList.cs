@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Backend.Data.Struct;
+﻿namespace Engine.Struct;
 
 public ref struct OrderedMoveList
 {
