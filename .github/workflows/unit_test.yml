@@ -17,11 +17,12 @@ jobs:
         run: |
           cd Test
           dotnet build --configuration Release
-          dotnet test --logger "trx;LogFileName=test-results.trx" || true
+          dotnet test --logger "trx;LogFileName=test-results.trx" --verbosity normal || true
       - name: Report
         uses: dorny/test-reporter@v1
         if: always()
         with:
+          name: StockNemo Unit Tests
           path: "**/test-results.trx"
           reporter: dotnet-trx
           fail-on-error: true
