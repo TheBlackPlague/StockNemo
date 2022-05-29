@@ -105,7 +105,7 @@ public static class AttackTable
         GenerateSlidingMoves(Piece.Bishop);
         
         // Generate between table.
-        EssentialTable.GenerateBetweenTable();
+        UtilityTable.GenerateBetweenTable();
     }
         
     private static void GenerateSlidingMoves(Piece piece)

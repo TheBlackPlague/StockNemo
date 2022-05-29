@@ -108,7 +108,7 @@ public ref struct MoveList
             // rook or queen.
             Square rqSq = rookQueenCheck;
             
-            checks |= EssentialTable.Between[s][(int)rqSq] | rqSq;
+            checks |= UtilityTable.Between[s][(int)rqSq] | rqSq;
             count++;
             
             // In the case where pawn promotes to queen or rook, we have a secondary check as well.
@@ -121,7 +121,7 @@ public ref struct MoveList
             // bishop or queen.
             Square bqSq = bishopQueenCheck;
             
-            checks |= EssentialTable.Between[s][(int)bqSq] | bqSq;
+            checks |= UtilityTable.Between[s][(int)bqSq] | bqSq;
             count++;
         }
         
@@ -181,7 +181,7 @@ public ref struct MoveList
         Square rqSq = rookQueenIterator.Current;
         while (rookQueenIterator.MoveNext()) {
             int rqS = (int)rqSq;
-            BitBoard possiblePin = EssentialTable.Between[s][rqS] | rqSq;
+            BitBoard possiblePin = UtilityTable.Between[s][rqS] | rqSq;
 
             if ((possiblePin & board.All(us)).Count == 1) horizontalVerticalPin |= possiblePin;
             
@@ -195,7 +195,7 @@ public ref struct MoveList
         Square bqSq = bishopQueenIterator.Current;
         while (bishopQueenIterator.MoveNext()) {
             int bqS = (int)bqSq;
-            BitBoard possiblePin = EssentialTable.Between[s][bqS] | bqSq;
+            BitBoard possiblePin = UtilityTable.Between[s][bqS] | bqSq;
 
             if ((possiblePin & board.All(us)).Count == 1) diagonalPin |= possiblePin;
             

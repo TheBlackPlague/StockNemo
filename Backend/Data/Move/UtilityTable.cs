@@ -4,7 +4,7 @@ using Backend.Data.Struct;
 
 namespace Backend.Data.Move;
 
-public static class EssentialTable
+public static class UtilityTable
 {
     
     public static readonly BitBoard[] Hs = {
