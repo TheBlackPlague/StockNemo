@@ -8,11 +8,20 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v2
-      - name: Run Tests
-        uses: zyborg/dotnet-tests-report@v1
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v2
         with:
-          project_path: Test
-          report_name: stocknemo_unit_tests
-          report_title: StockNemo Unit Tests
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dotnet-version: 6.0.300
+      - name: Run Tests
+        run: |
+          cd Test
+          dotnet build --configuration Release
+          dotnet test --logger "trx;LogFileName=test-results.trx" || true
+      - name: Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          path: "**/test-results.trx"
+          reporter: dotnet-trx
+          fail-on-error: true
