@@ -135,28 +135,6 @@ public ref struct MoveList
     {
         int s = (int)sq;
         
-        // U64 them = Enemy(c);
-        // U64 rook_mask = (Rooks(~c) | Queens(~c)) & RookAttacks(sq, them);
-        // U64 bishop_mask = (Bishops(~c) | Queens(~c)) & BishopAttacks(sq, them);
-        // U64 rook_pin = 0ULL;
-        // U64 bishop_pin = 0ULL;
-        // pinD = 0ULL;
-        // pinHV = 0ULL;
-        // while (rook_mask) {
-        //     Square index = poplsb(rook_mask);
-        //     U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
-        //     if (popcount(possible_pin & Us(c)) == 1)
-        //         rook_pin |= possible_pin;
-        // }
-        // while (bishop_mask) {
-        //     Square index = poplsb(bishop_mask);
-        //     U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
-        //     if (popcount(possible_pin & Us(c)) == 1)
-        //         bishop_pin |= possible_pin;
-        // }
-        // pinHV = rook_pin;
-        // pinD = bishop_pin;
-        
         // Unlike for all other boards and checks, we don't use a fully occupied board. We want our paths to go through
         // our pieces so we only consider board occupied by opposing.
         BitBoard byBoard = board.All(by);
@@ -230,6 +208,8 @@ public ref struct MoveList
         D = diagonal;
         C = checks;
 
+        // If we're double-checked (discovered check + normal check), only the king can move. Thus, we can return
+        // early here.
         if (doubleChecked && piece != Piece.King) return;
         
         // Generate Legal Moves
@@ -273,7 +253,7 @@ public ref struct MoveList
 
         BitBoard colored = board.All(color);
         foreach (Square sq in colored) {
-            MoveList moveList = MoveList.WithoutProvidedPins(board, sq);
+            MoveList moveList = WithoutProvidedPins(board, sq);
             Moves |= moveList.Moves;
         }
     }
