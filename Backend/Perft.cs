@@ -182,20 +182,20 @@ public class Perft
             // iterations in parallel.
             Parallel.ForEach((Square[])colored, ParallelOptions, from =>
             {
+                // Clone the board to allow memory-safe operations: ensures that there are no overrides from
+                // other threads.
+                Board next = board.Clone();
+                
                 // Generate all pseudo-legal moves for our square iteration.
-                (Piece piece, PieceColor pieceColor) = board.At(from);
+                (Piece piece, PieceColor pieceColor) = next.At(from);
                 MoveList moveList = new(
-                    board, from, piece, pieceColor, 
+                    next, from, piece, pieceColor, 
                     ref hv, ref d, ref checks, doubleChecked
                 );
                 BitBoard moves = moveList.Moves;
                     
                 // If there are no legal moves, we don't need to waste further resources on this iteration.
                 if (moves == BitBoard.Default) return;
-                    
-                // Clone the board to allow memory-safe operations: ensures that there are no overrides from
-                // other threads.
-                Board next = board.Clone();
 
                 BitBoardIterator iterator = moves.GetEnumerator();
                 Square move = iterator.Current;
@@ -213,8 +213,8 @@ public class Perft
                         // Undo original pawn move without promotion.
                         int i = 1;
                         while (i < 5) {
-                            board.UndoMove(ref rv);
-                            rv = board.Move(from, move, (Promotion)i);
+                            next.UndoMove(ref rv);
+                            rv = next.Move(from, move, (Promotion)i);
                             nextCount += MoveGeneration(next, nextDepth, false);
                             i++;
                         }
