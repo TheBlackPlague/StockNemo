@@ -1,0 +1,33 @@
+name: .NET Core Unit Test
+
+on: push
+
+permissions:
+  statuses: write
+  checks: write
+  contents: write
+
+jobs: 
+  Main:
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 6.0.300
+      - name: Run Tests
+        run: |
+          cd Test
+          dotnet build --configuration Release
+          dotnet test --logger "trx;LogFileName=test-results.trx" --verbosity normal || true
+      - name: Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: StockNemo Unit Tests
+          path: "**/test-results.trx"
+          reporter: dotnet-trx
+          fail-on-error: true

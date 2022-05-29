@@ -8,27 +8,7 @@ public struct BitBoard
 {
 
     public static readonly BitBoard Default = new(ulong.MinValue);
-    public static readonly BitBoard[] Hs = {
-        0x101010101010101,
-        0x202020202020202,
-        0x404040404040404,
-        0x808080808080808,
-        0x1010101010101010,
-        0x2020202020202020,
-        0x4040404040404040,
-        0x8080808080808080
-    };
-    public static readonly BitBoard[] Vs = {
-        0xFF, 
-        0xFF00, 
-        0xFF0000, 
-        0xFF000000,
-        0xFF00000000,
-        0xFF0000000000,
-        0xFF000000000000,
-        0xFF00000000000000
-    };
-    public static readonly BitBoard Edged = Hs[0] | Hs[7] | Vs[0] | Vs[7];
+    public static readonly BitBoard Filled = new(ulong.MaxValue);
 
     #region Operators
         
