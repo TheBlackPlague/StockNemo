@@ -363,8 +363,8 @@ public ref struct MoveList
             // If the pawn isn't pinned diagonally or horizontally/vertically, we must do one final check for EP:
             // In the rare EP-pin position: 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -
             // If we do EP here, our king can be attacked by rook.
-            // This is known as being pinned through a piece and only happens for EP, thus we must remove both our piece
-            // and the enemy EP Piece if it exists, and make sure that our pawn isn't pinned through a piece.
+            // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
+            // if our king is under attacked.
             
             Board.RemovePiece(From);
             Board.RemovePiece(epPieceSq);
