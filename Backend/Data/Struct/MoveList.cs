@@ -124,18 +124,42 @@ public ref struct MoveList
             checks |= EssentialTable.Between[s][(int)bqSq] | bqSq;
             count++;
         }
+        
+        if (checks == BitBoard.Default) checks = BitBoard.Filled;
 
         return (checks, count > 1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public static (BitBoard, BitBoard) PinBitBoards(Board board, Square sq, PieceColor by)
+    public static (BitBoard, BitBoard) PinBitBoards(Board board, Square sq, PieceColor us, PieceColor by)
     {
         int s = (int)sq;
         
+        // U64 them = Enemy(c);
+        // U64 rook_mask = (Rooks(~c) | Queens(~c)) & RookAttacks(sq, them);
+        // U64 bishop_mask = (Bishops(~c) | Queens(~c)) & BishopAttacks(sq, them);
+        // U64 rook_pin = 0ULL;
+        // U64 bishop_pin = 0ULL;
+        // pinD = 0ULL;
+        // pinHV = 0ULL;
+        // while (rook_mask) {
+        //     Square index = poplsb(rook_mask);
+        //     U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
+        //     if (popcount(possible_pin & Us(c)) == 1)
+        //         rook_pin |= possible_pin;
+        // }
+        // while (bishop_mask) {
+        //     Square index = poplsb(bishop_mask);
+        //     U64 possible_pin = (SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
+        //     if (popcount(possible_pin & Us(c)) == 1)
+        //         bishop_pin |= possible_pin;
+        // }
+        // pinHV = rook_pin;
+        // pinD = bishop_pin;
+        
         // Unlike for all other boards and checks, we don't use a fully occupied board. We want our paths to go through
         // our pieces so we only consider board occupied by opposing.
-        BitBoard byBoard = board.All(Util.OppositeColor(by));
+        BitBoard byBoard = board.All(by);
 
         // We will reference the queen along with rooks and bishops for the checks.
         BitBoard queen = board.All(Piece.Queen, by);
@@ -159,7 +183,7 @@ public ref struct MoveList
             int rqS = (int)rqSq;
             BitBoard possiblePin = EssentialTable.Between[s][rqS] | rqSq;
 
-            if ((possiblePin & board.All(by)).Count == 1) horizontalVerticalPin |= possiblePin;
+            if ((possiblePin & board.All(us)).Count == 1) horizontalVerticalPin |= possiblePin;
             
             // Next square iteration.
             rqSq = rookQueenIterator.Current;
@@ -173,7 +197,7 @@ public ref struct MoveList
             int bqS = (int)bqSq;
             BitBoard possiblePin = EssentialTable.Between[s][bqS] | bqSq;
 
-            if ((possiblePin & board.All(by)).Count == 1) diagonalPin |= possiblePin;
+            if ((possiblePin & board.All(us)).Count == 1) diagonalPin |= possiblePin;
             
             // Next square iteration.
             bqSq = bishopQueenIterator.Current;
@@ -189,9 +213,8 @@ public ref struct MoveList
         PieceColor oppositeColor = Util.OppositeColor(color);
         
         Square kingSq = board.KingLoc(color);
-        (BitBoard horizontalVertical, BitBoard diagonal) = PinBitBoards(board, kingSq, oppositeColor);
+        (BitBoard horizontalVertical, BitBoard diagonal) = PinBitBoards(board, kingSq, color, oppositeColor);
         (BitBoard checks, bool doubleChecked) = CheckBitBoard(board, kingSq, oppositeColor);
-        if (checks == BitBoard.Default) checks = BitBoard.Filled;
         return new MoveList(board, from, piece, color, ref horizontalVertical, ref diagonal, ref checks, doubleChecked);
     }
 
@@ -291,11 +314,11 @@ public ref struct MoveList
 
         // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
         // our pieces).
-        Moves |= attack & opposite;
+        Moves |= attack & opposite & C;
 
         if (D[From]) {
             // If pawn is pinned diagonally, we can only do attacks and EP on the pin.
-            Moves &= D & C;
+            Moves &= D;
             return;
         }
             
@@ -322,12 +345,12 @@ public ref struct MoveList
         // These are normal moves, not attack moves so we can't capture.
         pushes &= ~opposite & ~Board.All(color);
         
-        Moves |= pushes;
+        Moves |= pushes & C;
 
         if (Hv[From]) {
             // If pawn is horizontally pinned, then we have no moves.
             // However, if pawn is vertically pinned, then we can at least do pushes.
-            Moves &= Hv & C;
+            Moves &= Hv;
             return;
         }
         
@@ -345,6 +368,7 @@ public ref struct MoveList
             
             Board.RemovePiece(From);
             Board.RemovePiece(epPieceSq);
+            Board.InsertPiece(Board.EnPassantTarget, Piece.Pawn, color);
             
             Square kingSq = Board.KingLoc(color);
             
@@ -354,11 +378,13 @@ public ref struct MoveList
             
             Board.InsertPiece(From, Piece.Pawn, color);
             Board.InsertPiece(epPieceSq, Piece.Pawn, oppositeColor);
+            Board.RemovePiece(Board.EnPassantTarget);
+
+            // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
+            if (Moves[Board.EnPassantTarget] && !C[epPieceSq]) Moves &= ~(1UL << (int)Board.EnPassantTarget);
         }
 
         #endregion
-        
-        Moves &= C;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

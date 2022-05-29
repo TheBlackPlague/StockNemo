@@ -90,6 +90,12 @@ public class Perft
 
         // Get all squares occupied by our color.
         BitBoard colored = board.All(color);
+        
+        // Generate pins and check bitboards.
+        Square kingSq = board.KingLoc(color);
+        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, color, oppositeColor);
+        (BitBoard checks, bool doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor);
+        
         if (depth < 5) {
             // If depth is less than 5 (1 - 4), we should do PERFT synchronously as it's fast enough that the cost
             // of pushing to other threads actually slows it down.
@@ -99,29 +105,23 @@ public class Perft
                 // If depth is 1, then we don't need to do any further recursion and can just do +1 to the count.
                 while (coloredIterator.MoveNext()) {
                     // Generate all pseudo-legal moves for our square iteration.
-                    MoveList moveList = MoveList.WithoutProvidedPins(board, from);
-                    BitBoardIterator moveListIterator = moveList.Moves.GetEnumerator();
-                    Square move = moveListIterator.Current;
-                        
-                    while (moveListIterator.MoveNext()) {
-                        // Make our move iteration for our square iteration. Save the revert move for reverting
-                        // in future.
-                        RevertMove rv = board.Move(from, move);
+                    (Piece piece, PieceColor pieceColor) = board.At(from);
+                    MoveList moveList = new(
+                        board, from, piece, pieceColor, 
+                        ref hv, ref d, ref checks, doubleChecked
+                    );
+                    
+                    count += moveList.Promotion ? (ulong)moveList.Count * 4UL : (ulong)moveList.Count;
 
-                        BitBoard kingSafety = board.KingLoc(color);
-                        if (!MoveList.UnderAttack(board, kingSafety, oppositeColor)) {
-                            // If our king is safe, that move is legal and can be added to the count.
-                            // In case of promotion, there are 4 possible outcomes.
-                            count += moveList.Promotion ? 4UL : 1UL;
-                                
-                            // If we're dividing at this depth, log the move with the count.
-                            if (divide) LogNodeCount(from, move, moveList.Promotion ? 4UL : 1UL);
+                    if (divide && moveList.Count != 0) {
+                        BitBoardIterator moveListIterator = moveList.Moves.GetEnumerator();
+                        Square move = moveListIterator.Current;
+
+                        while (moveListIterator.MoveNext()) {
+                            LogNodeCount(from, move, moveList.Promotion ? 4UL : 1UL);
+
+                            move = moveListIterator.Current;
                         }
-                            
-                        // Revert the move to get back to original state.
-                        board.UndoMove(ref rv);
-
-                        move = moveListIterator.Current;
                     }
 
                     from = coloredIterator.Current;
@@ -133,7 +133,11 @@ public class Perft
                     
                 while (coloredIterator.MoveNext()) {
                     // Generate all pseudo-legal moves for our square iteration.
-                    MoveList moveList = MoveList.WithoutProvidedPins(board, from);
+                    (Piece piece, PieceColor pieceColor) = board.At(from);
+                    MoveList moveList = new(
+                        board, from, piece, pieceColor, 
+                        ref hv, ref d, ref checks, doubleChecked
+                    );
                     BitBoardIterator moveListIterator = moveList.Moves.GetEnumerator();
                     Square move = moveListIterator.Current;
                         
@@ -142,43 +146,27 @@ public class Perft
                         // in future.
                         RevertMove rv = board.Move(from, move);
                             
-                        BitBoard kingSafety = board.KingLoc(color);
-                        if (!MoveList.UnderAttack(board, kingSafety, oppositeColor)) {
-                            // If our king is safe, that move is legal and we can calculate moves at lesser
-                            // depth recursively, but we shouldn't divide at lesser depth.
-                            ulong nextCount;
-                            if (moveList.Promotion) {
-                                // Undo original pawn move without promotion.
+                        // If our king is safe, that move is legal and we can calculate moves at lesser
+                        // depth recursively, but we shouldn't divide at lesser depth.
+                        ulong nextCount = 0;
+                        if (moveList.Promotion) {
+                            // Undo original pawn move without promotion.
+                            int i = 1;
+                            while (i < 5) {
                                 board.UndoMove(ref rv);
-                                
-                                // Promote to rook.
-                                rv = board.Move(from, move, Promotion.Rook);
-                                nextCount = MoveGeneration(board, nextDepth, false);
-                                board.UndoMove(ref rv);
+                                rv = board.Move(from, move, (Promotion)i);
+                                nextCount += MoveGeneration(board, nextDepth, false);
+                                i++;
+                            }
 
-                                // Promote to knight.
-                                rv = board.Move(from, move, Promotion.Knight);
-                                nextCount += MoveGeneration(board, nextDepth, false);
-                                board.UndoMove(ref rv);
+                            // Don't undo the final move as it's done outside.
+                        } else nextCount = MoveGeneration(board, nextDepth, false);
                                 
-                                // Promote to bishop.
-                                rv = board.Move(from, move, Promotion.Bishop);
-                                nextCount += MoveGeneration(board, nextDepth, false);
-                                board.UndoMove(ref rv);
+                        // Add the number of moves calculated at the lesser depth.
+                        count += nextCount;
                                 
-                                // Promote to queen.
-                                rv = board.Move(from, move, Promotion.Queen);
-                                nextCount += MoveGeneration(board, nextDepth, false);
-                                
-                                // Don't undo the final move as it's done outside.
-                            } else nextCount = MoveGeneration(board, nextDepth, false);
-                                
-                            // Add the number of moves calculated at the lesser depth.
-                            count += nextCount;
-                                
-                            // If we're dividing at this depth, log the move with the count.
-                            if (divide) LogNodeCount(from, move, nextCount);
-                        }
+                        // If we're dividing at this depth, log the move with the count.
+                        if (divide) LogNodeCount(from, move, nextCount);
                             
                         // Revert the move to get back to original state.
                         board.UndoMove(ref rv);
@@ -195,7 +183,11 @@ public class Perft
             Parallel.ForEach((Square[])colored, ParallelOptions, from =>
             {
                 // Generate all pseudo-legal moves for our square iteration.
-                MoveList moveList = MoveList.WithoutProvidedPins(board, from);
+                (Piece piece, PieceColor pieceColor) = board.At(from);
+                MoveList moveList = new(
+                    board, from, piece, pieceColor, 
+                    ref hv, ref d, ref checks, doubleChecked
+                );
                 BitBoard moves = moveList.Moves;
                     
                 // If there are no legal moves, we don't need to waste further resources on this iteration.
@@ -214,49 +206,30 @@ public class Perft
                     // Make our move iteration for our square iteration. Save the revert move for reverting
                     // in future.
                     RevertMove rv = next.Move(from, move);
-                            
-                    BitBoard kingSafety = next.KingLoc(color);
-                    if (!MoveList.UnderAttack(next, kingSafety, oppositeColor)) {
-                        // If our king is safe, that move is legal and we can calculate moves at lesser
-                        // depth recursively, but we shouldn't divide at lesser depth.
+                    
+                    ulong nextCount = 0;
                         
-                        ulong nextCount;
-                        
-                        if (moveList.Promotion) {
-                            // Undo original pawn move without promotion.
-                            next.UndoMove(ref rv);
-                                
-                            // Promote to rook.
-                            rv = next.Move(from, move, Promotion.Rook);
-                            nextCount = MoveGeneration(next, nextDepth, false);
-                            next.UndoMove(ref rv);
+                    if (moveList.Promotion) {
+                        // Undo original pawn move without promotion.
+                        int i = 1;
+                        while (i < 5) {
+                            board.UndoMove(ref rv);
+                            rv = board.Move(from, move, (Promotion)i);
+                            nextCount += MoveGeneration(next, nextDepth, false);
+                            i++;
+                        }
 
-                            // Promote to knight.
-                            rv = next.Move(from, move, Promotion.Knight);
-                            nextCount += MoveGeneration(next, nextDepth, false);
-                            next.UndoMove(ref rv);
-                                
-                            // Promote to bishop.
-                            rv = next.Move(from, move, Promotion.Bishop);
-                            nextCount += MoveGeneration(next, nextDepth, false);
-                            next.UndoMove(ref rv);
-                                
-                            // Promote to queen.
-                            rv = next.Move(from, move, Promotion.Queen);
-                            nextCount += MoveGeneration(next, nextDepth, false);
-                                
-                            // Don't undo the final move as it's done outside.
-                        } else nextCount = MoveGeneration(next, nextDepth, false);
+                        // Don't undo the final move as it's done outside.
+                    } else nextCount = MoveGeneration(next, nextDepth, false);
                             
-                        // Add the number of moves calculated at the lesser depth. Since we're going to be adding
-                        // from multiple threads, it's possible that race-conditions occur. That's why we have to
-                        // lock all threads while the addition is happening.
-                        Interlocked.Add(ref count, nextCount);
+                    // Add the number of moves calculated at the lesser depth. Since we're going to be adding
+                    // from multiple threads, it's possible that race-conditions occur. That's why we have to
+                    // lock all threads while the addition is happening.
+                    Interlocked.Add(ref count, nextCount);
                                 
-                        // If we're dividing at this depth, log the move with the count.
-                        if (divide) LogNodeCount(from, move, nextCount);
-                    }
-                            
+                    // If we're dividing at this depth, log the move with the count.
+                    if (divide) LogNodeCount(from, move, nextCount);
+
                     // Revert the move to get back to original state.
                     next.UndoMove(ref rv);
 
