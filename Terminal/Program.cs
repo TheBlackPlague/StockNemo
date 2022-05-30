@@ -64,13 +64,13 @@ internal static class Program
             int depth = 8;
             if (args.Length > 1) depth = int.Parse(args[1]);
 
+            MoveSearch moveSearch = new(Board);
             for (int i = 1; i < depth + 1; i++) {
                 Stopwatch sw = new();
                 sw.Start();
-                MoveSearchResult moveSearchResult = new(Board, i);
+                SearchedMove bestMove = moveSearch.SearchAndReturn(i);
                 sw.Stop();
-            
-                SearchedMove bestMove = moveSearchResult.BestMove;
+                
                 Console.Write(i + ": " + (bestMove.From.ToString() + bestMove.To).ToLower());
                 Console.Write(" [" + bestMove.Score + "]");
                 Console.WriteLine(" (" + sw.ElapsedMilliseconds + " ms)");

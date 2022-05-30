@@ -4,7 +4,7 @@ using Backend.Data.Struct;
 
 namespace Engine.Struct;
 
-public ref struct MoveSearchResult
+public class MoveSearch
 {
 
     private const int POS_INFINITY = 100000000;
@@ -13,14 +13,18 @@ public ref struct MoveSearchResult
 
     private readonly Board Board;
 
-    public SearchedMove BestMove { get; private set; }
+    private SearchedMove BestMove;
 
-    public MoveSearchResult(Board board, int maxDepth)
+    public MoveSearch(Board board)
     {
         Board = board;
         BestMove = new SearchedMove(Square.Na, Square.Na, Promotion.None, NEG_INFINITY);
+    }
 
-        AbSearch(board, 0, maxDepth, NEG_INFINITY, POS_INFINITY);
+    public SearchedMove SearchAndReturn(int depth)
+    {
+        AbSearch(Board, 0, depth, NEG_INFINITY, POS_INFINITY);
+        return BestMove;
     }
 
     private int AbSearch(Board board, int plyFromRoot, int depth, int alpha, int beta)

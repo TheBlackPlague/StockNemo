@@ -2,7 +2,7 @@
 
 namespace Engine.Struct;
 
-public readonly ref struct SearchedMove
+public readonly struct SearchedMove
 {
 
     public readonly Square From;

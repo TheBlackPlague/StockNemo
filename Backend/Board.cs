@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Engine.Struct;
 
 namespace Backend;
 
@@ -91,6 +92,9 @@ public class Board
         return MoveList.UnderAttack(this, kingLoc, color) ? 
             MoveResult.SuccessAndCheck : MoveResult.Success;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public RevertMove Move(ref OrderedMoveEntry move) => Move(move.From, move.To, move.Promotion);
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public RevertMove Move(Square from, Square to, Promotion promotion = Promotion.None)
