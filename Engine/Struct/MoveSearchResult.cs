@@ -1,5 +1,4 @@
-﻿using System.Xml;
-using Backend;
+﻿using Backend;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
 
@@ -10,6 +9,7 @@ public ref struct MoveSearchResult
 
     private const int POS_INFINITY = 100000000;
     private const int NEG_INFINITY = -POS_INFINITY;
+    private const int MATE = POS_INFINITY - 1;
 
     private readonly Board Board;
 
@@ -26,6 +26,12 @@ public ref struct MoveSearchResult
     private int AbSearch(Board board, int plyFromRoot, int depth, int alpha, int beta)
     {
         if (depth == 0) return Evaluation.RelativeEvaluation(board);
+
+        if (plyFromRoot != 0) {
+            alpha = Math.Max(alpha, -MATE + plyFromRoot);
+            beta = Math.Min(beta, MATE - plyFromRoot - 1);
+            if (alpha >= beta) return alpha;
+        }
         
         // Count number of nodes explored at this depth.
         int nodes = 0;
@@ -95,7 +101,7 @@ public ref struct MoveSearchResult
                             return beta;
                         }
 
-                        if (evaluation >= alpha) {
+                        if (evaluation > alpha) {
                             // If our evaluation was better than our alpha (best evaluation so far), then we should
                             // replace our alpha with our evaluation.
                             alpha = evaluation;
@@ -120,7 +126,7 @@ public ref struct MoveSearchResult
                         return beta;
                     }
 
-                    if (evaluation >= alpha) {
+                    if (evaluation > alpha) {
                         // If our evaluation was better than our alpha (best evaluation so far), then we should
                         // replace our alpha with our evaluation.
                         alpha = evaluation;
@@ -144,7 +150,7 @@ public ref struct MoveSearchResult
             // If our king is in check, it means we lost as nothing can save the king anymore.
             // Otherwise, it's a stalemate where we can't really do anything but the opponent cannot
             // kill our king either.
-            return MoveList.UnderAttack(board, kingSq, oppositeColor) ? NEG_INFINITY : 0;
+            return MoveList.UnderAttack(board, kingSq, oppositeColor) ? -MATE + plyFromRoot : 0;
         }
 
         // Return the best evaluation we've had this depth.
