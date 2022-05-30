@@ -72,7 +72,7 @@ public class Board
 
         // If the requested move isn't found in legal moves for our square, then we cannot make the move
         // securely. Return a failure result.
-        if (!moves[to]) return MoveResult.Fail;
+        if (!moves[to] || (promotion != Promotion.None && !moveList.Promotion)) return MoveResult.Fail;
             
         // Make the move.
         Move(from, to, promotion);

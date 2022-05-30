@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Backend;
 using Backend.Data.Enum;
 using Backend.Data.Move;
+using Engine.Struct;
 using Version = Backend.Version;
 
 namespace Terminal;
@@ -43,20 +44,59 @@ internal static class Program
             } catch (InvalidOperationException) {}
             goto Start;
         }
+        
+        if (Board == null) {
+            Console.WriteLine("Please first define a position.");
+            goto Start;
+        }
 
         if (args[0].ToLower().Equals("perft")) {
-            if (Board == null) {
-                Console.WriteLine("Please first define a position.");
-                goto Start;
-            }
-            
             RunPerft(int.Parse(args[1]));
             goto Start;
         }
 
-        if (args[0].ToLower().Equals("d")) {
-            hardwareInitializationTask.Wait();
-            DrawCycle.Draw(Board);
+        if (args[0].ToLower().Equals("d") || args[0].ToLower().Equals("d~")) {
+            Console.WriteLine(Board.ToString(args[0].ToLower().Equals("d~")));
+            goto Start;
+        }
+
+        if (args[0].ToLower().Equals("bestmove")) {
+            int depth = 8;
+            if (args.Length > 1) depth = int.Parse(args[1]);
+
+            for (int i = 1; i < depth + 1; i++) {
+                Stopwatch sw = new();
+                sw.Start();
+                MoveSearchResult moveSearchResult = new(Board, i);
+                sw.Stop();
+            
+                SearchedMove bestMove = moveSearchResult.BestMove;
+                Console.Write(i + ": " + (bestMove.From.ToString() + bestMove.To).ToLower());
+                Console.Write(" [" + bestMove.Score + "]");
+                Console.WriteLine(" (" + sw.ElapsedMilliseconds + " ms)");
+            }
+            
+            goto Start;
+        }
+
+        if (args[0].ToLower().Equals("moves")) {
+            for (int i = 1; i < args.Length; i++) {
+                Square from = Enum.Parse<Square>(args[i][..2], true);
+                Square to = Enum.Parse<Square>(args[i][2..4], true);
+                Promotion promotion = Promotion.None;
+                if (args[i].Length > 4 && args[i][4].Equals('=')) {
+                    promotion = args[i].ToUpper()[5] switch
+                    {
+                        'R' => Promotion.Rook,
+                        'N' => Promotion.Knight,
+                        'B' => Promotion.Bishop,
+                        'Q' => Promotion.Queen,
+                        _ => Promotion.None
+                    };
+                }
+
+                Board.SecureMove(from, to, promotion);
+            }
             goto Start;
         }
 
@@ -70,9 +110,7 @@ internal static class Program
     [SuppressMessage("ReSharper", "UseStringInterpolation")]
     private static void RunPerft(int depth = 1)
     {
-        Console.WriteLine("Running PERFT tests: ");
-
-        Console.WriteLine("Running depth " + depth + ": ");
+        Console.WriteLine("Running PERFT @ depth " + depth + ": ");
         
         Stopwatch watch = new();
         watch.Start();
