@@ -1,4 +1,5 @@
 ﻿using Backend.Data.Enum;
+using Backend.Data.Struct;
 
 namespace Engine.Struct;
 

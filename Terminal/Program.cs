@@ -72,6 +72,10 @@ internal static class Program
                 sw.Stop();
                 
                 Console.Write(i + ": " + (bestMove.From.ToString() + bestMove.To).ToLower());
+                if (bestMove.Promotion != Promotion.None) {
+                    Console.Write("=" + bestMove.Promotion.ToString()[0]);
+                }
+                
                 Console.Write(" [" + bestMove.Score + "]");
                 Console.WriteLine(" (" + sw.ElapsedMilliseconds + " ms)");
             }
