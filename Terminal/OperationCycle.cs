@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Backend.Data.Enum;
+using Engine;
+using Engine.Struct;
 
 namespace Terminal;
 
@@ -8,17 +11,35 @@ internal static class OperationCycle
 
     private static bool Exit;
 
-    public static void Cycle(DisplayBoard board)
+    public static void Cycle(DisplayBoard board, bool againstSn = false, PieceColor snColor = PieceColor.None)
     {
+        TaskFactory factory = new();
         while (!Exit) {
             Start:
             DrawCycle.Draw(board);
             
             Square from = Square.Na;
             Square to = Square.Na;
+            Promotion promotion = Promotion.None;
             
             FromSelection:
             string colorToMove = board.WhiteTurn ? "White" : "Black";
+
+            if (againstSn && Enum.Parse<PieceColor>(colorToMove, true) == snColor) {
+                Task<SearchedMove> searchTask = factory.StartNew(() =>
+                {
+                    MoveSearch moveSearch = new(board);
+                    return moveSearch.SearchAndReturn(8);
+                });
+                Console.WriteLine("Searching best move...");
+                searchTask.Wait();
+                SearchedMove bestMove = searchTask.Result;
+                from = bestMove.From;
+                to = bestMove.To;
+                promotion = bestMove.Promotion;
+                goto Move;
+            }
+            
             Console.Write(colorToMove + " to move (enter square to highlight moves): ");
             string fromSelection = Console.ReadLine()?.ToUpper();
 
@@ -54,7 +75,6 @@ internal static class OperationCycle
             to = Enum.Parse<Square>(toSelection);
             
             FromAndToSelected:
-            Promotion promotion = Promotion.None;
             (Piece piece, PieceColor color) = board.At(from);
             if (piece == Piece.Pawn) {
                 switch (color) {

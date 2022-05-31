@@ -30,6 +30,13 @@ public class MoveSearch
         return BestMove;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Search(int depth, out SearchedMove bestMove)
+    {
+        AbSearch(Board, 0, depth, NEG_INFINITY, POS_INFINITY);
+        bestMove = BestMove;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int AbSearch(Board board, int plyFromRoot, int depth, int alpha, int beta)
     {

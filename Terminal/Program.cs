@@ -106,7 +106,13 @@ internal static class Program
 
         if (args[0].ToLower().Equals("play")) {
             hardwareInitializationTask.Wait();
-            OperationCycle.Cycle(Board);
+            bool againstSn = false;
+            PieceColor snColor = PieceColor.Black;
+            if (args.Length > 2) {
+                againstSn = args[1].ToLower().Equals("sn");
+                if (args[2].ToLower().Equals("w")) snColor = PieceColor.White;
+            }
+            OperationCycle.Cycle(Board, againstSn, snColor);
             goto Start;
         }
     }
