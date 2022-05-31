@@ -11,10 +11,4 @@
       <Compile Remove="Move\Log.cs" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Reference Include="Engine">
-        <HintPath>..\Terminal\bin\Debug\net6.0\Engine.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-
 </Project>
