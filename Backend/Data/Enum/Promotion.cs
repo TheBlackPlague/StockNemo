@@ -1,12 +1,12 @@
 ﻿namespace Backend.Data.Enum;
 
-public enum Promotion
+public enum Promotion : byte
 {
 
     None,
-    Rook,
     Knight,
     Bishop,
+    Rook,
     Queen
 
 }
