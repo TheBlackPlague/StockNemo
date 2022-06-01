@@ -35,6 +35,9 @@ public class MoveSearch
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int AbSearch(Board board, int plyFromRoot, int depth, int alpha, int beta)
     {
+        // If we're cancelled, we should abort as soon as possible. Note, this requires a cloned Board to be
+        // provided. If provided without cloning, there's no guarantee the original state will be maintained after
+        // search.
         if (Token.IsCancellationRequested) throw new OperationCanceledException();
         
         #region Mate Pruning
