@@ -14,13 +14,15 @@ public class MoveSearch
     private const int MATE = POS_INFINITY - 1;
 
     private readonly Board Board;
+    private readonly CancellationToken Token;
 
     private SearchedMove BestMove;
 
-    public MoveSearch(Board board)
+    public MoveSearch(Board board, CancellationToken token = default)
     {
         Board = board;
         BestMove = new SearchedMove(Square.Na, Square.Na, Promotion.None, NEG_INFINITY);
+        Token = token;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -30,16 +32,11 @@ public class MoveSearch
         return BestMove;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Search(int depth, out SearchedMove bestMove)
-    {
-        AbSearch(Board, 0, depth, NEG_INFINITY, POS_INFINITY);
-        bestMove = BestMove;
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int AbSearch(Board board, int plyFromRoot, int depth, int alpha, int beta)
     {
+        if (Token.IsCancellationRequested) throw new OperationCanceledException();
+        
         #region Mate Pruning
 
         if (plyFromRoot != 0) {
@@ -91,7 +88,7 @@ public class MoveSearch
                 // Evaluate position by getting the relative evaluation and negating it. An evaluation that's good for
                 // our opponent will obviously be bad for us.
                 int evaluation = -Evaluation.RelativeEvaluation(board);
-        
+
                 if (evaluation >= beta) {
                     // If the evaluation was better than beta, it means the position was too good. Thus, there
                     // is a good chance that the opponent will avoid this path. Hence, there is currently no
