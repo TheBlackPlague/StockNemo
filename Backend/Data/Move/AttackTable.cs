@@ -174,8 +174,6 @@ public static class AttackTable
                 // If there is no occupied, we can break to next iteration.
                 if (occupied.Count == 0) break;
             }
-                
-            Console.WriteLine("Generated Black Magic Attack Table for [" + piece + "] at: " + sq);
         }
     }
 
