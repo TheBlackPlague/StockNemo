@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Backend.Data.Enum;
 using Engine;
 using Engine.Struct;
@@ -13,7 +12,6 @@ internal static class OperationCycle
 
     public static void Cycle(DisplayBoard board, bool againstSn = false, PieceColor snColor = PieceColor.None)
     {
-        TaskFactory factory = new();
         while (!Exit) {
             Start:
             DrawCycle.Draw(board);
@@ -26,14 +24,9 @@ internal static class OperationCycle
             string colorToMove = board.WhiteTurn ? "White" : "Black";
 
             if (againstSn && Enum.Parse<PieceColor>(colorToMove, true) == snColor) {
-                Task<SearchedMove> searchTask = factory.StartNew(() =>
-                {
-                    MoveSearch moveSearch = new(board);
-                    return moveSearch.SearchAndReturn(8);
-                });
+                MoveSearch moveSearch = new(board);
                 Console.WriteLine("Searching best move...");
-                searchTask.Wait();
-                SearchedMove bestMove = searchTask.Result;
+                SearchedMove bestMove = moveSearch.SearchAndReturn(8);
                 from = bestMove.From;
                 to = bestMove.To;
                 promotion = bestMove.Promotion;
