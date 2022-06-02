@@ -72,6 +72,8 @@ public static class UniversalChessInterface
         switch (args[1].ToLower()) {
             case "startpos":
                 Board = Board.Default();
+
+                argsParsed++;
                 break;
             case "fen":
                 string p = args[2];
@@ -81,7 +83,7 @@ public static class UniversalChessInterface
 
                 Board = Board.FromFen(p + " " + s + " " + c + " " + ep);
                 
-                argsParsed += 6;
+                argsParsed += 7;
                 break;
             default:
                 throw new InvalidOperationException("Invalid Position provided.");
