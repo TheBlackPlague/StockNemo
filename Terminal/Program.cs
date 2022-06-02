@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Threading.Tasks;
 using Backend;
 using Backend.Data.Enum;
@@ -24,9 +25,9 @@ internal static class Program
         
         // Run JIT.
         Perft.MoveGeneration(Backend.Board.Default(), 4, false);
-        
-        string[] args = Environment.GetCommandLineArgs();
-        if (args.Length > 1 && args[1].ToLower().Equals("uci")) {
+
+        string command = Environment.CommandLine;
+        if (command.ToLower().Contains("--uci=true")) {
             goto Start;
         }
         
@@ -34,12 +35,16 @@ internal static class Program
         DrawCycle.OutputTitle();
 
         Start:
-        args = Console.ReadLine()?.Split(" ");
+        string[] args = Console.ReadLine()?.Split(" ");
         
         if (args == null) goto Start;
 
         if (args[0].ToLower().Equals("uci")) {
-            UniversalChessInterface.LaunchInUciToGuiMode();
+            StreamWriter standardOutput = new(Console.OpenStandardOutput());
+            standardOutput.AutoFlush = true;
+            Console.SetOut(standardOutput);
+            UniversalChessInterface.Setup();
+            UniversalChessInterface.LaunchUci();
             return;
         }
         

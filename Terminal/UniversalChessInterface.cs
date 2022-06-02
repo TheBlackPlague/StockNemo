@@ -17,8 +17,20 @@ public static class UniversalChessInterface
     private const string AUTHOR = "Shaheryar";
 
     private static Board Board;
+    private static bool Busy;
+    private static CancellationTokenSource SearchCancellationSource;
 
-    public static void LaunchInUciToGuiMode()
+    public static void Setup()
+    {
+        Busy = false;
+        UciStdInputThread.CommandReceived += (_, input) => HandleIsReady(input);
+        UciStdInputThread.CommandReceived += (thread, input) => HandleQuit((Thread)thread, input);
+        UciStdInputThread.CommandReceived += (_, input) => HandlePosition(input);
+        UciStdInputThread.CommandReceived += (_, input) => HandleGo(input);
+        UciStdInputThread.CommandReceived += (_, input) => HandleStop(input);
+    }
+
+    public static void LaunchUci()
     {
         // Provide identification information.
         Console.WriteLine("id name " + NAME);
@@ -27,170 +39,131 @@ public static class UniversalChessInterface
         // Let GUI know engine is ready in UCI mode.
         Console.WriteLine("uciok");
         
-        // Wait for GUI to ask if we're done setting up.
-        string[] args = WaitForCommands(new []{ "isready", "quit" }).Split(" ");
-        if (args[0].ToLower() == "quit") return;
+        // Start an input thread.
+        Thread inputThread = new(UciStdInputThread.StartAcceptingInput);
+        inputThread.Start();
+    }
+
+    private static void HandleIsReady(string input)
+    {
+        if (!input.ToLower().Equals("isready")) return;
+        Task.Run(() =>
+        {
+            while (Busy) {}
+            Console.WriteLine("readyok");
+        });
+    }
+
+    private static void HandleQuit(Thread thread, string input)
+    {
+        if (!input.ToLower().Equals("quit")) return;
+        UciStdInputThread.Running = false;
+        thread.IsBackground = true;
+        Environment.Exit(0);
+    }
+
+    private static void HandlePosition(string input)
+    {
+        string[] args = input.Split(" ");
+        if (!args[0].ToLower().Equals("position")) return;
+        if (args.Length == 1) return;
+        Busy = true;
+        int argsParsed = 1;
+        switch (args[1].ToLower()) {
+            case "startpos":
+                Board = Board.Default();
+                break;
+            case "fen":
+                string p = args[2];
+                string s = args[3];
+                string c = args[4];
+                string ep = args[5];
+
+                Board = Board.FromFen(p + " " + s + " " + c + " " + ep);
+                
+                argsParsed += 6;
+                break;
+            default:
+                throw new InvalidOperationException("Invalid Position provided.");
+        }
+        
+        // Once we've loaded the position, we can apply moves.
+        if (args[argsParsed].ToLower().Equals("moves")) {
+            for (int i = argsParsed + 1; i < args.Length; i++) {
+                Square from = Enum.Parse<Square>(args[i][..2], true);
+                Square to = Enum.Parse<Square>(args[i][2..4], true);
+                Promotion promotion = Promotion.None;
+                if (args[i].Length > 4) {
+                    promotion = args[i][4] switch
+                    {
+                        'r' => Promotion.Rook,
+                        'n' => Promotion.Knight,
+                        'b' => Promotion.Bishop,
+                        'q' => Promotion.Queen,
+                        _ => Promotion.None
+                    };
+                }
+
+                Board.SecureMove(from, to, promotion);
+            }
+        }
+
+        Busy = false;
+    }
+
+    private static void HandleGo(string input)
+    {
+        string[] args = input.Split(" ");
+        if (!args[0].ToLower().Equals("go")) return;
+        if (args.Length == 1) return;
 
         TaskFactory factory = new();
-        // Let GUI know we're done setting up.
-        Console.WriteLine("readyok");
+        SearchedMove bestMove = new(Square.Na, Square.Na, Promotion.None, 0);
         
-        ParseCommand:
-        args = WaitForCommands(new [] { "ucinewgame", "position", "go", "quit" }).Split(" ");
         
-        switch (args[0].ToLower()) {
-            case "quit":
-                return;
-            // Not all GUIs will support this... we should just wait for the position.
-            case "ucinewgame":
-                goto ParseCommand;
-            // Load the position.
-            case "position":
-                // If only the command was provided, it was wrong and we should wait for next command to be
-                // correct.
-                if (args.Length == 1) goto ParseCommand;
+        switch (args[1].ToLower()) {
+            case "movetime":
+                int time = int.Parse(args[2]);
+                SearchCancellationSource = new CancellationTokenSource();
+                SearchCancellationSource.CancelAfter(time);
+                factory.StartNew(() =>
+                {
+                    // ReSharper disable once AccessToModifiedClosure
+                    MoveSearch search = new(Board.Clone(), SearchCancellationSource.Token);
+                    int depth = 1;
+                    Busy = true;
+                    try {
+                        while (!SearchCancellationSource.Token.IsCancellationRequested) {
+                            bestMove = search.SearchAndReturn(depth);
+                            
+                            Console.Write(
+                                "info depth " + depth + " pv " + 
+                                bestMove.From.ToString().ToLower() + bestMove.To.ToString().ToLower()
+                            );
+                            if (bestMove.Promotion != Promotion.None)
+                                Console.Write(bestMove.Promotion.ToString().ToLower()[0]);
 
-                int argsParsed = 1;
-                switch (args[1].ToLower()) {
-                    // In the case of startpos, it's the default position.
-                    case "startpos":
-                        Board = Board.Default();
-                        break;
-                    // In the case of fen, we can extract the data from the args and load it into the board.
-                    case "fen":
-                    {
-                        string p = args[2];
-                        string s = args[3];
-                        string c = args[4];
-                        string ep = args[5];
-
-                        Board = Board.FromFen(p + " " + s + " " + c + " " + ep);
-                
-                        argsParsed += 6;
-                        break;
-                    }
-                    default:
-                        throw new InvalidOperationException("No proper position argument provided.");
-                }
-
-                // Once we've loaded the position, we can apply moves.
-                if (args[argsParsed].ToLower().Equals("moves")) {
-                    for (int i = argsParsed + 1; i < args.Length; i++) {
-                        Square from = Enum.Parse<Square>(args[i][..2], true);
-                        Square to = Enum.Parse<Square>(args[i][2..4], true);
-                        Promotion promotion = Promotion.None;
-                        if (args[i].Length > 4) {
-                            promotion = args[i][4] switch
-                            {
-                                'r' => Promotion.Rook,
-                                'n' => Promotion.Knight,
-                                'b' => Promotion.Bishop,
-                                'q' => Promotion.Queen,
-                                _ => Promotion.None
-                            };
+                            Console.WriteLine();
+                            Thread.Sleep(1000);
+                            depth++;
                         }
-
-                        Board.SecureMove(from, to, promotion);
-                    }
-                }
+                    } catch (OperationCanceledException) {} 
+                    Busy = false;
+                    string from = bestMove.From.ToString().ToLower();
+                    string to = bestMove.To.ToString().ToLower();
+                    string promotion = bestMove.Promotion != Promotion.None ? 
+                        bestMove.Promotion.ToString()[0].ToString().ToLower() : "";
+                    Console.WriteLine("bestmove " + from + to + promotion);
+                }, SearchCancellationSource.Token);
                 break;
-            case "go":
-                goto GoCommandRun;
-            default:
-                goto ParseCommand;
         }
-
-        GoCommandRun:
-        switch (args[0].ToLower()) {
-            case "quit":
-                return;
-            case "go":
-                SearchedMove bestMove = new(Square.Na, Square.Na, Promotion.None, 0);
-                
-                switch (args[1].ToLower()) {
-                    case "movetime":
-                        int time = int.Parse(args[2]);
-
-                        CancellationTokenSource source = new();
-                        source.CancelAfter(time);
-                        
-                        Task searchTask = factory.StartNew(() =>
-                        {
-                            // ReSharper disable once AccessToModifiedClosure
-                            MoveSearch search = new(Board.Clone(), source.Token);
-                            int depth = 1;
-                            try {
-                                while (true) {
-                                    bestMove = search.SearchAndReturn(depth);
-                                    Console.Write("info depth " + depth + " " + bestMove.From + bestMove.To);
-                                    if (bestMove.Promotion != Promotion.None)
-                                        Console.Write(bestMove.Promotion.ToString()[0]);
-                                
-                                    Console.WriteLine();
-                                    depth++;
-                                }
-                            } catch (OperationCanceledException) {}
-                        }, source.Token);
-
-                        CancellationTokenSource inputCancellationSource = new();
-                        // ReSharper disable once MethodSupportsCancellation
-                        Task<string> input = Task.Run(() =>
-                        {
-                            // ReSharper disable once AccessToModifiedClosure
-                            Task<string> innerTask = Task.Run(Console.ReadLine, inputCancellationSource.Token);
-                            // ReSharper disable once AccessToModifiedClosure
-                            innerTask.Wait(inputCancellationSource.Token);
-                            return innerTask.Result;
-                        }, inputCancellationSource.Token);
-
-                        while (!input.IsCompleted) {
-                            if (source.Token.IsCancellationRequested) {
-                                goto WithoutInput;
-                            }
-                        }
-
-                        switch (input.Result!.ToLower()) {
-                            case "quit":
-                                source.Cancel();
-                                return;
-                            case "stop":
-                                source.Cancel();
-                                break;
-                            case "isready":
-                                // ReSharper disable once MethodSupportsCancellation
-                                searchTask.Wait();
-                                Console.WriteLine("readyok");
-                                break;
-                        }
-
-                        WithoutInput:
-                        // ReSharper disable once MethodSupportsCancellation
-                        searchTask.Wait();
-                        
-                        break;
-                }
-                
-                string from = bestMove.From.ToString().ToLower();
-                string to = bestMove.To.ToString().ToLower();
-                string promotion = 
-                    bestMove.Promotion != Promotion.None ? bestMove.Promotion.ToString()[0].ToString().ToLower() : "";
-                Console.WriteLine("bestmove " + from + to + promotion);
-                break;
-            default:
-                goto ParseCommand;
-        }
-        
-        goto ParseCommand;
     }
 
-    private static string WaitForCommands(string[] commands)
+    private static void HandleStop(string input)
     {
-        string[] input = Console.ReadLine()?.Split(" ");
-        while (!input!.Any(i => commands.Contains(i.ToLower()))) {
-            input = Console.ReadLine()?.Split(" ");
-        }
-
-        return string.Join(" ", input);
+        if (!input.ToLower().Equals("stop")) return;
+        if (!Busy) return;
+        SearchCancellationSource.Cancel();
     }
-    
+
 }
