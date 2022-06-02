@@ -119,44 +119,48 @@ public static class UniversalChessInterface
 
         TaskFactory factory = new();
         SearchedMove bestMove = new(Square.Na, Square.Na, Promotion.None, 0);
-        
+        int time;
         
         switch (args[1].ToLower()) {
             case "movetime":
-                int time = int.Parse(args[2]);
-                SearchCancellationSource = new CancellationTokenSource();
-                SearchCancellationSource.CancelAfter(time);
-                factory.StartNew(() =>
-                {
-                    // ReSharper disable once AccessToModifiedClosure
-                    MoveSearch search = new(Board.Clone(), SearchCancellationSource.Token);
-                    int depth = 1;
-                    Busy = true;
-                    try {
-                        while (!SearchCancellationSource.Token.IsCancellationRequested) {
-                            bestMove = search.SearchAndReturn(depth);
-                            
-                            Console.Write(
-                                "info depth " + depth + " pv " + 
-                                bestMove.From.ToString().ToLower() + bestMove.To.ToString().ToLower()
-                            );
-                            if (bestMove.Promotion != Promotion.None)
-                                Console.Write(bestMove.Promotion.ToString().ToLower()[0]);
-
-                            Console.WriteLine();
-                            Thread.Sleep(1000);
-                            depth++;
-                        }
-                    } catch (OperationCanceledException) {} 
-                    Busy = false;
-                    string from = bestMove.From.ToString().ToLower();
-                    string to = bestMove.To.ToString().ToLower();
-                    string promotion = bestMove.Promotion != Promotion.None ? 
-                        bestMove.Promotion.ToString()[0].ToString().ToLower() : "";
-                    Console.WriteLine("bestmove " + from + to + promotion);
-                }, SearchCancellationSource.Token);
+                time = int.Parse(args[2]);
+                break;
+            default:
+                time = 3500;
                 break;
         }
+        
+        SearchCancellationSource = new CancellationTokenSource();
+        SearchCancellationSource.CancelAfter(time);
+        factory.StartNew(() =>
+        {
+            // ReSharper disable once AccessToModifiedClosure
+            MoveSearch search = new(Board.Clone(), SearchCancellationSource.Token);
+            int depth = 1;
+            Busy = true;
+            try {
+                while (!SearchCancellationSource.Token.IsCancellationRequested) {
+                    bestMove = search.SearchAndReturn(depth);
+                            
+                    Console.Write(
+                        "info depth " + depth + " pv " + 
+                        bestMove.From.ToString().ToLower() + bestMove.To.ToString().ToLower()
+                    );
+                    if (bestMove.Promotion != Promotion.None)
+                        Console.Write(bestMove.Promotion.ToString().ToLower()[0]);
+
+                    Console.WriteLine();
+                    Thread.Sleep(1000);
+                    depth++;
+                }
+            } catch (OperationCanceledException) {} 
+            Busy = false;
+            string from = bestMove.From.ToString().ToLower();
+            string to = bestMove.To.ToString().ToLower();
+            string promotion = bestMove.Promotion != Promotion.None ? 
+                bestMove.Promotion.ToString()[0].ToString().ToLower() : "";
+            Console.WriteLine("bestmove " + from + to + promotion);
+        }, SearchCancellationSource.Token);
     }
 
     private static void HandleStop(string input)
