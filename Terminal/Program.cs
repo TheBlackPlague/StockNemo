@@ -25,13 +25,23 @@ internal static class Program
         // Run JIT.
         Perft.MoveGeneration(Backend.Board.Default(), 4, false);
         
+        string[] args = Environment.GetCommandLineArgs();
+        if (args.Length > 1 && args[1].ToLower().Equals("uci")) {
+            goto Start;
+        }
+        
         Console.Clear();
         DrawCycle.OutputTitle();
 
         Start:
-        string[] args = Console.ReadLine()?.Split(" ");
+        args = Console.ReadLine()?.Split(" ");
         
         if (args == null) goto Start;
+
+        if (args[0].ToLower().Equals("uci")) {
+            UniversalChessInterface.LaunchInUciToGuiMode();
+            return;
+        }
         
         if (args[0].ToLower().Equals("position")) {
             try {
