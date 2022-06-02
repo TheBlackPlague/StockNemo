@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend;
@@ -19,6 +17,7 @@ public static class UniversalChessInterface
     private static Board Board;
     private static bool Busy;
     private static CancellationTokenSource SearchCancellationSource;
+    private static int MoveCount;
 
     public static void Setup()
     {
@@ -91,6 +90,7 @@ public static class UniversalChessInterface
         
         // Once we've loaded the position, we can apply moves.
         if (args[argsParsed].ToLower().Equals("moves")) {
+            MoveCount = args.Length - (argsParsed + 1);
             for (int i = argsParsed + 1; i < args.Length; i++) {
                 Square from = Enum.Parse<Square>(args[i][..2], true);
                 Square to = Enum.Parse<Square>(args[i][2..4], true);
@@ -121,17 +121,32 @@ public static class UniversalChessInterface
 
         TaskFactory factory = new();
         SearchedMove bestMove = new(Square.Na, Square.Na, Promotion.None, 0);
-        int time;
+
+        int time = 3500;
         
-        switch (args[1].ToLower()) {
-            case "movetime":
-                time = int.Parse(args[2]);
-                break;
-            default:
-                time = 3500;
-                break;
+        Span<int> timeForColor = stackalloc int[2];
+        Span<int> timeIncForColor = stackalloc int[2];
+        PieceColor color = Board.WhiteTurn ? PieceColor.White : PieceColor.Black;
+        if (input.ToLower().Contains("wtime") || input.ToLower().Contains("btime")) {
+            timeForColor[0] = int.Parse(args[2]);
+            timeForColor[1] = int.Parse(args[4]);
+            timeIncForColor[0] = int.Parse(args[6]);
+            timeIncForColor[1] = int.Parse(args[8]);
+
+            time = timeForColor[(int)color] / 20;
+
+            if (MoveCount > 10) {
+                time += timeIncForColor[(int)color] / 2;
+            }
+
+            if (MoveCount > 20) {
+                int dTime = timeForColor[(int)color] - timeForColor[(int)Util.OppositeColor(color)];
+                if (dTime > 3000) time += dTime / 3;
+            }
+        } else if (input.ToLower().Contains("movetime")) {
+            time = int.Parse(args[2]);
         }
-        
+
         SearchCancellationSource = new CancellationTokenSource();
         SearchCancellationSource.CancelAfter(time);
         factory.StartNew(() =>
@@ -161,6 +176,7 @@ public static class UniversalChessInterface
             string promotion = bestMove.Promotion != Promotion.None ? 
                 bestMove.Promotion.ToString()[0].ToString().ToLower() : "";
             Console.WriteLine("bestmove " + from + to + promotion);
+            MoveCount++;
         }, SearchCancellationSource.Token);
     }
 
