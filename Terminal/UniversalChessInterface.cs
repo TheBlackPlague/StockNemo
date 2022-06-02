@@ -150,7 +150,6 @@ public static class UniversalChessInterface
                         Console.Write(bestMove.Promotion.ToString().ToLower()[0]);
 
                     Console.WriteLine();
-                    Thread.Sleep(1000);
                     depth++;
                 }
             } catch (OperationCanceledException) {} 
