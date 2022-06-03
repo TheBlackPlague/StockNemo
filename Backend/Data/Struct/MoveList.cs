@@ -441,10 +441,11 @@ public ref struct MoveList
         if (UnderAttack(Board, From, oppositeColor)) return;
             
         // Get castling rights.
-        (bool q, bool k) = Board.CastlingRight(color);
+        (byte q, byte k) = Board.CastlingRight(color);
             
         // Make sure castling close-path isn't under attack.
-        if (q && !UnderAttack(Board, From - 1, oppositeColor) && !UnderAttack(Board, From - 2, oppositeColor)) {
+        if (q != 0x0 && 
+            !UnderAttack(Board, From - 1, oppositeColor) && !UnderAttack(Board, From - 2, oppositeColor)) {
             // Generate path of castle queen-side.
             BitBoard path = color == PieceColor.White ? WHITE_QUEEN_CASTLE : BLACK_QUEEN_CASTLE;
                 
@@ -457,7 +458,8 @@ public ref struct MoveList
 
         // ReSharper disable once InvertIf
         // Make sure castling close-path isn't under attack.
-        if (k && !UnderAttack(Board, From + 1, oppositeColor) && !UnderAttack(Board, From + 2, oppositeColor)) {
+        if (k != 0x0 && 
+            !UnderAttack(Board, From + 1, oppositeColor) && !UnderAttack(Board, From + 2, oppositeColor)) {
             // Generate path of castle king-side.
             BitBoard path = color == PieceColor.White ? WHITE_KING_CASTLE : BLACK_KING_CASTLE;
                 

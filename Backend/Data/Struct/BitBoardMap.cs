@@ -19,10 +19,10 @@ public struct BitBoardMap
         
     public bool WhiteTurn;
         
-    public bool WhiteKCastle;
-    public bool WhiteQCastle;
-    public bool BlackKCastle;
-    public bool BlackQCastle;
+    public byte WhiteKCastle;
+    public byte WhiteQCastle;
+    public byte BlackKCastle;
+    public byte BlackQCastle;
         
     public Square EnPassantTarget;
 
@@ -116,10 +116,10 @@ public struct BitBoardMap
         }
 
         WhiteTurn = turnData[0] == 'w';
-        WhiteKCastle = castlingData.Contains('K');
-        WhiteQCastle = castlingData.Contains('Q');
-        BlackKCastle = castlingData.Contains('k');
-        BlackQCastle = castlingData.Contains('q');
+        WhiteKCastle = castlingData.Contains('K') ? (byte)0x1 : (byte)0x0;
+        WhiteQCastle = castlingData.Contains('Q') ? (byte)0x2 : (byte)0x0;
+        BlackKCastle = castlingData.Contains('k') ? (byte)0x4 : (byte)0x0;
+        BlackQCastle = castlingData.Contains('q') ? (byte)0x8 : (byte)0x0;
         EnPassantTarget = Square.Na;
             
         if (enPassantTargetData.Length == 2) {

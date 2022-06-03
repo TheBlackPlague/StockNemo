@@ -43,7 +43,7 @@ public class Board
     #region Readonly Properties
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public (bool, bool) CastlingRight(PieceColor color) => color == PieceColor.White ? 
+    public (byte, byte) CastlingRight(PieceColor color) => color == PieceColor.White ? 
         (Map.WhiteQCastle, Map.WhiteKCastle) : (Map.BlackQCastle, Map.BlackKCastle);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -155,10 +155,10 @@ public class Board
                     case PieceColor.White:
                         switch ((int)from % 8) {
                             case 0:
-                                Map.WhiteQCastle = false;
+                                Map.WhiteQCastle = 0x0;
                                 break;
                             case 7:
-                                Map.WhiteKCastle = false;
+                                Map.WhiteKCastle = 0x0;
                                 break;
                         }
 
@@ -166,10 +166,10 @@ public class Board
                     case PieceColor.Black:
                         switch ((int)from % 8) {
                             case 0:
-                                Map.BlackQCastle = false;
+                                Map.BlackQCastle = 0x0;
                                 break;
                             case 7:
-                                Map.BlackKCastle = false;
+                                Map.BlackKCastle = 0x0;
                                 break;
                         }
 
@@ -185,12 +185,12 @@ public class Board
             case Piece.King:
                 switch (colorF) {
                     case PieceColor.White:
-                        Map.WhiteKCastle = false;
-                        Map.WhiteQCastle = false;
+                        Map.WhiteKCastle = 0x0;
+                        Map.WhiteQCastle = 0x0;
                         break;
                     case PieceColor.Black:
-                        Map.BlackKCastle = false;
-                        Map.BlackQCastle = false;
+                        Map.BlackKCastle = 0x0;
+                        Map.BlackQCastle = 0x0;
                         break;
                     case PieceColor.None:
                     default:
@@ -228,13 +228,13 @@ public class Board
             switch (colorT) {
                 case PieceColor.White:
                     // ReSharper disable once ConvertIfStatementToSwitchStatement
-                    if (to == Square.H1) Map.WhiteKCastle = false;
-                    else if (to == Square.A1) Map.WhiteQCastle = false;
+                    if (to == Square.H1) Map.WhiteKCastle = 0x0;
+                    else if (to == Square.A1) Map.WhiteQCastle = 0x0;
                     break;
                 case PieceColor.Black:
                     // ReSharper disable once ConvertIfStatementToSwitchStatement
-                    if (to == Square.H8) Map.BlackKCastle = false;
-                    else if (to == Square.A8) Map.BlackQCastle = false;
+                    if (to == Square.H8) Map.BlackKCastle = 0x0;
+                    else if (to == Square.A8) Map.BlackQCastle = 0x0;
                     break;
                 case PieceColor.None:
                 default:
@@ -321,15 +321,15 @@ public class Board
             
         string castlingRight = "";
         // ReSharper disable once ConvertIfStatementToSwitchStatement
-        if (!Map.WhiteKCastle && !Map.WhiteQCastle && !Map.BlackKCastle && !Map.BlackQCastle) {
+        if (Map.WhiteKCastle == 0x0 && Map.WhiteQCastle == 0x0 && Map.BlackKCastle == 0x0 && Map.BlackQCastle == 0x0) {
             castlingRight = "-";
             goto EnPassantFill;
         }
             
-        if (Map.WhiteKCastle) castlingRight += "K";
-        if (Map.WhiteQCastle) castlingRight += "Q";
-        if (Map.BlackKCastle) castlingRight += "k";
-        if (Map.BlackQCastle) castlingRight += "q";
+        if (Map.WhiteKCastle != 0x0) castlingRight += "K";
+        if (Map.WhiteQCastle != 0x0) castlingRight += "Q";
+        if (Map.BlackKCastle != 0x0) castlingRight += "k";
+        if (Map.BlackQCastle != 0x0) castlingRight += "q";
             
         EnPassantFill:
         string enPassantTarget = "-";
