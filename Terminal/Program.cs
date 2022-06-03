@@ -7,7 +7,7 @@ using Backend;
 using Backend.Data.Enum;
 using Backend.Data.Move;
 using Engine;
-using Engine.Struct;
+using Engine.Data.Struct;
 
 namespace Terminal;
 

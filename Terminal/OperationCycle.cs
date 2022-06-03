@@ -1,7 +1,7 @@
 ﻿using System;
 using Backend.Data.Enum;
 using Engine;
-using Engine.Struct;
+using Engine.Data.Struct;
 
 namespace Terminal;
 

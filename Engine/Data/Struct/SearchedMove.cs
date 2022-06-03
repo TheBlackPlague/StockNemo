@@ -1,7 +1,7 @@
 ﻿using Backend.Data.Enum;
 using Backend.Data.Struct;
 
-namespace Engine.Struct;
+namespace Engine.Data.Struct;
 
 public readonly struct SearchedMove
 {
