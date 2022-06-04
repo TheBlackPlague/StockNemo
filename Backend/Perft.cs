@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
 
@@ -21,6 +22,8 @@ public class Perft
     {
         MaxDegreeOfParallelism = 4
     };
+
+    private static readonly PerftTranspositionTable TranspositionTable = new();
         
     // ReSharper disable once FieldCanBeMadeReadOnly.Local
     private Board Board = Board.Default();
@@ -81,6 +84,13 @@ public class Perft
         bool divide = true
     )
     {
+        if (depth < 9) {
+            // First check if there is a transposition table entry.
+            bool entryExists = TranspositionTable.VerifyDepth(board.ZobristHash, depth);
+            // If the entry is valid, we can just return the stored count.
+            if (entryExists && !divide) return TranspositionTable[board.ZobristHash, depth];
+        }
+        
         // Store the count in a uint64.
         ulong count = 0;
 
@@ -237,7 +247,13 @@ public class Perft
                 }
             });
         }
-          
+
+        if (depth < 9) {
+            // In the case we didn't return early, it means the entry wasn't valid. Thus, we should try and add
+            // this transposition into our table to improve performance if we ever get to this transposition again.
+            TranspositionTable[board.ZobristHash, depth] = count;
+        }
+        
         return count;
     }
 
