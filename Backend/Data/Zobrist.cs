@@ -9,7 +9,7 @@ public static class Zobrist
 {
 
     private static readonly Random Random = new();
-    private static readonly PieceKeyTable PieceKeys = new(Random);
+    private static readonly ZobristPieceKeyTable PieceKeys = new(Random);
     private static readonly ulong[] CastlingKeys = new ulong[16];
     private static readonly ulong[] EnPassantKeys = new ulong[64];
     private static ulong TurnKey;

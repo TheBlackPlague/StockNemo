@@ -4,12 +4,12 @@ using Backend.Data.Enum;
 
 namespace Backend.Data;
 
-public class PieceKeyTable
+public class ZobristPieceKeyTable
 {
 
     private readonly ulong[] Internal = new ulong[768];
 
-    public PieceKeyTable(Random random)
+    public ZobristPieceKeyTable(Random random)
     {
         Span<byte> buffer = stackalloc byte[sizeof(ulong)];
         int i = 0;
