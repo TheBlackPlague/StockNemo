@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
 using Backend;
+using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Move;
 using Engine;
@@ -22,9 +23,10 @@ internal static class Program
         Task hardwareInitializationTask = factory.StartNew(HardwareInitializer.Setup);
         
         AttackTable.SetUp();
+        Zobrist.Setup();
         
         // Run JIT.
-        Perft.MoveGeneration(Backend.Board.Default(), 4, false);
+        Perft.MoveGeneration(Backend.Board.Default(), 5, false);
 
         string command = Environment.CommandLine;
         if (command.ToLower().Contains("--uci=true")) {

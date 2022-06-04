@@ -39,7 +39,7 @@ internal class DisplayBoard : Board
     {
         string board = DrawBoardCli(flip).ToString().Trim(' ');
         string fen = "FEN: " + GenerateFen() + "\n";
-        return board + fen;
+        return board + fen + "Hash: " + $"{Map.ZobristHash:X}";
     }
     
     private Table DrawBoardCli(bool flip)
