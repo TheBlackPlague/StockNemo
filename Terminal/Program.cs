@@ -16,6 +16,7 @@ internal static class Program
 {
 
     private static DisplayBoard Board;
+    private static PerftTranspositionTable Table;
 
     private static void Main()
     {
@@ -31,6 +32,10 @@ internal static class Program
         string command = Environment.CommandLine;
         if (command.ToLower().Contains("--uci=true")) {
             goto Start;
+        }
+
+        if (command.ToLower().Contains("--perft-tt=true")) {
+            Table = new PerftTranspositionTable();
         }
         
         Console.Clear();
@@ -140,9 +145,16 @@ internal static class Program
         Console.WriteLine("Running PERFT @ depth " + depth + ": ");
         
         Stopwatch watch = new();
-        watch.Start();
-        ulong result = Perft.MoveGeneration(Board, depth);
-        watch.Stop();
+        ulong result;
+        if (Table != null) {
+            watch.Start();
+            result = Perft.MoveGeneration(Board, depth, Table);
+            watch.Stop();
+        } else {
+            watch.Start();
+            result = Perft.MoveGeneration(Board, depth);
+            watch.Stop();
+        }
             
         string output = "Searched " + result.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
         Console.WriteLine(output);
