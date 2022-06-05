@@ -1,15 +1,17 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Backend.Data;
 
+[StructLayout(LayoutKind.Sequential)]
 public class PerftTranspositionTableEntry
 {
 
     public ulong ZobristHash { get; private set; }
     public bool Set { get; private set; }
     
-    private readonly ulong[] DepthCount = new ulong[8];
-    private readonly bool[] DepthSet = new bool[8];
+    private readonly ulong[] DepthCount = new ulong[9];
+    private readonly bool[] DepthSet = new bool[9];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetZobristHash(ulong zobristHash)
