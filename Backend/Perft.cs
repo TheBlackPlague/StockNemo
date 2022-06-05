@@ -20,7 +20,7 @@ public class Perft
 
     private static readonly ParallelOptions ParallelOptions = new()
     {
-        MaxDegreeOfParallelism = 4
+        MaxDegreeOfParallelism = -1
     };
         
     // ReSharper disable once FieldCanBeMadeReadOnly.Local
