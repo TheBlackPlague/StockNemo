@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Backend.Data;
 
@@ -10,17 +11,25 @@ public class PerftTranspositionTable
     private readonly PerftTranspositionTableEntry[] Internal = 
         new PerftTranspositionTableEntry[HASH_FILTER + 1];
 
+    public ulong HitCount;
+
     public PerftTranspositionTable()
     {
         for (int i = 0; i < Internal.Length; i++) {
             Internal[i] = new PerftTranspositionTableEntry();
         }
+
+        HitCount = 0;
     }
 
     public ulong this[ulong hash, int depth]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Internal[(int)hash & HASH_FILTER][depth];
+        get
+        {
+            Interlocked.Increment(ref HitCount);
+            return Internal[(int)hash & HASH_FILTER][depth];
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set
         {

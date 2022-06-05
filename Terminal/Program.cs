@@ -147,6 +147,7 @@ internal static class Program
         Stopwatch watch = new();
         ulong result;
         if (Table != null) {
+            Table.HitCount = 0;
             watch.Start();
             result = Perft.MoveGeneration(Board, depth, Table);
             watch.Stop();
@@ -157,7 +158,11 @@ internal static class Program
         }
             
         string output = "Searched " + result.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds + " ms).";
-        Console.WriteLine(output);
+        string ttHitResult = "";
+        if (Table != null) {
+            ttHitResult = " TT: " + Table.HitCount + " hits.";
+        }
+        Console.WriteLine(output + ttHitResult);
     }
 
 }
