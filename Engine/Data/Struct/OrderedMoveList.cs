@@ -1,8 +1,9 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
+using Backend;
 using Backend.Data.Enum;
+using Backend.Data.Struct;
 
-namespace Backend.Data.Struct;
+namespace Engine.Data.Struct;
 
 public readonly ref struct OrderedMoveList
 {
@@ -24,10 +25,19 @@ public readonly ref struct OrderedMoveList
     private readonly Span<OrderedMoveEntry> Internal;
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static int ScoreMove(Board board, ref OrderedMoveEntry move)
+    private static int ScoreMove(
+        Board board, 
+        ref OrderedMoveEntry move, 
+        MoveTranspositionTable table, 
+        bool transpositionEntryFound
+        )
     {
+        if (transpositionEntryFound && move == table[board.ZobristHash].BestMove) {
+            return PRIORITY - 1;
+        }
+        
         if (move.Promotion != Promotion.None) {
-            return PRIORITY - 8 + (int)move.Promotion;
+            return PRIORITY - 800 + (int)move.Promotion;
         }
 
         Piece to = board.At(move.To).Item1;
@@ -42,9 +52,14 @@ public readonly ref struct OrderedMoveList
     private static int MvvLva(Piece attacker, Piece victim) => MvvLvaTable[(int)victim][(int)attacker];
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public OrderedMoveList(Board board, ref Span<OrderedMoveEntry> @internal)
+    public OrderedMoveList(
+        Board board, 
+        ref Span<OrderedMoveEntry> memory, 
+        MoveTranspositionTable table, 
+        bool transpositionEntryFound = false
+        )
     {
-        Internal = @internal;
+        Internal = memory;
 
         PieceColor color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
         PieceColor oppositeColor = Util.OppositeColor(color);
@@ -78,13 +93,13 @@ public readonly ref struct OrderedMoveList
                         int p = 1;
                         while (p < 5) {
                             Internal[i] = new OrderedMoveEntry(from, move, (Promotion)p);
-                            Internal[i].Score = ScoreMove(board, ref Internal[i]);
+                            Internal[i].Score = ScoreMove(board, ref Internal[i], table, transpositionEntryFound);
                             i++;
                             p++;
                         }
                     } else {
                         Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                        Internal[i].Score = ScoreMove(board, ref Internal[i]);
+                        Internal[i].Score = ScoreMove(board, ref Internal[i], table, transpositionEntryFound);
                         i++;
                     }
                     
@@ -109,7 +124,7 @@ public readonly ref struct OrderedMoveList
 
                     while (moves.MoveNext()) {
                         Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                        Internal[i].Score = ScoreMove(board, ref Internal[i]);
+                        Internal[i].Score = ScoreMove(board, ref Internal[i], table, transpositionEntryFound);
                         i++;
                     
                         move = moves.Current;
@@ -135,7 +150,7 @@ public readonly ref struct OrderedMoveList
 
             while (moves.MoveNext()) {
                 Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                Internal[i].Score = ScoreMove(board, ref Internal[i]);
+                Internal[i].Score = ScoreMove(board, ref Internal[i], table, transpositionEntryFound);
                 i++;
                     
                 move = moves.Current;

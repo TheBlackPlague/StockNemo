@@ -36,12 +36,7 @@ public class MoveTranspositionTable
     public ref MoveTranspositionTableEntry this[ulong zobristHash]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get
-        {
-            ref MoveTranspositionTableEntry entry = ref Internal[(int)zobristHash & HashFilter];
-            if (entry.ZobristHash == zobristHash) return ref entry;
-            return ref MoveTranspositionTableEntry.Default;
-        }
+        get => ref Internal[(int)zobristHash & HashFilter];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

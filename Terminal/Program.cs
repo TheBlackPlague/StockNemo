@@ -8,6 +8,7 @@ using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Move;
 using Engine;
+using Engine.Data;
 using Engine.Data.Struct;
 
 namespace Terminal;
@@ -46,27 +47,28 @@ internal static class Program
         
         if (args == null) goto Start;
 
-        if (args[0].ToLower().Equals("uci")) {
-            StreamWriter standardOutput = new(Console.OpenStandardOutput());
-            standardOutput.AutoFlush = true;
-            Console.SetOut(standardOutput);
-            UniversalChessInterface.Setup();
-            UniversalChessInterface.LaunchUci();
-            return;
+        switch (args[0].ToLower()) {
+            case "uci":
+            {
+                StreamWriter standardOutput = new(Console.OpenStandardOutput());
+                standardOutput.AutoFlush = true;
+                Console.SetOut(standardOutput);
+                UniversalChessInterface.Setup();
+                UniversalChessInterface.LaunchUci();
+                return;
+            }
+            case "position":
+                try {
+                    Board = args[1].ToLower() switch
+                    {
+                        "startpos" => DisplayBoard.Default(),
+                        "fen" => DisplayBoard.FromFen(string.Join(" ", args[2..])),
+                        _ => throw new InvalidOperationException("Please enter a valid position.")
+                    };
+                } catch (InvalidOperationException) {}
+                goto Start;
         }
-        
-        if (args[0].ToLower().Equals("position")) {
-            try {
-                Board = args[1].ToLower() switch
-                {
-                    "startpos" => DisplayBoard.Default(),
-                    "fen" => DisplayBoard.FromFen(string.Join(" ", args[2..])),
-                    _ => throw new InvalidOperationException("Please enter a valid position.")
-                };
-            } catch (InvalidOperationException) {}
-            goto Start;
-        }
-        
+
         if (Board == null) {
             Console.WriteLine("Please first define a position.");
             goto Start;
@@ -86,7 +88,7 @@ internal static class Program
             int depth = 8;
             if (args.Length > 1) depth = int.Parse(args[1]);
 
-            MoveSearch moveSearch = new(Board);
+            MoveSearch moveSearch = new(Board, MoveTranspositionTable.GenerateTable(1));
             for (int i = 1; i < depth + 1; i++) {
                 Stopwatch sw = new();
                 sw.Start();

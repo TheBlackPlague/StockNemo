@@ -1,6 +1,7 @@
 ﻿using System;
 using Backend.Data.Enum;
 using Engine;
+using Engine.Data;
 using Engine.Data.Struct;
 
 namespace Terminal;
@@ -10,8 +11,11 @@ internal static class OperationCycle
 
     private static bool Exit;
 
+    private static MoveTranspositionTable Table;
+
     public static void Cycle(DisplayBoard board, bool againstSn = false, PieceColor snColor = PieceColor.None)
     {
+        if (againstSn) Table = MoveTranspositionTable.GenerateTable(32);
         while (!Exit) {
             Start:
             DrawCycle.Draw(board);
@@ -24,7 +28,7 @@ internal static class OperationCycle
             string colorToMove = board.WhiteTurn ? "White" : "Black";
 
             if (againstSn && Enum.Parse<PieceColor>(colorToMove, true) == snColor) {
-                MoveSearch moveSearch = new(board);
+                MoveSearch moveSearch = new(board, Table);
                 Console.WriteLine("Searching best move...");
                 SearchedMove bestMove = moveSearch.SearchAndReturn(8);
                 from = bestMove.From;

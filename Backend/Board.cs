@@ -49,6 +49,9 @@ public class Board
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public (Piece, PieceColor) At(Square sq) => Map[sq];
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public BitBoard All() => Map[PieceColor.White] | Map[PieceColor.Black];
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public BitBoard All(PieceColor color) => Map[color];
@@ -92,9 +95,6 @@ public class Board
         return MoveList.UnderAttack(this, kingLoc, color) ? 
             MoveResult.SuccessAndCheck : MoveResult.Success;
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public RevertMove Move(ref OrderedMoveEntry move) => Move(move.From, move.To, move.Promotion);
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public RevertMove Move(Square from, Square to, Promotion promotion = Promotion.None)

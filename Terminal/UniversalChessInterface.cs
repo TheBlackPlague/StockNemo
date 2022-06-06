@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Backend;
 using Backend.Data.Enum;
 using Engine;
+using Engine.Data;
 using Engine.Data.Struct;
 
 namespace Terminal;
@@ -14,6 +15,9 @@ public static class UniversalChessInterface
     private const string NAME = "StockNemo";
     private const string AUTHOR = "Shaheryar";
 
+    private static MoveTranspositionTable TranspositionTable;
+    private static int TranspositionTableSizeMb = 16;
+
     private static Board Board;
     private static bool Busy;
     private static CancellationTokenSource SearchCancellationSource;
@@ -22,6 +26,7 @@ public static class UniversalChessInterface
     public static void Setup()
     {
         Busy = false;
+        UciStdInputThread.CommandReceived += (_, input) => HandleSetOption(input);
         UciStdInputThread.CommandReceived += (_, input) => HandleIsReady(input);
         UciStdInputThread.CommandReceived += (thread, input) => HandleQuit((Thread)thread, input);
         UciStdInputThread.CommandReceived += (_, input) => HandlePosition(input);
@@ -31,9 +36,13 @@ public static class UniversalChessInterface
 
     public static void LaunchUci()
     {
+        // Initialize default UCI parameters.
+        TranspositionTable = MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb);
+        
         // Provide identification information.
         Console.WriteLine("id name " + NAME);
         Console.WriteLine("id author " + AUTHOR);
+        Console.WriteLine("option name Hash type spin default 16 min 4 max 512");
         
         // Let GUI know engine is ready in UCI mode.
         Console.WriteLine("uciok");
@@ -41,6 +50,23 @@ public static class UniversalChessInterface
         // Start an input thread.
         Thread inputThread = new(UciStdInputThread.StartAcceptingInput);
         inputThread.Start();
+    }
+
+    private static void HandleSetOption(string input)
+    {
+        if (!input.ToLower().Contains("setoption")) return;
+
+        string[] args = input.Split(" ");
+        switch (args[2]) {
+            case "Hash":
+                TranspositionTableSizeMb = int.Parse(args[4]);
+                Busy = true;
+                TranspositionTable.FreeMemory();
+                TranspositionTable = null;
+                TranspositionTable = MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb);
+                Busy = false;
+                break;
+        }
     }
 
     private static void HandleIsReady(string input)
@@ -56,6 +82,8 @@ public static class UniversalChessInterface
     private static void HandleQuit(Thread thread, string input)
     {
         if (!input.ToLower().Equals("quit")) return;
+        TranspositionTable.FreeMemory();
+        TranspositionTable = null;
         UciStdInputThread.Running = false;
         thread.IsBackground = true;
         Environment.Exit(0);
@@ -152,7 +180,7 @@ public static class UniversalChessInterface
         factory.StartNew(() =>
         {
             // ReSharper disable once AccessToModifiedClosure
-            MoveSearch search = new(Board.Clone(), SearchCancellationSource.Token);
+            MoveSearch search = new(Board.Clone(), TranspositionTable, SearchCancellationSource.Token);
             int depth = 1;
             Busy = true;
             try {
