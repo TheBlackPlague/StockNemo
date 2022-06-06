@@ -193,7 +193,7 @@ public static class UniversalChessInterface
                     bestMove = search.SearchAndReturn(depth);
                             
                     Console.Write(
-                        "info depth " + depth + " pv " + 
+                        "info depth " + depth + " nodes " + search.TotalNodeSearchCount + " pv " + 
                         bestMove.From.ToString().ToLower() + bestMove.To.ToString().ToLower()
                     );
                     if (bestMove.Promotion != Promotion.None)
@@ -209,6 +209,7 @@ public static class UniversalChessInterface
             string promotion = bestMove.Promotion != Promotion.None ? 
                 bestMove.Promotion.ToString()[0].ToString().ToLower() : "";
             Console.WriteLine("bestmove " + from + to + promotion);
+            Console.WriteLine("TT Count: " + search.TableCutoffCount);
             MoveCount++;
         }, SearchCancellationSource.Token);
     }

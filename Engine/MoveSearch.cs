@@ -15,6 +15,9 @@ public class MoveSearch
     private const int NEG_INFINITY = -POS_INFINITY;
     private const int MATE = POS_INFINITY - 1;
 
+    public int TableCutoffCount;
+    public int TotalNodeSearchCount;
+
     private readonly Board Board;
     private readonly CancellationToken Token;
     private readonly MoveTranspositionTable Table;
@@ -47,6 +50,8 @@ public class MoveSearch
         if (Token.IsCancellationRequested) throw new OperationCanceledException();
 
         #endregion
+
+        int originalAlpha = alpha;
         
         #region Mate Pruning & Piece-Count Draw-Checks
 
@@ -76,7 +81,7 @@ public class MoveSearch
         #endregion
 
         #region Transposition Table Lookup
-
+        
         bool transpositionEntryFound = false;
         ref MoveTranspositionTableEntry ttEntry = ref Table[board.ZobristHash];
         bool valid = ttEntry.Type != MoveTranspositionTableEntryType.Invalid;
@@ -94,11 +99,14 @@ public class MoveSearch
                 default:
                     break;
             }
-
-            if (alpha >= beta) return ttEntry.BestMove.Score;
+        
+            if (alpha >= beta) {
+                TableCutoffCount++;
+                return ttEntry.BestMove.Score;
+            }
             transpositionEntryFound = true;
         }
-
+        
         #endregion
 
         #region Move List Creation
@@ -118,7 +126,8 @@ public class MoveSearch
         }
 
         #endregion
-        
+
+        int bestEvaluation = NEG_INFINITY;
         OrderedMoveEntry bestMoveSoFar = new(Square.Na, Square.Na, Promotion.None);
 
         #region Alpha Beta Negamax
@@ -137,34 +146,29 @@ public class MoveSearch
                 // Make the move.
                 OrderedMoveEntry move = moveList[i];
                 RevertMove rv = BoardUtil.Move(board, ref move);
+                TotalNodeSearchCount++;
         
                 // Evaluate position by getting the relative evaluation and negating it. An evaluation that's good for
                 // our opponent will obviously be bad for us.
                 int evaluation = -Evaluation.RelativeEvaluation(board);
 
-                if (evaluation >= beta) {
-                    // If the evaluation was better than beta, it means the position was too good. Thus, there
-                    // is a good chance that the opponent will avoid this path. Hence, there is currently no
-                    // reason to evaluate it further.
-                    
-                    // We should add a beta-cutoff entry to the TT.
-                    Table.InsertEntry(
-                        board.ZobristHash, 
-                        MoveTranspositionTableEntryType.BetaCutoff, 
-                        new SearchedMove(ref move, evaluation), 
-                        (byte)depth
-                    );
-                    
-                    board.UndoMove(ref rv);
-                    return beta;
+                if (evaluation > bestEvaluation) {
+                    bestEvaluation = evaluation;
+                    bestMoveSoFar = move;
                 }
-        
+
                 if (evaluation > alpha) {
                     // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
-                    // replace our alpha with our evaluation. We should also take into account that it was our best
-                    // so far.
+                    // replace our alpha with our evaluation. 
                     alpha = evaluation;
-                    bestMoveSoFar = move;
+                    if (alpha >= beta) {
+                        // If the evaluation was better than beta, it means the position was too good. Thus, there
+                        // is a good chance that the opponent will avoid this path. Hence, there is currently no
+                        // reason to evaluate it further.
+                        board.UndoMove(ref rv);
+                        alpha = beta;
+                        break;
+                    }
                 }
             
                 // Undo the move.
@@ -185,26 +189,15 @@ public class MoveSearch
                 // Make the move.
                 OrderedMoveEntry move = moveList[i];
                 RevertMove rv = BoardUtil.Move(board, ref move);
+                TotalNodeSearchCount++;
         
                 // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                 // our opponent will obviously be bad for us.
                 int evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
-        
-                if (evaluation >= beta) {
-                    // If the evaluation was better than beta, it means the position was too good. Thus, there
-                    // is a good chance that the opponent will avoid this path. Hence, there is currently no
-                    // reason to evaluate it further.
-                    
-                    // We should add a beta-cutoff entry to the TT.
-                    Table.InsertEntry(
-                        board.ZobristHash, 
-                        MoveTranspositionTableEntryType.BetaCutoff, 
-                        new SearchedMove(ref move, evaluation), 
-                        (byte)depth
-                    );
-                    
-                    board.UndoMove(ref rv);
-                    return beta;
+                
+                if (evaluation > bestEvaluation) {
+                    bestEvaluation = evaluation;
+                    bestMoveSoFar = move;
                 }
         
                 if (evaluation > alpha) {
@@ -212,7 +205,14 @@ public class MoveSearch
                     // replace our alpha with our evaluation. We should also take into account that it was our best
                     // so far.
                     alpha = evaluation;
-                    bestMoveSoFar = move;
+                    if (alpha >= beta) {
+                        // If the evaluation was better than beta, it means the position was too good. Thus, there
+                        // is a good chance that the opponent will avoid this path. Hence, there is currently no
+                        // reason to evaluate it further.
+                        board.UndoMove(ref rv);
+                        alpha = beta;
+                        break;
+                    }
                 }
             
                 // Undo the move.
@@ -222,22 +222,11 @@ public class MoveSearch
         }
         
         #endregion
-        
-        // In case where a best move was found, we should add an exact entry to our TT.
-        if (bestMoveSoFar.From != Square.Na) Table.InsertEntry(
-            board.ZobristHash, 
-            MoveTranspositionTableEntryType.Exact, 
-            new SearchedMove(ref bestMoveSoFar, alpha), 
-            (byte)depth
-        );
-        // Otherwise, if there was no evaluation greater than our alpha, it means there are no good moves here,
-        // and we can just add an alpha-unchanged entry to our TT.
-        else Table.InsertEntry(
-            board.ZobristHash, 
-            MoveTranspositionTableEntryType.AlphaUnchanged, 
-            new SearchedMove(ref moveList[0], alpha), 
-            (byte)depth
-        );
+
+        MoveTranspositionTableEntryType type = MoveTranspositionTableEntryType.Exact;
+        if (bestEvaluation <= originalAlpha) type = MoveTranspositionTableEntryType.AlphaUnchanged;
+        else if (bestEvaluation >= beta) type = MoveTranspositionTableEntryType.BetaCutoff;
+        Table.InsertEntry(board.ZobristHash, type, new SearchedMove(ref bestMoveSoFar, bestEvaluation), (byte)depth);
         
         // If we're at the root node, we should also consider this our best move from the search.
         if (plyFromRoot == 0) BestMove = new SearchedMove(ref bestMoveSoFar, alpha);
