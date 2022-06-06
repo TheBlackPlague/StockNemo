@@ -194,6 +194,15 @@ public class MoveSearch
                     // If the evaluation was better than beta, it means the position was too good. Thus, there
                     // is a good chance that the opponent will avoid this path. Hence, there is currently no
                     // reason to evaluate it further.
+                    
+                    // We should add a beta-cutoff entry to the TT.
+                    Table.InsertEntry(
+                        board.ZobristHash, 
+                        MoveTranspositionTableEntryType.BetaCutoff, 
+                        new SearchedMove(ref move, evaluation), 
+                        (byte)depth
+                    );
+                    
                     board.UndoMove(ref rv);
                     return beta;
                 }
