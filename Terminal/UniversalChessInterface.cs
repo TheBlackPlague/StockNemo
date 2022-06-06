@@ -156,6 +156,7 @@ public static class UniversalChessInterface
         SearchedMove bestMove = new(Square.Na, Square.Na, Promotion.None, 0);
 
         int time = 3500;
+        int maxDepth = 999;
         
         Span<int> timeForColor = stackalloc int[2];
         Span<int> timeIncForColor = stackalloc int[2];
@@ -178,6 +179,9 @@ public static class UniversalChessInterface
             }
         } else if (input.ToLower().Contains("movetime")) {
             time = int.Parse(args[2]);
+        } else if (input.ToLower().Contains("depth")) {
+            maxDepth = int.Parse(args[2]);
+            time = 999999;
         }
 
         SearchCancellationSource = new CancellationTokenSource();
@@ -189,7 +193,7 @@ public static class UniversalChessInterface
             int depth = 1;
             Busy = true;
             try {
-                while (!SearchCancellationSource.Token.IsCancellationRequested) {
+                while (!SearchCancellationSource.Token.IsCancellationRequested && depth <= maxDepth) {
                     bestMove = search.SearchAndReturn(depth);
                             
                     Console.Write(
