@@ -10,11 +10,12 @@ public struct MoveTranspositionTableEntry
 
     public static MoveTranspositionTableEntry Default = new();
     
-    public ulong ZobristHash { get; private set; }
-    public MoveTranspositionTableEntryType Type { get; private set; }
-    public SearchedMove BestMove { get; private set; }
-    public byte Depth { get; private set; }
+    public ulong ZobristHash { get; }
+    public MoveTranspositionTableEntryType Type { get; }
+    public SearchedMove BestMove { get; }
+    public byte Depth { get; }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public MoveTranspositionTableEntry()
     {
         ZobristHash = 0UL;
@@ -24,14 +25,14 @@ public struct MoveTranspositionTableEntry
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetEntry(
-        ulong zobristHash, MoveTranspositionTableEntryType type, ref SearchedMove bestMove, byte depth
+    public MoveTranspositionTableEntry(
+        ulong zobristHash, MoveTranspositionTableEntryType type, SearchedMove bestMove, int depth
     )
     {
         ZobristHash = zobristHash;
         Type = type;
         BestMove = bestMove;
-        Depth = depth;
+        Depth = (byte)depth;
     }
 
 }

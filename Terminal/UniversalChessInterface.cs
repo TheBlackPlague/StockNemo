@@ -116,7 +116,7 @@ public static class UniversalChessInterface
                 throw new InvalidOperationException("Invalid Position provided.");
         }
 
-        if (args.Length < argsParsed) {
+        if (args.Length < argsParsed + 1) {
             Busy = false;
             return;
         }
@@ -213,7 +213,9 @@ public static class UniversalChessInterface
             string promotion = bestMove.Promotion != Promotion.None ? 
                 bestMove.Promotion.ToString()[0].ToString().ToLower() : "";
             Console.WriteLine("bestmove " + from + to + promotion);
+#if DEBUG
             Console.WriteLine("TT Count: " + search.TableCutoffCount);
+#endif
             MoveCount++;
         }, SearchCancellationSource.Token);
     }

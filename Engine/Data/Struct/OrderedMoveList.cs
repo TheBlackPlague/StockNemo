@@ -37,7 +37,7 @@ public readonly ref struct OrderedMoveList
         }
         
         if (move.Promotion != Promotion.None) {
-            return PRIORITY - 800 + (int)move.Promotion;
+            return PRIORITY - 8 + (int)move.Promotion;
         }
 
         Piece to = board.At(move.To).Item1;

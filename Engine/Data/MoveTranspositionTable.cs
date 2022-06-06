@@ -1,6 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Backend.Data.Struct;
 using Engine.Data.Enum;
 using Engine.Data.Struct;
 
@@ -17,7 +15,7 @@ public unsafe class MoveTranspositionTable
     public static MoveTranspositionTable GenerateTable(int megabyteSize) => new(megabyteSize * MB_TO_B);
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public MoveTranspositionTable(int byteSize)
+    private MoveTranspositionTable(int byteSize)
     {
         HashFilter = 0x0;
 
@@ -43,18 +41,18 @@ public unsafe class MoveTranspositionTable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void InsertEntry(ulong zobristHash, MoveTranspositionTableEntryType type, SearchedMove bestMove, byte depth)
+    public void InsertEntry(ulong zobristHash, ref MoveTranspositionTableEntry entry)
     {
         int index = (int)zobristHash & HashFilter;
-        ref MoveTranspositionTableEntry entry = ref Internal[index];
+        ref MoveTranspositionTableEntry oldEntry = ref Internal[index];
         
-        if (entry.Type == MoveTranspositionTableEntryType.Invalid) {
-            entry.SetEntry(zobristHash, type, ref bestMove, depth);
+        if (oldEntry.Type == MoveTranspositionTableEntryType.Invalid) {
+            Internal[index] = entry;
             return;
         }
         
-        if (entry.Depth - 3 > depth) return;
-        entry.SetEntry(zobristHash, type, ref bestMove, depth);
+        if (oldEntry.Depth - 3 > entry.Depth) return;
+        Internal[index] = entry;
     }
 
     public void FreeMemory() => Internal = null;

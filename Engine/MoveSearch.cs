@@ -81,19 +81,19 @@ public class MoveSearch
         #endregion
 
         #region Transposition Table Lookup
-        
-        bool transpositionEntryFound = false;
-        ref MoveTranspositionTableEntry ttEntry = ref Table[board.ZobristHash];
-        bool valid = ttEntry.Type != MoveTranspositionTableEntryType.Invalid;
-        if (valid && ttEntry.ZobristHash == board.ZobristHash && ttEntry.Depth >= depth && plyFromRoot != 0) {
-            switch (ttEntry.Type) {
+
+        ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
+        bool valid = storedEntry.Type != MoveTranspositionTableEntryType.Invalid;
+        if (valid && storedEntry.ZobristHash == board.ZobristHash && storedEntry.Depth >= depth && plyFromRoot != 0 &&
+            beta - alpha <= 1) {
+            switch (storedEntry.Type) {
                 case MoveTranspositionTableEntryType.Exact:
-                    return ttEntry.BestMove.Score;
+                    return storedEntry.BestMove.Score;
                 case MoveTranspositionTableEntryType.BetaCutoff:
-                    alpha = Math.Max(alpha, ttEntry.BestMove.Score);
+                    alpha = Math.Max(alpha, storedEntry.BestMove.Score);
                     break;
                 case MoveTranspositionTableEntryType.AlphaUnchanged:
-                    beta = Math.Min(beta, ttEntry.BestMove.Score);
+                    beta = Math.Min(beta, storedEntry.BestMove.Score);
                     break;
                 case MoveTranspositionTableEntryType.Invalid:
                 default:
@@ -101,10 +101,11 @@ public class MoveSearch
             }
         
             if (alpha >= beta) {
+#if DEBUG
                 TableCutoffCount++;
-                return ttEntry.BestMove.Score;
+#endif
+                return storedEntry.BestMove.Score;
             }
-            transpositionEntryFound = true;
         }
         
         #endregion
@@ -113,7 +114,7 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[128];
-        OrderedMoveList moveList = new(board, ref moveSpan, Table, transpositionEntryFound);
+        OrderedMoveList moveList = new(board, ref moveSpan, Table, valid);
         
         if (moveList.Count == 0) {
             // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
@@ -127,13 +128,12 @@ public class MoveSearch
 
         #endregion
 
-        int bestEvaluation = NEG_INFINITY;
-        OrderedMoveEntry bestMoveSoFar = new(Square.Na, Square.Na, Promotion.None);
-
         #region Alpha Beta Negamax
         
+        int bestEvaluation = NEG_INFINITY;
+        OrderedMoveEntry bestMoveSoFar = new(Square.Na, Square.Na, Promotion.None);
+        
         int i = 0;
-
         if (depth == 1) {
             // If depth is equal to 1, then we we will just be evaluating the state of the board.
             // While we could do this at depth zero, and use the same logic as all depths > 1, it is beneficial to 
@@ -153,6 +153,8 @@ public class MoveSearch
                 int evaluation = -Evaluation.RelativeEvaluation(board);
 
                 if (evaluation > bestEvaluation) {
+                    // If our evaluation was better than our current best evaluation, we should update our evaluation
+                    // with the new evaluation. We should also take into account that it was our best move so far.
                     bestEvaluation = evaluation;
                     bestMoveSoFar = move;
                 }
@@ -166,7 +168,6 @@ public class MoveSearch
                         // is a good chance that the opponent will avoid this path. Hence, there is currently no
                         // reason to evaluate it further.
                         board.UndoMove(ref rv);
-                        alpha = beta;
                         break;
                     }
                 }
@@ -196,21 +197,21 @@ public class MoveSearch
                 int evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 
                 if (evaluation > bestEvaluation) {
+                    // If our evaluation was better than our current best evaluation, we should update our evaluation
+                    // with the new evaluation. We should also take into account that it was our best move so far.
                     bestEvaluation = evaluation;
                     bestMoveSoFar = move;
                 }
         
                 if (evaluation > alpha) {
                     // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
-                    // replace our alpha with our evaluation. We should also take into account that it was our best
-                    // so far.
+                    // replace our alpha with our evaluation.
                     alpha = evaluation;
                     if (alpha >= beta) {
                         // If the evaluation was better than beta, it means the position was too good. Thus, there
                         // is a good chance that the opponent will avoid this path. Hence, there is currently no
                         // reason to evaluate it further.
                         board.UndoMove(ref rv);
-                        alpha = beta;
                         break;
                     }
                 }
@@ -223,15 +224,21 @@ public class MoveSearch
         
         #endregion
 
+        #region Transposition Table Insertion
+
         MoveTranspositionTableEntryType type = MoveTranspositionTableEntryType.Exact;
         if (bestEvaluation <= originalAlpha) type = MoveTranspositionTableEntryType.AlphaUnchanged;
         else if (bestEvaluation >= beta) type = MoveTranspositionTableEntryType.BetaCutoff;
-        Table.InsertEntry(board.ZobristHash, type, new SearchedMove(ref bestMoveSoFar, bestEvaluation), (byte)depth);
+        SearchedMove bestMove = new(ref bestMoveSoFar, bestEvaluation);
+        MoveTranspositionTableEntry entry = new(board.ZobristHash, type, bestMove, depth);
+        Table.InsertEntry(board.ZobristHash, ref entry);
+
+        #endregion
         
         // If we're at the root node, we should also consider this our best move from the search.
-        if (plyFromRoot == 0) BestMove = new SearchedMove(ref bestMoveSoFar, alpha);
+        if (plyFromRoot == 0) BestMove = bestMove;
 
-        return alpha;
+        return bestEvaluation;
     }
 
 }
