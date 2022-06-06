@@ -6,13 +6,13 @@ using Engine.Data.Struct;
 
 namespace Engine.Data;
 
-public class MoveTranspositionTable
+public unsafe class MoveTranspositionTable
 {
 
     private const int MB_TO_B = 1_048_576;
 
     private readonly int HashFilter;
-    private UnmanagedHeapArray<MoveTranspositionTableEntry> Internal;
+    private MoveTranspositionTableEntry[] Internal;
 
     public static MoveTranspositionTable GenerateTable(int megabyteSize) => new(megabyteSize * MB_TO_B);
 
@@ -21,15 +21,18 @@ public class MoveTranspositionTable
     {
         HashFilter = 0x0;
 
-        for (int i = 0x1; byteSize >= (i + 1) * Marshal.SizeOf<MoveTranspositionTableEntry>(); i = (i << 1) | 0x1) {
+        for (int i = 0x1; byteSize >= (i + 1) * sizeof(MoveTranspositionTableEntry); i = (i << 1) | 0x1) {
             HashFilter = i;
         }
 
         int length = HashFilter + 1;
-        Internal = new UnmanagedHeapArray<MoveTranspositionTableEntry>(length, true);
+        Internal = new MoveTranspositionTableEntry[length];
+
+        Parallel.For(0, length, i => Internal[i] = new MoveTranspositionTableEntry());
 
 #if DEBUG
-        Console.WriteLine("Allocated " + Internal.Size() + " bytes for " + length + " TT entries.");
+        Console.WriteLine("Allocated " + length * sizeof(MoveTranspositionTableEntry) + 
+                          " bytes for " + length + " TT entries.");
 #endif
     }
 
@@ -54,10 +57,6 @@ public class MoveTranspositionTable
         entry.SetEntry(zobristHash, type, ref bestMove, depth);
     }
 
-    public void FreeMemory()
-    {
-        Internal.Release();
-        Internal = null;
-    }
+    public void FreeMemory() => Internal = null;
 
 }

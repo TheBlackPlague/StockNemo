@@ -115,6 +115,11 @@ public static class UniversalChessInterface
             default:
                 throw new InvalidOperationException("Invalid Position provided.");
         }
+
+        if (args.Length < argsParsed) {
+            Busy = false;
+            return;
+        }
         
         // Once we've loaded the position, we can apply moves.
         if (args[argsParsed].ToLower().Equals("moves")) {

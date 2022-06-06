@@ -77,10 +77,10 @@ public class MoveSearch
 
         #region Transposition Table Lookup
 
-        bool tranpositionEntryFound = false;
+        bool transpositionEntryFound = false;
         ref MoveTranspositionTableEntry ttEntry = ref Table[board.ZobristHash];
         bool valid = ttEntry.Type != MoveTranspositionTableEntryType.Invalid;
-        if (ttEntry.ZobristHash == board.ZobristHash && ttEntry.Depth >= depth && plyFromRoot != 0 && valid) {
+        if (valid && ttEntry.ZobristHash == board.ZobristHash && ttEntry.Depth >= depth && plyFromRoot != 0) {
             switch (ttEntry.Type) {
                 case MoveTranspositionTableEntryType.Exact:
                     return ttEntry.BestMove.Score;
@@ -96,7 +96,7 @@ public class MoveSearch
             }
 
             if (alpha >= beta) return ttEntry.BestMove.Score;
-            tranpositionEntryFound = true;
+            transpositionEntryFound = true;
         }
 
         #endregion
@@ -105,7 +105,7 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[128];
-        OrderedMoveList moveList = new(board, ref moveSpan, Table, tranpositionEntryFound);
+        OrderedMoveList moveList = new(board, ref moveSpan, Table, transpositionEntryFound);
         
         if (moveList.Count == 0) {
             // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
