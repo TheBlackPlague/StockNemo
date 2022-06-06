@@ -151,6 +151,9 @@ public class MoveSearch
                 // Evaluate position by getting the relative evaluation and negating it. An evaluation that's good for
                 // our opponent will obviously be bad for us.
                 int evaluation = -Evaluation.RelativeEvaluation(board);
+                
+                // Undo the move.
+                board.UndoMove(ref rv);
 
                 if (evaluation > bestEvaluation) {
                     // If our evaluation was better than our current best evaluation, we should update our evaluation
@@ -163,17 +166,13 @@ public class MoveSearch
                     // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
                     // replace our alpha with our evaluation. 
                     alpha = evaluation;
-                    if (alpha >= beta) {
-                        // If the evaluation was better than beta, it means the position was too good. Thus, there
-                        // is a good chance that the opponent will avoid this path. Hence, there is currently no
-                        // reason to evaluate it further.
-                        board.UndoMove(ref rv);
-                        break;
-                    }
+                    
+                    // If the evaluation was better than beta, it means the position was too good. Thus, there
+                    // is a good chance that the opponent will avoid this path. Hence, there is currently no
+                    // reason to evaluate it further.
+                    if (alpha >= beta) break;
                 }
             
-                // Undo the move.
-                board.UndoMove(ref rv);
                 i++;
             }
         } else {
@@ -196,6 +195,9 @@ public class MoveSearch
                 // our opponent will obviously be bad for us.
                 int evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 
+                // Undo the move.
+                board.UndoMove(ref rv);
+                
                 if (evaluation > bestEvaluation) {
                     // If our evaluation was better than our current best evaluation, we should update our evaluation
                     // with the new evaluation. We should also take into account that it was our best move so far.
@@ -207,17 +209,13 @@ public class MoveSearch
                     // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
                     // replace our alpha with our evaluation.
                     alpha = evaluation;
-                    if (alpha >= beta) {
-                        // If the evaluation was better than beta, it means the position was too good. Thus, there
-                        // is a good chance that the opponent will avoid this path. Hence, there is currently no
-                        // reason to evaluate it further.
-                        board.UndoMove(ref rv);
-                        break;
-                    }
+                    
+                    // If the evaluation was better than beta, it means the position was too good. Thus, there
+                    // is a good chance that the opponent will avoid this path. Hence, there is currently no
+                    // reason to evaluate it further.
+                    if (alpha >= beta) break;
                 }
             
-                // Undo the move.
-                board.UndoMove(ref rv);
                 i++;
             }
         }
