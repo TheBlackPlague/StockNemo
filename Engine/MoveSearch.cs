@@ -131,7 +131,7 @@ public class MoveSearch
         #region Alpha Beta Negamax
         
         int bestEvaluation = NEG_INFINITY;
-        OrderedMoveEntry bestMoveSoFar = new(Square.Na, Square.Na, Promotion.None);
+        int bestMoveIndex = -1;
         
         int i = 0;
         if (depth == 1) {
@@ -159,7 +159,7 @@ public class MoveSearch
                     // If our evaluation was better than our current best evaluation, we should update our evaluation
                     // with the new evaluation. We should also take into account that it was our best move so far.
                     bestEvaluation = evaluation;
-                    bestMoveSoFar = move;
+                    bestMoveIndex = i;
                 }
 
                 if (evaluation > alpha) {
@@ -202,7 +202,7 @@ public class MoveSearch
                     // If our evaluation was better than our current best evaluation, we should update our evaluation
                     // with the new evaluation. We should also take into account that it was our best move so far.
                     bestEvaluation = evaluation;
-                    bestMoveSoFar = move;
+                    bestMoveIndex = i;
                 }
         
                 if (evaluation > alpha) {
@@ -227,7 +227,7 @@ public class MoveSearch
         MoveTranspositionTableEntryType type = MoveTranspositionTableEntryType.Exact;
         if (bestEvaluation <= originalAlpha) type = MoveTranspositionTableEntryType.AlphaUnchanged;
         else if (bestEvaluation >= beta) type = MoveTranspositionTableEntryType.BetaCutoff;
-        SearchedMove bestMove = new(ref bestMoveSoFar, bestEvaluation);
+        SearchedMove bestMove = new(ref moveList[bestMoveIndex], bestEvaluation);
         MoveTranspositionTableEntry entry = new(board.ZobristHash, type, bestMove, depth);
         Table.InsertEntry(board.ZobristHash, ref entry);
 
