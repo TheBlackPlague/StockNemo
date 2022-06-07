@@ -145,7 +145,7 @@ public class MoveSearch
                 
                 // Make the move.
                 OrderedMoveEntry move = moveList[i];
-                RevertMove rv = BoardUtil.Move(board, ref move);
+                RevertMove rv = board.Move(move.From, move.To, move.Promotion);
                 TotalNodeSearchCount++;
         
                 // Evaluate position by getting the relative evaluation and negating it. An evaluation that's good for
@@ -188,7 +188,7 @@ public class MoveSearch
                 
                 // Make the move.
                 OrderedMoveEntry move = moveList[i];
-                RevertMove rv = BoardUtil.Move(board, ref move);
+                RevertMove rv = board.Move(move.From, move.To, move.Promotion);
                 TotalNodeSearchCount++;
         
                 // Evaluate position by searching deeper and negating the result. An evaluation that's good for
