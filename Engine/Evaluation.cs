@@ -6,10 +6,10 @@ namespace Engine;
 public static class Evaluation
 {
     
-    private const int QUEEN = 9;
-    private const int ROOK = 5;
-    private const int BISHOP_KNIGHT = 3;
-    private const int PAWN = 1;
+    private const int QUEEN = 900;
+    private const int ROOK = 500;
+    private const int BISHOP_KNIGHT = 300;
+    private const int PAWN = 100;
 
     public static int RelativeEvaluation(Board board)
     {

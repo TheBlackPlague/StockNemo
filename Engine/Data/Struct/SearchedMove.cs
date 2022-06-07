@@ -11,7 +11,7 @@ public readonly struct SearchedMove
     public readonly Square From;
     public readonly Square To;
     public readonly Promotion Promotion;
-    public readonly int Score;
+    public readonly int Evaluation;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(OrderedMoveEntry entry, SearchedMove searchedMove) => 
@@ -20,20 +20,20 @@ public readonly struct SearchedMove
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(OrderedMoveEntry entry, SearchedMove searchedMove) => !(entry == searchedMove);
 
-    public SearchedMove(ref OrderedMoveEntry move, int score)
+    public SearchedMove(ref OrderedMoveEntry move, int evaluation)
     {
         From = move.From;
         To = move.To;
         Promotion = move.Promotion;
-        Score = score;
+        Evaluation = evaluation;
     }
 
-    public SearchedMove(Square from, Square to, Promotion promotion, int score)
+    public SearchedMove(Square from, Square to, Promotion promotion, int evaluation)
     {
         From = from;
         To = to;
         Promotion = promotion;
-        Score = score;
+        Evaluation = evaluation;
     }
 
 }

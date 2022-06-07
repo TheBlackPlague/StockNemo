@@ -100,7 +100,7 @@ internal static class Program
                     Console.Write("=" + bestMove.Promotion.ToString()[0]);
                 }
                 
-                Console.Write(" [" + bestMove.Score + "]");
+                Console.Write(" [" + bestMove.Evaluation + "]");
                 Console.WriteLine(" (" + sw.ElapsedMilliseconds + " ms)");
             }
             

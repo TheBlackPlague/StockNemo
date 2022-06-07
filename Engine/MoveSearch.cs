@@ -88,12 +88,12 @@ public class MoveSearch
         if (valid && storedEntry.ZobristHash == board.ZobristHash && storedEntry.Depth >= depth && plyFromRoot != 0) {
             switch (storedEntry.Type) {
                 case MoveTranspositionTableEntryType.Exact:
-                    return storedEntry.BestMove.Score;
+                    return storedEntry.BestMove.Evaluation;
                 case MoveTranspositionTableEntryType.BetaCutoff:
-                    alpha = Math.Max(alpha, storedEntry.BestMove.Score);
+                    alpha = Math.Max(alpha, storedEntry.BestMove.Evaluation);
                     break;
                 case MoveTranspositionTableEntryType.AlphaUnchanged:
-                    beta = Math.Min(beta, storedEntry.BestMove.Score);
+                    beta = Math.Min(beta, storedEntry.BestMove.Evaluation);
                     break;
                 case MoveTranspositionTableEntryType.Invalid:
                 default:
@@ -104,7 +104,7 @@ public class MoveSearch
 #if DEBUG
                 TableCutoffCount++;
 #endif
-                return storedEntry.BestMove.Score;
+                return storedEntry.BestMove.Evaluation;
             }
 
             transpositionUsed = true;

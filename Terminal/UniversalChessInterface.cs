@@ -197,8 +197,9 @@ public static class UniversalChessInterface
                     bestMove = search.SearchAndReturn(depth);
                             
                     Console.Write(
-                        "info depth " + depth + " nodes " + search.TotalNodeSearchCount + " pv " + 
-                        bestMove.From.ToString().ToLower() + bestMove.To.ToString().ToLower()
+                        "info depth " + depth + " score cp " + bestMove.Evaluation + " nodes " + 
+                        search.TotalNodeSearchCount + " pv " + bestMove.From.ToString().ToLower() + 
+                        bestMove.To.ToString().ToLower()
                     );
                     if (bestMove.Promotion != Promotion.None)
                         Console.Write(bestMove.Promotion.ToString().ToLower()[0]);
