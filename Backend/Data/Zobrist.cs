@@ -57,21 +57,21 @@ public static class Zobrist
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong HashPiece(ref ulong zobristHash, Piece piece, PieceColor color, Square sq)
+    public static ulong HashPiece(ulong zobristHash, Piece piece, PieceColor color, Square sq)
     {
         return zobristHash ^= PieceKeys[piece, color, sq];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong HashCastlingRights(ref ulong zobristHash, byte wk, byte wq, byte bk, byte bq)
+    public static ulong HashCastlingRights(ulong zobristHash, byte wk, byte wq, byte bk, byte bq)
     {
         return zobristHash ^= CastlingKeys[wk | wq | bk | bq];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong FlipTurnInHash(ref ulong zobristHash) => zobristHash ^= TurnKey;
+    public static ulong FlipTurnInHash(ulong zobristHash) => zobristHash ^= TurnKey;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong HashEp(ref ulong zobristHash, Square ep) => zobristHash ^= EnPassantKeys[(int)ep];
+    public static ulong HashEp(ulong zobristHash, Square ep) => zobristHash ^= EnPassantKeys[(int)ep];
 
 }
