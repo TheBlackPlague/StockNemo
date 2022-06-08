@@ -19,12 +19,14 @@ public struct BitBoardMap
         
     public bool WhiteTurn;
         
-    public bool WhiteKCastle;
-    public bool WhiteQCastle;
-    public bool BlackKCastle;
-    public bool BlackQCastle;
+    public byte WhiteKCastle;
+    public byte WhiteQCastle;
+    public byte BlackKCastle;
+    public byte BlackQCastle;
         
     public Square EnPassantTarget;
+
+    public ulong ZobristHash;
 
     public BitBoardMap(string boardFen, string turnData, string castlingData, string enPassantTargetData)
     {
@@ -116,10 +118,10 @@ public struct BitBoardMap
         }
 
         WhiteTurn = turnData[0] == 'w';
-        WhiteKCastle = castlingData.Contains('K');
-        WhiteQCastle = castlingData.Contains('Q');
-        BlackKCastle = castlingData.Contains('k');
-        BlackQCastle = castlingData.Contains('q');
+        WhiteKCastle = castlingData.Contains('K') ? (byte)0x1 : (byte)0x0;
+        WhiteQCastle = castlingData.Contains('Q') ? (byte)0x2 : (byte)0x0;
+        BlackKCastle = castlingData.Contains('k') ? (byte)0x4 : (byte)0x0;
+        BlackQCastle = castlingData.Contains('q') ? (byte)0x8 : (byte)0x0;
         EnPassantTarget = Square.Na;
             
         if (enPassantTargetData.Length == 2) {
@@ -132,6 +134,10 @@ public struct BitBoardMap
         Black = Bb[(int)PieceColor.Black][(int)Piece.Pawn] | Bb[(int)PieceColor.Black][(int)Piece.Rook] | 
                 Bb[(int)PieceColor.Black][(int)Piece.Knight] | Bb[(int)PieceColor.Black][(int)Piece.Bishop] | 
                 Bb[(int)PieceColor.Black][(int)Piece.Queen] | Bb[(int)PieceColor.Black][(int)Piece.King];
+
+        // Necessary to do two assignments to acknowledge struct is fully initialized.
+        ZobristHash = 0;
+        ZobristHash = Zobrist.Hash(ref this);
     }
 
     // ReSharper disable once SuggestBaseTypeForParameterInConstructor
@@ -154,6 +160,8 @@ public struct BitBoardMap
             Array.Copy(bb[i], Bb[i], 6);
         }
         Array.Copy(piecesAndColors, PiecesAndColors, 64);
+        
+        ZobristHash = map.ZobristHash;
     }
 
     public (Piece, PieceColor) this[Square sq]
@@ -200,11 +208,14 @@ public struct BitBoardMap
             // Remove from color bitboards.
             if (cT == PieceColor.White) White[to] = false;
             else Black[to] = false;
+            
+            // Update Zobrist.
+            Zobrist.HashPiece(ref ZobristHash, pT, cT, to);
         }
             
-        // We remove from original square.
+        // We remove from original square and update Zobrist.
         Bb[(int)cF][(int)pF][from] = false;
-            
+
         // Set at next square.
         Bb[(int)cF][(int)pF][to] = true;
 
@@ -220,6 +231,10 @@ public struct BitBoardMap
             Black[from] = false;
             Black[to] = true;
         }
+        
+        // Update Zobrist.
+        Zobrist.HashPiece(ref ZobristHash, pF, cF, from);
+        Zobrist.HashPiece(ref ZobristHash, pF, cF, to);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -236,6 +251,9 @@ public struct BitBoardMap
         // Remove from color bitboards.
         if (c == PieceColor.White) White[sq] = false;
         else Black[sq] = false;
+        
+        // Update Zobrist.
+        Zobrist.HashPiece(ref ZobristHash, p, c, sq);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -251,6 +269,9 @@ public struct BitBoardMap
         // Set piece in pieces and colors.
         int offset = color == PieceColor.White ? 0x0 : 0x10;
         PiecesAndColors[(int)sq] = (byte)((int)piece | offset);
+        
+        // Update Zobrist.
+        Zobrist.HashPiece(ref ZobristHash, piece, color, sq);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

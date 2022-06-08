@@ -1,6 +1,6 @@
 ﻿namespace Backend.Data.Enum;
 
-public enum Square
+public enum Square : sbyte
 {
         
     // Squares on a chess board.

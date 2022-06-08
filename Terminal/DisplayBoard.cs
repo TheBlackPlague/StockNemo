@@ -35,14 +35,14 @@ internal class DisplayBoard : Board
         HighlightedMoves = moveList.Moves;
     }
     
-    public override string ToString()
+    public string ToString(bool flip = false)
     {
-        string board = DrawBoardCli().ToString().Trim(' ');
+        string board = DrawBoardCli(flip).ToString().Trim(' ');
         string fen = "FEN: " + GenerateFen() + "\n";
-        return board + fen;
+        return board + fen + "Hash: " + $"{Map.ZobristHash:X}";
     }
     
-    private Table DrawBoardCli()
+    private Table DrawBoardCli(bool flip)
     {
         TableBuilder builder = new(new CellFormat(Alignment.Center));
             
@@ -50,15 +50,22 @@ internal class DisplayBoard : Board
         builder.AddColumn("*");
             
         // Add columns for files
-        for (int h = 0; h < UBOUND; h++) builder.AddColumn(((char)(65 + h)).ToString());
+        int hStart = flip ? UBOUND - 1 : 0;
+        int hStop = flip ? LBOUND : UBOUND;
+        int hDelta = flip ? -1 : 1;
+        for (int h = hStart; h != hStop; h += hDelta) builder.AddColumn(((char)(65 + h)).ToString());
 
         Table table = builder.Build();
 
-        for (int v = UBOUND - 1; v > LBOUND; v--) {
+        int vStart = flip ? 0 : UBOUND - 1;
+        int vStop = flip ? UBOUND : LBOUND;
+        int vDelta = flip ? 1 : -1;
+        
+        for (int v = vStart; v != vStop; v += vDelta) {
             // Count: Rank column + Files columns (1 + 8)
             ICell[] cells = new ICell[UBOUND + 1];
             cells[0] = new TableCell((v + 1).ToString());
-            for (int h = 0; h < UBOUND; h++) {
+            for (int h = hStart; h != hStop; h += hDelta) {
                 Square sq = (Square)(v * 8 + h);
                 (Piece piece, PieceColor color) = Map[sq];
                 string pieceRepresentation = piece switch
