@@ -213,7 +213,7 @@ public struct BitBoardMap
             Zobrist.HashPiece(ref ZobristHash, pT, cT, to);
         }
             
-        // We remove from original square and update Zobrist.
+        // We remove from original square.
         Bb[(int)cF][(int)pF][from] = false;
 
         // Set at next square.
