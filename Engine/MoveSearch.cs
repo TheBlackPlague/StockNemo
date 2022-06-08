@@ -134,6 +134,28 @@ public class MoveSearch
         
         int bestEvaluation = NEG_INFINITY;
         int bestMoveIndex = -1;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool HandleEvaluation(int evaluation, int moveIndex)
+        {
+            if (evaluation <= bestEvaluation) return true;
+            
+            // If our evaluation was better than our current best evaluation, we should update our evaluation
+            // with the new evaluation. We should also take into account that it was our best move so far.
+            bestEvaluation = evaluation;
+            bestMoveIndex = moveIndex;
+
+            if (evaluation <= alpha) return true;
+
+            // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
+            // replace our alpha with our evaluation.
+            alpha = evaluation;
+            
+            // If the evaluation was better than beta, it means the position was too good. Thus, there
+            // is a good chance that the opponent will avoid this path. Hence, there is currently no
+            // reason to evaluate it further.
+            return evaluation < beta;
+        }
         
         int i = 0;
         if (depth == 1) {
@@ -157,24 +179,8 @@ public class MoveSearch
                 // Undo the move.
                 board.UndoMove(ref rv);
 
-                if (evaluation > bestEvaluation) {
-                    // If our evaluation was better than our current best evaluation, we should update our evaluation
-                    // with the new evaluation. We should also take into account that it was our best move so far.
-                    bestEvaluation = evaluation;
-                    bestMoveIndex = i;
-                }
+                if (!HandleEvaluation(evaluation, i)) break;
 
-                if (evaluation > alpha) {
-                    // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
-                    // replace our alpha with our evaluation. 
-                    alpha = evaluation;
-                    
-                    // If the evaluation was better than beta, it means the position was too good. Thus, there
-                    // is a good chance that the opponent will avoid this path. Hence, there is currently no
-                    // reason to evaluate it further.
-                    if (alpha >= beta) break;
-                }
-            
                 i++;
             }
         } else {
@@ -200,23 +206,7 @@ public class MoveSearch
                 // Undo the move.
                 board.UndoMove(ref rv);
                 
-                if (evaluation > bestEvaluation) {
-                    // If our evaluation was better than our current best evaluation, we should update our evaluation
-                    // with the new evaluation. We should also take into account that it was our best move so far.
-                    bestEvaluation = evaluation;
-                    bestMoveIndex = i;
-                }
-        
-                if (evaluation > alpha) {
-                    // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
-                    // replace our alpha with our evaluation.
-                    alpha = evaluation;
-                    
-                    // If the evaluation was better than beta, it means the position was too good. Thus, there
-                    // is a good chance that the opponent will avoid this path. Hence, there is currently no
-                    // reason to evaluate it further.
-                    if (alpha >= beta) break;
-                }
+                if (!HandleEvaluation(evaluation, i)) break;
             
                 i++;
             }
