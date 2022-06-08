@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
 
@@ -14,10 +15,10 @@ public class Board
     protected const string DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     public bool WhiteTurn => Map.WhiteTurn;
-        
-    protected BitBoardMap Map;
-        
     public Square EnPassantTarget => Map.EnPassantTarget;
+    public ulong ZobristHash => Map.ZobristHash;
+    
+    protected BitBoardMap Map;
         
     public static Board Default()
     {
@@ -43,11 +44,14 @@ public class Board
     #region Readonly Properties
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public (bool, bool) CastlingRight(PieceColor color) => color == PieceColor.White ? 
+    public (byte, byte) CastlingRight(PieceColor color) => color == PieceColor.White ? 
         (Map.WhiteQCastle, Map.WhiteKCastle) : (Map.BlackQCastle, Map.BlackKCastle);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public (Piece, PieceColor) At(Square sq) => Map[sq];
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public BitBoard All() => Map[PieceColor.White] | Map[PieceColor.Black];
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public BitBoard All(PieceColor color) => Map[color];
@@ -72,7 +76,7 @@ public class Board
 
         // If the requested move isn't found in legal moves for our square, then we cannot make the move
         // securely. Return a failure result.
-        if (!moves[to]) return MoveResult.Fail;
+        if (!moves[to] || (promotion != Promotion.None && !moveList.Promotion)) return MoveResult.Fail;
             
         // Make the move.
         Move(from, to, promotion);
@@ -97,14 +101,7 @@ public class Board
     {
         (Piece pieceF, PieceColor colorF) = Map[from];
         (Piece pieceT, PieceColor colorT) = Map[to];
-            
-        // This is a debug exception left in to help with debugging.
-        // In real-world scenarios, it should never occur.
-        // We cannot move a piece to the same color.
-        // if (colorF == colorT) {
-        //     throw InvalidMoveAttemptException.FromBoard(this, "Cannot move to same color.");
-        // }
-            
+
         // Generate a revert move before the map has been altered.
         RevertMove rv = RevertMove.FromBitBoardMap(ref Map);
             
@@ -127,9 +124,14 @@ public class Board
             rv.CapturedColor = Util.OppositeColor(colorF);
         }
 
+        // Update Zobrist.
+        if (EnPassantTarget != Square.Na) Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
         if (pieceF == Piece.Pawn && Math.Abs(to - from) == 16) {
             // If the pawn push is a 2-push, the square behind it will be EP target.
             Map.EnPassantTarget = colorF == PieceColor.White ? from + 8 : from - 8;
+            
+            // Update Zobrist.
+            Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
         } else Map.EnPassantTarget = Square.Na;
 
         // Make the move.
@@ -145,6 +147,13 @@ public class Board
         rv.From = from;
         rv.To = to;
 
+        // Remove castling rights from hash to allow easy update.
+        Zobrist.HashCastlingRights(
+            ref Map.ZobristHash, 
+            Map.WhiteKCastle, Map.WhiteQCastle, 
+            Map.BlackKCastle, Map.BlackQCastle
+        );
+        
         switch (pieceF) {
             // If our rook moved, we must update castling rights.
             case Piece.Rook:
@@ -152,10 +161,10 @@ public class Board
                     case PieceColor.White:
                         switch ((int)from % 8) {
                             case 0:
-                                Map.WhiteQCastle = false;
+                                Map.WhiteQCastle = 0x0;
                                 break;
                             case 7:
-                                Map.WhiteKCastle = false;
+                                Map.WhiteKCastle = 0x0;
                                 break;
                         }
 
@@ -163,10 +172,10 @@ public class Board
                     case PieceColor.Black:
                         switch ((int)from % 8) {
                             case 0:
-                                Map.BlackQCastle = false;
+                                Map.BlackQCastle = 0x0;
                                 break;
                             case 7:
-                                Map.BlackKCastle = false;
+                                Map.BlackKCastle = 0x0;
                                 break;
                         }
 
@@ -182,12 +191,12 @@ public class Board
             case Piece.King:
                 switch (colorF) {
                     case PieceColor.White:
-                        Map.WhiteKCastle = false;
-                        Map.WhiteQCastle = false;
+                        Map.WhiteKCastle = 0x0;
+                        Map.WhiteQCastle = 0x0;
                         break;
                     case PieceColor.Black:
-                        Map.BlackKCastle = false;
-                        Map.BlackQCastle = false;
+                        Map.BlackKCastle = 0x0;
+                        Map.BlackQCastle = 0x0;
                         break;
                     case PieceColor.None:
                     default:
@@ -225,22 +234,32 @@ public class Board
             switch (colorT) {
                 case PieceColor.White:
                     // ReSharper disable once ConvertIfStatementToSwitchStatement
-                    if (to == Square.H1) Map.WhiteKCastle = false;
-                    else if (to == Square.A1) Map.WhiteQCastle = false;
+                    if (to == Square.H1) Map.WhiteKCastle = 0x0;
+                    else if (to == Square.A1) Map.WhiteQCastle = 0x0;
                     break;
                 case PieceColor.Black:
                     // ReSharper disable once ConvertIfStatementToSwitchStatement
-                    if (to == Square.H8) Map.BlackKCastle = false;
-                    else if (to == Square.A8) Map.BlackQCastle = false;
+                    if (to == Square.H8) Map.BlackKCastle = 0x0;
+                    else if (to == Square.A8) Map.BlackQCastle = 0x0;
                     break;
                 case PieceColor.None:
                 default:
                     throw new InvalidOperationException("Rook cannot have no color.");
             }
         }
+        
+        // Re-hash castling rights.
+        Zobrist.HashCastlingRights(
+            ref Map.ZobristHash, 
+            Map.WhiteKCastle, Map.WhiteQCastle, 
+            Map.BlackKCastle, Map.BlackQCastle
+        );
 
         // Flip the turn.
         Map.WhiteTurn = !WhiteTurn;
+        
+        // Update Zobrist.
+        Zobrist.FlipTurnInHash(ref Map.ZobristHash);
 
         return rv;
     }
@@ -248,17 +267,38 @@ public class Board
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void UndoMove(ref RevertMove rv)
     {
+        // Remove castling rights from hash to allow easy update.
+        Zobrist.HashCastlingRights(
+            ref Map.ZobristHash, 
+            Map.WhiteKCastle, Map.WhiteQCastle, 
+            Map.BlackKCastle, Map.BlackQCastle
+        );
+        
         // Revert to old castling rights.
         Map.WhiteKCastle = rv.WhiteKCastle;
         Map.WhiteQCastle = rv.WhiteQCastle;
         Map.BlackKCastle = rv.BlackKCastle;
         Map.BlackQCastle = rv.BlackQCastle;
+        
+        // Re-hash castling rights.
+        Zobrist.HashCastlingRights(
+            ref Map.ZobristHash, 
+            Map.WhiteKCastle, Map.WhiteQCastle, 
+            Map.BlackKCastle, Map.BlackQCastle
+        );
             
+        // Update Zobrist.
+        if (Map.EnPassantTarget != Square.Na) 
+            Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
         // Revert to the previous EP target.
         Map.EnPassantTarget = rv.EnPassantTarget;
-            
+        if (Map.EnPassantTarget != Square.Na) 
+            // If we don't have an empty EP, we should hash it in.
+            Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
+
         // Revert to previous turn.
         Map.WhiteTurn = rv.WhiteTurn;
+        Zobrist.FlipTurnInHash(ref Map.ZobristHash);
 
         if (rv.Promotion) {
             PieceColor color = Map[rv.To].Item2;
@@ -273,14 +313,12 @@ public class Board
             // If it was an EP attack, we must insert a pawn at the affected square.
             Square insertion = rv.CapturedColor == PieceColor.White ? rv.To + 8 : rv.To - 8;
             Map.InsertPiece(insertion, Piece.Pawn, rv.CapturedColor);
-                
             return;
         }
 
         if (rv.CapturedPiece != Piece.Empty) {
             // If a capture happened, we must insert the piece at the relevant square.
             Map.InsertPiece(rv.To, rv.CapturedPiece, rv.CapturedColor);
-                
             return;
         }
 
@@ -308,7 +346,7 @@ public class Board
 
     public override string ToString()
     {
-        return "FEN: " + GenerateFen() + "\n";
+        return "FEN: " + GenerateFen() + "\nHash: " + $"{Map.ZobristHash:X}" + "\n";
     }
 
     protected string GenerateFen()
@@ -318,15 +356,15 @@ public class Board
             
         string castlingRight = "";
         // ReSharper disable once ConvertIfStatementToSwitchStatement
-        if (!Map.WhiteKCastle && !Map.WhiteQCastle && !Map.BlackKCastle && !Map.BlackQCastle) {
+        if (Map.WhiteKCastle == 0x0 && Map.WhiteQCastle == 0x0 && Map.BlackKCastle == 0x0 && Map.BlackQCastle == 0x0) {
             castlingRight = "-";
             goto EnPassantFill;
         }
             
-        if (Map.WhiteKCastle) castlingRight += "K";
-        if (Map.WhiteQCastle) castlingRight += "Q";
-        if (Map.BlackKCastle) castlingRight += "k";
-        if (Map.BlackQCastle) castlingRight += "q";
+        if (Map.WhiteKCastle != 0x0) castlingRight += "K";
+        if (Map.WhiteQCastle != 0x0) castlingRight += "Q";
+        if (Map.BlackKCastle != 0x0) castlingRight += "k";
+        if (Map.BlackQCastle != 0x0) castlingRight += "q";
             
         EnPassantFill:
         string enPassantTarget = "-";

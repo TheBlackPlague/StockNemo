@@ -160,7 +160,6 @@ internal static class BlackMagicBitBoardFactory
                 
             // Flip mask for BM bitboards.
             RookMagic[(int)sq] = (magic, ~GenerateRookOccupiedMask(sq), offset);
-            Console.WriteLine("Generated Rook Magic Entry for: " + sq);
         }
     }
 
@@ -173,7 +172,6 @@ internal static class BlackMagicBitBoardFactory
                 
             // Flip mask for BM bitboards.
             BishopMagic[(int)sq] = (magic, ~GenerateBishopOccupiedMask(sq), offset);
-            Console.WriteLine("Generated Bishop Magic Entry for: " + sq);
         }
     }
 

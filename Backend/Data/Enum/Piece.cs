@@ -1,6 +1,6 @@
 ﻿namespace Backend.Data.Enum;
 
-public enum Piece
+public enum Piece : byte
 {
         
     // The type of piece.

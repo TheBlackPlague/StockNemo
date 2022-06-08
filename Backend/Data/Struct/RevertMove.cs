@@ -8,10 +8,10 @@ public ref struct RevertMove
 
     #region Data
 
-    public bool WhiteKCastle;
-    public bool WhiteQCastle;
-    public bool BlackKCastle;
-    public bool BlackQCastle;
+    public byte WhiteKCastle;
+    public byte WhiteQCastle;
+    public byte BlackKCastle;
+    public byte BlackQCastle;
     public Square EnPassantTarget;
 
     public bool WhiteTurn;
