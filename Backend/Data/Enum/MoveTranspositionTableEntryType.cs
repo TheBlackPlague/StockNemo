@@ -1,4 +1,4 @@
-﻿namespace Engine.Data.Enum;
+﻿namespace Backend.Data.Enum;
 
 public enum MoveTranspositionTableEntryType : byte
 {

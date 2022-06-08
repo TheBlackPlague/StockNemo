@@ -1,8 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Engine.Data.Enum;
+using Backend.Data.Enum;
 
-namespace Engine.Data.Struct;
+namespace Backend.Data.Struct;
 
 [StructLayout(LayoutKind.Sequential)]
 public struct MoveTranspositionTableEntry

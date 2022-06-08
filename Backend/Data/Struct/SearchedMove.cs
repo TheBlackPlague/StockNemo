@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 
-namespace Engine.Data.Struct;
+namespace Backend.Data.Struct;
 
 #pragma warning disable CS0660, CS0661
 public readonly struct SearchedMove
