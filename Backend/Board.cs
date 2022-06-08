@@ -125,13 +125,13 @@ public class Board
         }
 
         // Update Zobrist.
-        if (EnPassantTarget != Square.Na) Map.ZobristHash = Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
+        if (EnPassantTarget != Square.Na) Map.ZobristHash = Zobrist.HashEp(Map.ZobristHash, Map.EnPassantTarget);
         if (pieceF == Piece.Pawn && Math.Abs(to - from) == 16) {
             // If the pawn push is a 2-push, the square behind it will be EP target.
             Map.EnPassantTarget = colorF == PieceColor.White ? from + 8 : from - 8;
             
             // Update Zobrist.
-            Map.ZobristHash = Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
+            Map.ZobristHash = Zobrist.HashEp(Map.ZobristHash, Map.EnPassantTarget);
         } else Map.EnPassantTarget = Square.Na;
 
         // Make the move.
@@ -149,7 +149,7 @@ public class Board
 
         // Remove castling rights from hash to allow easy update.
         Map.ZobristHash = Zobrist.HashCastlingRights(
-            ref Map.ZobristHash, 
+            Map.ZobristHash, 
             Map.WhiteKCastle, Map.WhiteQCastle, 
             Map.BlackKCastle, Map.BlackQCastle
         );
@@ -250,7 +250,7 @@ public class Board
         
         // Re-hash castling rights.
         Map.ZobristHash = Zobrist.HashCastlingRights(
-            ref Map.ZobristHash, 
+            Map.ZobristHash, 
             Map.WhiteKCastle, Map.WhiteQCastle, 
             Map.BlackKCastle, Map.BlackQCastle
         );
@@ -259,7 +259,7 @@ public class Board
         Map.WhiteTurn = !WhiteTurn;
         
         // Update Zobrist.
-        Map.ZobristHash = Zobrist.FlipTurnInHash(ref Map.ZobristHash);
+        Map.ZobristHash = Zobrist.FlipTurnInHash(Map.ZobristHash);
 
         return rv;
     }
@@ -269,7 +269,7 @@ public class Board
     {
         // Remove castling rights from hash to allow easy update.
         Map.ZobristHash = Zobrist.HashCastlingRights(
-            ref Map.ZobristHash, 
+            Map.ZobristHash, 
             Map.WhiteKCastle, Map.WhiteQCastle, 
             Map.BlackKCastle, Map.BlackQCastle
         );
@@ -282,23 +282,23 @@ public class Board
         
         // Re-hash castling rights.
         Map.ZobristHash = Zobrist.HashCastlingRights(
-            ref Map.ZobristHash, 
+            Map.ZobristHash, 
             Map.WhiteKCastle, Map.WhiteQCastle, 
             Map.BlackKCastle, Map.BlackQCastle
         );
             
         // Update Zobrist.
         if (Map.EnPassantTarget != Square.Na) 
-            Map.ZobristHash = Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
+            Map.ZobristHash = Zobrist.HashEp(Map.ZobristHash, Map.EnPassantTarget);
         // Revert to the previous EP target.
         Map.EnPassantTarget = rv.EnPassantTarget;
         if (Map.EnPassantTarget != Square.Na) 
             // If we don't have an empty EP, we should hash it in.
-            Map.ZobristHash = Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
+            Map.ZobristHash = Zobrist.HashEp(Map.ZobristHash, Map.EnPassantTarget);
 
         // Revert to previous turn.
         Map.WhiteTurn = rv.WhiteTurn;
-        Map.ZobristHash = Zobrist.FlipTurnInHash(ref Map.ZobristHash);
+        Map.ZobristHash = Zobrist.FlipTurnInHash(Map.ZobristHash);
 
         if (rv.Promotion) {
             PieceColor color = Map[rv.To].Item2;

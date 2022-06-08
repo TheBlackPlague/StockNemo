@@ -210,7 +210,7 @@ public struct BitBoardMap
             else Black[to] = false;
             
             // Update Zobrist.
-            ZobristHash = Zobrist.HashPiece(ref ZobristHash, pT, cT, to);
+            ZobristHash = Zobrist.HashPiece(ZobristHash, pT, cT, to);
         }
             
         // We remove from original square and update Zobrist.
@@ -233,8 +233,8 @@ public struct BitBoardMap
         }
         
         // Update Zobrist.
-        ZobristHash = Zobrist.HashPiece(ref ZobristHash, pF, cF, from);
-        ZobristHash = Zobrist.HashPiece(ref ZobristHash, pF, cF, to);
+        ZobristHash = Zobrist.HashPiece(ZobristHash, pF, cF, from);
+        ZobristHash = Zobrist.HashPiece(ZobristHash, pF, cF, to);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -253,7 +253,7 @@ public struct BitBoardMap
         else Black[sq] = false;
         
         // Update Zobrist.
-        ZobristHash = Zobrist.HashPiece(ref ZobristHash, p, c, sq);
+        ZobristHash = Zobrist.HashPiece(ZobristHash, p, c, sq);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -271,7 +271,7 @@ public struct BitBoardMap
         PiecesAndColors[(int)sq] = (byte)((int)piece | offset);
         
         // Update Zobrist.
-        ZobristHash = Zobrist.HashPiece(ref ZobristHash, piece, color, sq);
+        ZobristHash = Zobrist.HashPiece(ZobristHash, piece, color, sq);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
