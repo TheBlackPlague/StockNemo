@@ -148,12 +148,14 @@ public struct BitBoard
     public int Count => BitOperations.PopCount(Internal);
 
     private ulong Internal;
-        
+       
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public BitBoard(BitBoard from)
     {
         Internal = from.Internal;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private BitBoard(ulong from)
     {
         Internal = from;
