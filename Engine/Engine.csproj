@@ -6,6 +6,8 @@
         <Nullable>disable</Nullable>
         <Company>StockNemo</Company>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Configurations>Debug;Release;Release GPU;Debug GPU</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>

@@ -4,6 +4,18 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;Release GPU;Debug GPU</Configurations>
+        <Platforms>AnyCPU</Platforms>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release GPU' ">
+      <Optimize>true</Optimize>
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug GPU' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
 
 </Project>

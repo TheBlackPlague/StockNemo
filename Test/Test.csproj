@@ -6,6 +6,10 @@
         <IsPackable>false</IsPackable>
 
         <LangVersion>10</LangVersion>
+
+        <Configurations>Debug;Release;Release GPU;Debug GPU</Configurations>
+
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>

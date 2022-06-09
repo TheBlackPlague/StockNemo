@@ -7,6 +7,8 @@
         <AssemblyName>StockNemo</AssemblyName>
         <PublicSign>false</PublicSign>
         <LangVersion>10</LangVersion>
+        <Configurations>Debug;Release;Release GPU;Debug GPU</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">

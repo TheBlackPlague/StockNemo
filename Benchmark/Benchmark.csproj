@@ -4,6 +4,8 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
         <LangVersion>10</LangVersion>
+        <Configurations>Debug;Release;Release GPU;Debug GPU</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>

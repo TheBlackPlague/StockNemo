@@ -5,6 +5,16 @@
         <Company>StockNemo</Company>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>10</LangVersion>
+        <Configurations>Debug;Release;Release GPU;Debug GPU</Configurations>
+        <Platforms>AnyCPU</Platforms>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release GPU' ">
+      <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug GPU' ">
+      <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
 
     <ItemGroup>
