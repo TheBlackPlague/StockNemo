@@ -17,6 +17,7 @@ public class Board
     public bool WhiteTurn => Map.WhiteTurn;
     public Square EnPassantTarget => Map.EnPassantTarget;
     public ulong ZobristHash => Map.ZobristHash;
+    public int PieceDevelopmentEvaluation => Map.PieceDevelopmentEvaluation;
     
     protected BitBoardMap Map;
         

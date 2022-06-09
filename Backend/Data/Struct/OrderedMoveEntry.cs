@@ -1,6 +1,6 @@
 ﻿using Backend.Data.Enum;
 
-namespace Engine.Data.Struct;
+namespace Backend.Data.Struct;
 
 public struct OrderedMoveEntry
 {

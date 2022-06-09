@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
+using Backend.Engine;
 
 namespace Backend.Data.Struct;
 
@@ -27,6 +28,8 @@ public struct BitBoardMap
     public Square EnPassantTarget;
 
     public ulong ZobristHash;
+
+    public int PieceDevelopmentEvaluation;
 
     public BitBoardMap(string boardFen, string turnData, string castlingData, string enPassantTargetData)
     {
@@ -135,9 +138,12 @@ public struct BitBoardMap
                 Bb[(int)PieceColor.Black][(int)Piece.Knight] | Bb[(int)PieceColor.Black][(int)Piece.Bishop] | 
                 Bb[(int)PieceColor.Black][(int)Piece.Queen] | Bb[(int)PieceColor.Black][(int)Piece.King];
 
+        PieceDevelopmentEvaluation = 0;
+        
         // Necessary to do two assignments to acknowledge struct is fully initialized.
         ZobristHash = 0;
         ZobristHash = Zobrist.Hash(ref this);
+        PieceDevelopmentEvaluation = Evaluation.InitialPieceDevelopmentEvaluation(ref this);
     }
 
     // ReSharper disable once SuggestBaseTypeForParameterInConstructor
@@ -162,6 +168,7 @@ public struct BitBoardMap
         Array.Copy(piecesAndColors, PiecesAndColors, 64);
         
         ZobristHash = map.ZobristHash;
+        PieceDevelopmentEvaluation = map.PieceDevelopmentEvaluation;
     }
 
     public (Piece, PieceColor) this[Square sq]
@@ -206,14 +213,19 @@ public struct BitBoardMap
             Bb[(int)cT][(int)pT][to] = false;
                 
             // Remove from color bitboards.
-            if (cT == PieceColor.White) White[to] = false;
-            else Black[to] = false;
+            if (cT == PieceColor.White) {
+                White[to] = false;
+                PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[pT, to];
+            } else {
+                Black[to] = false;
+                PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[pT, to];
+            }
             
             // Update Zobrist.
             Zobrist.HashPiece(ref ZobristHash, pT, cT, to);
         }
             
-        // We remove from original square and update Zobrist.
+        // We remove from original square.
         Bb[(int)cF][(int)pF][from] = false;
 
         // Set at next square.
@@ -227,9 +239,13 @@ public struct BitBoardMap
         if (cF == PieceColor.White) {
             White[from] = false;
             White[to] = true;
+            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[pF, from];
+            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[pF, to];
         } else {
             Black[from] = false;
             Black[to] = true;
+            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[pF, from];
+            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[pF, to];
         }
         
         // Update Zobrist.
@@ -249,8 +265,13 @@ public struct BitBoardMap
         PiecesAndColors[(int)sq] = 0x26;
 
         // Remove from color bitboards.
-        if (c == PieceColor.White) White[sq] = false;
-        else Black[sq] = false;
+        if (c == PieceColor.White) {
+            White[sq] = false;
+            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[p, sq];
+        } else {
+            Black[sq] = false;
+            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[p, sq];
+        }
         
         // Update Zobrist.
         Zobrist.HashPiece(ref ZobristHash, p, c, sq);
@@ -263,8 +284,13 @@ public struct BitBoardMap
         Bb[(int)color][(int)piece][sq] = true;
             
         // Insert into color bitboards.
-        if (color == PieceColor.White) White[sq] = true;
-        else Black[sq] = true;
+        if (color == PieceColor.White) {
+            White[sq] = true;
+            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[piece, sq];
+        } else {
+            Black[sq] = true;
+            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[piece, sq];
+        }
             
         // Set piece in pieces and colors.
         int offset = color == PieceColor.White ? 0x0 : 0x10;
