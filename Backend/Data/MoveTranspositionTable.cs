@@ -1,4 +1,7 @@
-﻿using System.Runtime.CompilerServices;
+﻿#if DEBUG
+using System;
+#endif
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
