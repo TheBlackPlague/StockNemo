@@ -18,4 +18,8 @@
       <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="ILGPU" Version="1.2.0" />
+    </ItemGroup>
+
 </Project>

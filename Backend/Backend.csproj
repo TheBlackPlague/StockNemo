@@ -21,4 +21,8 @@
       <Compile Remove="Move\Log.cs" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="ILGPU" Version="1.2.0" />
+    </ItemGroup>
+
 </Project>

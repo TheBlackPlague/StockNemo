@@ -1,6 +1,10 @@
-﻿using System.Numerics;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
+#if RELEASE_GPU || DEBUG_GPU
+using ILGPU;
+#else
+using System.Numerics;
+#endif
 
 namespace Backend.Data.Struct;
 
@@ -124,7 +128,11 @@ public struct BitBoard
     public static implicit operator Square(BitBoard bitBoard)
     {
         // Intrinsic: TZCNT
+#if RELEASE_GPU || DEBUG_GPU
+        return (Square)IntrinsicMath.TrailingZeroCount(bitBoard.Internal);
+#else
         return (Square)BitOperations.TrailingZeroCount(bitBoard.Internal);
+#endif
     }
 
     public static explicit operator Square[](BitBoard bitBoard)
@@ -145,7 +153,11 @@ public struct BitBoard
         
     // Number of set bits.
     // Intrinsic: POPCNT
+#if RELEASE_GPU || DEBUG_GPU
+    public int Count => IntrinsicMath.PopCount(Internal);
+#else
     public int Count => BitOperations.PopCount(Internal);
+#endif
 
     private ulong Internal;
        
@@ -253,7 +265,11 @@ public ref struct BitBoardIterator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
+#if RELEASE_GPU || DEBUG_GPU
+            int i = IntrinsicMath.TrailingZeroCount(Value);
+#else
             int i = BitOperations.TrailingZeroCount(Value);
+#endif
                 
             // Subtract 1 and only hold set bits in that mask.
             Value &= Value - 1;
