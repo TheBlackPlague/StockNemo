@@ -276,10 +276,8 @@ public ref struct MoveList
                 ? AttackTable.BlackPawnAttacks[(int)Board.EnPassantTarget]
                 : AttackTable.WhitePawnAttacks[(int)Board.EnPassantTarget];
                 
-            if (reverseCorner[From]) {
-                // If both the enemy EP piece and our piece that can theoretically EP exist...
-                Moves |= Board.EnPassantTarget;
-            }
+            // We can add the EP move if our piece is in a reverse-corner mask of the EP location.
+            if (reverseCorner[From]) Moves |= Board.EnPassantTarget;
         }
         
         // Attack Moves.
