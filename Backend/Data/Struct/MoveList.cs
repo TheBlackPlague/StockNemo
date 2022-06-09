@@ -264,7 +264,6 @@ public ref struct MoveList
         PieceColor oppositeColor = Util.OppositeColor(color);
         BitBoard from = From;
         BitBoard opposite = Board.All(oppositeColor);
-        Square epPieceSq = Square.Na;
 
         #region Attack moves
 
@@ -331,12 +330,13 @@ public ref struct MoveList
         #region Special EP case
 
         // ReSharper disable once InvertIf
-        if (epPieceSq != Square.Na) {
+        if (Moves[Board.EnPassantTarget]) {
             // If the pawn isn't pinned diagonally or horizontally/vertically, we must do one final check for EP:
             // In the rare EP-pin position: 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -
             // If we do EP here, our king can be attacked by rook.
             // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
             // if our king is under attacked.
+            Square epPieceSq = color == PieceColor.White ? Board.EnPassantTarget - 8 : Board.EnPassantTarget + 8;
             
             Board.RemovePiece(From);
             Board.RemovePiece(epPieceSq);
