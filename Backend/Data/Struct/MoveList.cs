@@ -270,19 +270,13 @@ public ref struct MoveList
 
         // En Passant.
         if (Board.EnPassantTarget != Square.Na) {
-            // If EP exists, then we need to check if a piece exists on square that's under attack from Ep, not
-            // where we move to.
-            epPieceSq = color == PieceColor.White ? 
-                Board.EnPassantTarget - 8 : Board.EnPassantTarget + 8;
-            bool epTargetPieceExists = Board.All(Piece.Pawn, oppositeColor)[epPieceSq];
-                
             // We need to check if a piece of ours exists to actually execute the EP.
             // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
             BitBoard reverseCorner = color == PieceColor.White
                 ? AttackTable.BlackPawnAttacks[(int)Board.EnPassantTarget]
                 : AttackTable.WhitePawnAttacks[(int)Board.EnPassantTarget];
                 
-            if (epTargetPieceExists & reverseCorner[From]) {
+            if (reverseCorner[From]) {
                 // If both the enemy EP piece and our piece that can theoretically EP exist...
                 Moves |= Board.EnPassantTarget;
             }
