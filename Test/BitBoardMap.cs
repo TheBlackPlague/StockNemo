@@ -85,4 +85,23 @@ public class BitBoardMap
         Assert.AreEqual("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", fen);
     }
 
+    [Test]
+    public void UndoEval()
+    {
+        Backend.Data.Struct.BitBoardMap useMap = Map;
+
+        int eval = useMap.PieceDevelopmentEvaluation;
+        Console.WriteLine("Previous Eval: " + eval);
+        useMap.Move(Square.E2, Square.E4);
+        int newEval = useMap.PieceDevelopmentEvaluation;
+        Console.WriteLine("New Eval: " + newEval);
+        bool evalChanged = eval != newEval;
+        useMap.Move(Square.E4, Square.E2);
+        int prevEval = useMap.PieceDevelopmentEvaluation;
+        Console.WriteLine("Reverted Eval: " + prevEval);
+        bool evalReverted = eval == prevEval;
+        
+        Assert.IsTrue(evalChanged && evalReverted);
+    }
+
 }
