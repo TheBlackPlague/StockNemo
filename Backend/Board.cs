@@ -115,14 +115,15 @@ public class Board
 
         if (EnPassantTarget == to && pieceF == Piece.Pawn) {
             // If the attack is an EP attack, we must empty the piece affected by EP.
-            Square epPiece = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
-            Map.Empty(epPiece);
+            Square epPieceSq = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
+            PieceColor oppositeColor = Util.OppositeColor(colorF);
+            Map.Empty(Piece.Pawn, oppositeColor, epPieceSq);
 
             // Set it in revert move.
             rv.EnPassant = true;
                 
             // We only need to reference the color.
-            rv.CapturedColor = Util.OppositeColor(colorF);
+            rv.CapturedColor = oppositeColor;
         }
 
         // Update Zobrist.
@@ -136,10 +137,10 @@ public class Board
         } else Map.EnPassantTarget = Square.Na;
 
         // Make the move.
-        Map.Move(from, to);
+        Map.Move(pieceF, colorF, pieceT, colorT, from, to);
 
         if (promotion != Promotion.None) {
-            Map.Empty(to);
+            Map.Empty(pieceF, colorF, to);
             Map.InsertPiece(to, (Piece)promotion, colorF);
             rv.Promotion = true;
         }
@@ -217,7 +218,10 @@ public class Board
                     }
                         
                     // Make the secondary move.
-                    Map.Move(rv.SecondaryFrom, rv.SecondaryTo);
+                    Map.Move(
+                        Piece.Rook, colorF, Piece.Empty, PieceColor.None, 
+                        rv.SecondaryFrom, rv.SecondaryTo
+                    );
                 }
 
                 break;
@@ -333,6 +337,9 @@ public class Board
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void InsertPiece(Square sq, Piece piece, PieceColor color) => Map.InsertPiece(sq, piece, color);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void RemovePiece(Piece piece, PieceColor color, Square sq) => Map.Empty(piece, color, sq);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemovePiece(Square sq) => Map.Empty(sq);

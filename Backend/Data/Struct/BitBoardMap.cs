@@ -202,12 +202,17 @@ public struct BitBoardMap
         get => Bb[(int)color][(int)piece];
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Move(Square from, Square to)
     {
         (Piece pF, PieceColor cF) = this[from];
         (Piece pT, PieceColor cT) = this[to];
+        Move(pF, cF, pT, cT, from, to);
+    }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void Move(Piece pF, PieceColor cF, Piece pT, PieceColor cT, Square from, Square to)
+    {
         if (pT != Piece.Empty) {
             // If moving to piece isn't empty, then we capture.
             Bb[(int)cT][(int)pT][to] = false;
@@ -256,25 +261,30 @@ public struct BitBoardMap
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Empty(Square sq)
     {
-        (Piece p, PieceColor c) = this[sq];
-            
+        (Piece piece, PieceColor color) = this[sq];
+        Empty(piece, color, sq);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Empty(Piece piece, PieceColor color, Square sq)
+    {
         // Remove from square.
-        Bb[(int)c][(int)p][sq] = false;
+        Bb[(int)color][(int)piece][sq] = false;
             
         // Set empty in pieces and colors.
         PiecesAndColors[(int)sq] = 0x26;
 
         // Remove from color bitboards.
-        if (c == PieceColor.White) {
+        if (color == PieceColor.White) {
             White[sq] = false;
-            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[p, (Square)((int)sq ^ 56)];
+            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[piece, (Square)((int)sq ^ 56)];
         } else {
             Black[sq] = false;
-            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[p, sq];
+            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[piece, sq];
         }
         
         // Update Zobrist.
-        Zobrist.HashPiece(ref ZobristHash, p, c, sq);
+        Zobrist.HashPiece(ref ZobristHash, piece, color, sq);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
