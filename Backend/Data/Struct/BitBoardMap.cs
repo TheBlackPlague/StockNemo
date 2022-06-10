@@ -215,7 +215,7 @@ public struct BitBoardMap
             // Remove from color bitboards.
             if (cT == PieceColor.White) {
                 White[to] = false;
-                PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[pT, to];
+                PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[pT, (Square)((int)to ^ 56)];
             } else {
                 Black[to] = false;
                 PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[pT, to];
@@ -239,8 +239,8 @@ public struct BitBoardMap
         if (cF == PieceColor.White) {
             White[from] = false;
             White[to] = true;
-            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[pF, from];
-            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[pF, to];
+            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[pF, (Square)((int)from ^ 56)];
+            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[pF, (Square)((int)to ^ 56)];
         } else {
             Black[from] = false;
             Black[to] = true;
@@ -267,7 +267,7 @@ public struct BitBoardMap
         // Remove from color bitboards.
         if (c == PieceColor.White) {
             White[sq] = false;
-            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[p, sq];
+            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[p, (Square)((int)sq ^ 56)];
         } else {
             Black[sq] = false;
             PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[p, sq];
@@ -286,7 +286,7 @@ public struct BitBoardMap
         // Insert into color bitboards.
         if (color == PieceColor.White) {
             White[sq] = true;
-            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[piece, sq];
+            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[piece, (Square)((int)sq ^ 56)];
         } else {
             Black[sq] = true;
             PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[piece, sq];
