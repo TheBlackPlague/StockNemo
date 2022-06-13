@@ -7,8 +7,6 @@ namespace Backend.Data.Struct;
 [StructLayout(LayoutKind.Sequential)]
 public struct MoveTranspositionTableEntry
 {
-
-    public static MoveTranspositionTableEntry Default = new();
     
     public ulong ZobristHash { get; }
     public MoveTranspositionTableEntryType Type { get; }
