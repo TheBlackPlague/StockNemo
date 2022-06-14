@@ -15,7 +15,7 @@ public class MoveSearch
     private const int MATE = POS_INFINITY - 1;
 
     public int TableCutoffCount;
-    public int TotalNodeSearchCount;
+    private int TotalNodeSearchCount;
 
     private readonly Board Board;
     private readonly CancellationToken Token;
@@ -36,6 +36,21 @@ public class MoveSearch
     {
         AbSearch(Board, 0, depth, NEG_INFINITY, POS_INFINITY);
         return BestMove;
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public SearchedMove IterativeDeepening(int selectedDepth)
+    {
+        SearchedMove bestMove = BestMove;
+        try {
+            int depth = 1;
+            while (!Token.IsCancellationRequested && depth <= selectedDepth) {
+                bestMove = SearchAndReturn(depth);
+                DepthSearchLog(depth);
+                depth++;
+            }
+        } catch (OperationCanceledException) {}
+        return bestMove;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -241,6 +256,20 @@ public class MoveSearch
         if (plyFromRoot == 0) BestMove = bestMove;
 
         return bestEvaluation;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void DepthSearchLog(int depth)
+    {
+        Console.Write(
+            "info depth " + depth + " score cp " + BestMove.Evaluation + " nodes " + 
+            TotalNodeSearchCount + " pv " + BestMove.From.ToString().ToLower() + 
+            BestMove.To.ToString().ToLower()
+        );
+        if (BestMove.Promotion != Promotion.None)
+            Console.Write(BestMove.Promotion.ToString().ToLower()[0]);
+
+        Console.WriteLine();
     }
 
 }

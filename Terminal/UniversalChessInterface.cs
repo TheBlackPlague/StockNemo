@@ -153,7 +153,7 @@ public static class UniversalChessInterface
         if (args.Length == 1) return;
 
         TaskFactory factory = new();
-        SearchedMove bestMove = new(Square.Na, Square.Na, Promotion.None, 0);
+        SearchedMove bestMove;
 
         int time = 3500;
         int maxDepth = 999;
@@ -190,24 +190,8 @@ public static class UniversalChessInterface
         {
             // ReSharper disable once AccessToModifiedClosure
             MoveSearch search = new(Board.Clone(), TranspositionTable, SearchCancellationSource.Token);
-            int depth = 1;
             Busy = true;
-            try {
-                while (!SearchCancellationSource.Token.IsCancellationRequested && depth <= maxDepth) {
-                    bestMove = search.SearchAndReturn(depth);
-                            
-                    Console.Write(
-                        "info depth " + depth + " score cp " + bestMove.Evaluation + " nodes " + 
-                        search.TotalNodeSearchCount + " pv " + bestMove.From.ToString().ToLower() + 
-                        bestMove.To.ToString().ToLower()
-                    );
-                    if (bestMove.Promotion != Promotion.None)
-                        Console.Write(bestMove.Promotion.ToString().ToLower()[0]);
-
-                    Console.WriteLine();
-                    depth++;
-                }
-            } catch (OperationCanceledException) {} 
+            bestMove = search.IterativeDeepening(maxDepth);
             Busy = false;
             string from = bestMove.From.ToString().ToLower();
             string to = bestMove.To.ToString().ToLower();
