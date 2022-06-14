@@ -83,7 +83,7 @@ public class MoveSearch
 
         ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
         bool valid = storedEntry.Type != MoveTranspositionTableEntryType.Invalid;
-        bool transpositionUsed = false;
+        SearchedMove transpositionMove = new(Square.Na, Square.Na, Promotion.None, 0);
         if (valid && storedEntry.ZobristHash == board.ZobristHash && storedEntry.Depth >= depth && plyFromRoot != 0) {
             // Check what type of evaluation we have stored.
             switch (storedEntry.Type) {
@@ -118,7 +118,7 @@ public class MoveSearch
                 return storedEntry.BestMove.Evaluation;
             }
 
-            transpositionUsed = true;
+            transpositionMove = storedEntry.BestMove;
         }
         
         #endregion
@@ -127,7 +127,7 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[128];
-        OrderedMoveList moveList = new(board, ref moveSpan, Table, transpositionUsed);
+        OrderedMoveList moveList = new(board, ref moveSpan, transpositionMove);
         
         if (moveList.Count == 0) {
             // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
