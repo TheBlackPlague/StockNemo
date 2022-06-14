@@ -3,7 +3,7 @@ WORKDIR /StockNemo
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["Terminal/Terminal.csproj", "Terminal/"]
+COPY ["Terminal.csproj", "Terminal/"]
 COPY ["Backend/Backend.csproj", "Backend/"]
 RUN dotnet restore "Terminal/Terminal.csproj"
 COPY . .
