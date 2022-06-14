@@ -85,13 +85,22 @@ public class MoveSearch
         bool valid = storedEntry.Type != MoveTranspositionTableEntryType.Invalid;
         bool transpositionUsed = false;
         if (valid && storedEntry.ZobristHash == board.ZobristHash && storedEntry.Depth >= depth && plyFromRoot != 0) {
+            // Check what type of evaluation we have stored.
             switch (storedEntry.Type) {
                 case MoveTranspositionTableEntryType.Exact:
+                    // In the case of an exact evaluation, we have previously found this was our best move
+                    // in said transposition. Therefore, it is reasonable to return early.
                     return storedEntry.BestMove.Evaluation;
                 case MoveTranspositionTableEntryType.BetaCutoff:
+                    // In the case we had a beta-cutoff, we can check the max between our alpha and the stored 
+                    // beta-cutoff and set it as our new alpha. This is to ensure all moves will be better than the
+                    // stored cutoff.
                     alpha = Math.Max(alpha, storedEntry.BestMove.Evaluation);
                     break;
                 case MoveTranspositionTableEntryType.AlphaUnchanged:
+                    // In the rare case that alpha was unchanged, we must try and change the beta value to
+                    // be the minimum value between our current beta and the stored unchanged alpha. This ensures
+                    // that if alpha would remain unchanged, we would receive a beta-cutoff.
                     beta = Math.Min(beta, storedEntry.BestMove.Evaluation);
                     break;
                 case MoveTranspositionTableEntryType.Invalid:
@@ -103,6 +112,9 @@ public class MoveSearch
 #if DEBUG
                 TableCutoffCount++;
 #endif
+                // In the case that our alpha was equal or greater than our beta, we should return the stored
+                // evaluation earlier because it was the best one possible at this transposition. Otherwise,
+                // we are required to search deeper.
                 return storedEntry.BestMove.Evaluation;
             }
 
@@ -122,8 +134,9 @@ public class MoveSearch
             // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
             // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
             // that's bad for us, so returning 0 is fine here.
-            Square kingSq = board.KingLoc(board.WhiteTurn ? PieceColor.White : PieceColor.Black);
-            PieceColor oppositeColor = board.WhiteTurn ? PieceColor.Black : PieceColor.White;
+            PieceColor color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
+            PieceColor oppositeColor = Util.OppositeColor(color);
+            Square kingSq = board.KingLoc(color);
             return MoveList.UnderAttack(board, kingSq, oppositeColor) ? -MATE + plyFromRoot : 0;
         }
 
