@@ -4,7 +4,9 @@ using Backend.Data.Enum;
 
 namespace Backend.Data.Struct;
 
+#pragma warning disable CS0660, CS0661
 public struct BitBoard
+#pragma warning restore CS0660, CS0661
 {
 
     public static readonly BitBoard Default = new(ulong.MinValue);
@@ -194,16 +196,6 @@ public struct BitBoard
         return new BitBoardIterator(Internal, Count);
     }
 
-    public override bool Equals(object obj)
-    {
-        return obj is BitBoard other && Equals(other);
-    }
-
-    public override int GetHashCode()
-    {
-        return Internal.GetHashCode();
-    }
-        
     public override string ToString()
     {
         string final = "";
@@ -217,11 +209,6 @@ public struct BitBoard
         }
 
         return final;
-    }
-
-    private bool Equals(BitBoard other)
-    {
-        return Internal == other.Internal;
     }
 
 }
