@@ -1,5 +1,7 @@
 ﻿FROM ghcr.io/theblackplague/stocknemo:1.0.0.0 as LAUNCH
 
+LABEL org.opencontainers.image.source=https://github.com/TheBlackPlague/StockNemo
+
 RUN apt-get update &&\
     apt-get install -y python3 python3-pip git 
 
