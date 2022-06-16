@@ -269,6 +269,9 @@ public ref struct MoveList
         #region Promotion Flag
 
         // If we're at rank 7 for white or rank 1 for black, we should set the promotion flag to true.
+        // It is important to set it earlier rather than later, because if there is a diagonal pin capture
+        // leading to a promotion, we must make sure to record that as 4 moves.
+        // FEN: 2q5/1Pp5/K2p4/7r/6Pk/8/8/1R6 w - -
         Promotion = color == PieceColor.White && From is > Square.H6 and < Square.A8 || 
                     color == PieceColor.Black && From is > Square.H1 and < Square.A3;
 
