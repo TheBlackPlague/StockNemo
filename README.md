@@ -1,11 +1,16 @@
 # StockNemo
 A Chess Engine written in C# trying to find good moves like Stockfish.
 
+Play vs StockNemo: [Lichess](https://lichess.org/@/StockNemo)
+
+Featured Games: [Watch](FEATUREDGAMES.md)
+
 ## Features:
+- UCI Compatible
 - Beautiful CLI:
 
-<img src=".readme/b1.png" alt="Start" width="300" height="185"/>
-<img src=".readme/b2.png" alt="Highlight Moves" width="300" height="185"/>
+<img src=".readme/b1.png" alt="Start" width="250" height="154"/>
+<img src=".readme/b2.png" alt="Highlight Moves" width="250" height="154"/>
 <img src=".readme/b3.png" alt="Checkmate" width="600" height="370"/>
 
 - One of the fastest engine PERFT:
