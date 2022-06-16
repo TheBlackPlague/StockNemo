@@ -28,6 +28,7 @@ public static class Zobrist
             EnPassantKeys[i] = BitConverter.ToUInt64(buffer);
         }
 
+        Random.NextBytes(buffer);
         TurnKey = BitConverter.ToUInt64(buffer);
     }
 
