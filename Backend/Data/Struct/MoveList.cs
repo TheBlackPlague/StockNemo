@@ -266,6 +266,14 @@ public ref struct MoveList
         BitBoard opposite = Board.All(oppositeColor);
         Square epPieceSq = Square.Na;
 
+        #region Promotion Flag
+
+        // If we're at rank 7 for white or rank 1 for black, we should set the promotion flag to true.
+        Promotion = color == PieceColor.White && From is > Square.H6 and < Square.A8 || 
+                    color == PieceColor.Black && From is > Square.H1 and < Square.A3;
+
+        #endregion
+
         #region Attack moves
 
         // En Passant.
@@ -316,10 +324,6 @@ public ref struct MoveList
             // Push once more.
             pushes |= color == PieceColor.White ? from << 16 : from >> 16;
         }
-        
-        // If we're at rank 7 for white or rank 1 for black, we should set the promotion flag to true.
-        Promotion = (color == PieceColor.White && From is > Square.H6 and < Square.A8) || 
-                    (color == PieceColor.Black && From is > Square.H1 and < Square.A3);
 
         // Make sure our pushes are not stepping on to enemy pieces.
         // These are normal moves, not attack moves so we can't capture.
