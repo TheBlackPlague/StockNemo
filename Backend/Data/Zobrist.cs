@@ -36,19 +36,18 @@ public static class Zobrist
     {
         ulong zobristHash = 0UL;
         Piece piece = Piece.Pawn;
-        PieceColor color = map.WhiteTurn ? PieceColor.White : PieceColor.Black;
         while (piece < Piece.Empty) {
-            BitBoardIterator pieceSquareIterator = map[piece, color].GetEnumerator();
+            BitBoardIterator pieceSquareIterator = map[piece, map.ColorToMove].GetEnumerator();
             Square sq = pieceSquareIterator.Current;
             while (pieceSquareIterator.MoveNext()) {
-                zobristHash ^= PieceKeys[piece, color, sq];
+                zobristHash ^= PieceKeys[piece, map.ColorToMove, sq];
                 sq = pieceSquareIterator.Current;
             }
             
             piece++;
         }
 
-        if (map.WhiteTurn) zobristHash ^= TurnKey;
+        if (map.ColorToMove == PieceColor.White) zobristHash ^= TurnKey;
         if (map.EnPassantTarget != Square.Na) zobristHash ^= EnPassantKeys[(int)map.EnPassantTarget];
         
         zobristHash ^= CastlingKeys[map.WhiteKCastle | map.WhiteQCastle | map.BlackKCastle | map.BlackQCastle];

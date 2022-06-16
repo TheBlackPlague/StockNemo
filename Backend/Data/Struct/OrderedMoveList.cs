@@ -58,12 +58,11 @@ public readonly ref struct OrderedMoveList
     {
         Internal = memory;
 
-        PieceColor color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
-        PieceColor oppositeColor = Util.OppositeColor(color);
+        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
 
         // Generate pins and check bitboards.
-        Square kingSq = board.KingLoc(color);
-        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, color, oppositeColor);
+        Square kingSq = board.KingLoc(board.ColorToMove);
+        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, board.ColorToMove, oppositeColor);
         (BitBoard checks, bool doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor);
 
         // Define the list.
@@ -75,11 +74,11 @@ public readonly ref struct OrderedMoveList
             // In case of double-checked (discovered + normal), only the king can move so we should skip this.
             
             // Generate all pawn moves.
-            fromIterator = board.All(Piece.Pawn, color).GetEnumerator();
+            fromIterator = board.All(Piece.Pawn, board.ColorToMove).GetEnumerator();
             from = fromIterator.Current;
             while (fromIterator.MoveNext()) {
                 MoveList moveList = new(
-                    board, from, Piece.Pawn, color, 
+                    board, from, Piece.Pawn, board.ColorToMove, 
                     ref hv, ref d, ref checks, false
                 );
                 BitBoardIterator moves = moveList.Moves.GetEnumerator();
@@ -109,11 +108,11 @@ public readonly ref struct OrderedMoveList
             // Generate moves for rook, knight, bishop, and queen.
             sbyte piece = 1;
             while (piece < 5) {
-                fromIterator = board.All((Piece)piece, color).GetEnumerator();
+                fromIterator = board.All((Piece)piece, board.ColorToMove).GetEnumerator();
                 from = fromIterator.Current;
                 while (fromIterator.MoveNext()) {
                     MoveList moveList = new(
-                        board, from, (Piece)piece, color, 
+                        board, from, (Piece)piece, board.ColorToMove, 
                         ref hv, ref d, ref checks, false
                     );
                     BitBoardIterator moves = moveList.Moves.GetEnumerator();
@@ -135,11 +134,11 @@ public readonly ref struct OrderedMoveList
         }
         
         // Generate all king moves.
-        fromIterator = board.All(Piece.King, color).GetEnumerator();
+        fromIterator = board.All(Piece.King, board.ColorToMove).GetEnumerator();
         from = fromIterator.Current;
         while (fromIterator.MoveNext()) {
             MoveList moveList = new(
-                board, from, Piece.King, color, 
+                board, from, Piece.King, board.ColorToMove, 
                 ref hv, ref d, ref checks, false
             );
             BitBoardIterator moves = moveList.Moves.GetEnumerator();

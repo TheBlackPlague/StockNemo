@@ -149,9 +149,8 @@ public class MoveSearch
             // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
             // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
             // that's bad for us, so returning 0 is fine here.
-            PieceColor color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
-            PieceColor oppositeColor = Util.OppositeColor(color);
-            Square kingSq = board.KingLoc(color);
+            PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+            Square kingSq = board.KingLoc(board.ColorToMove);
             return MoveList.UnderAttack(board, kingSq, oppositeColor) ? -MATE + plyFromRoot : 0;
         }
 

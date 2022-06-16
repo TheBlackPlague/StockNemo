@@ -160,21 +160,21 @@ public static class UniversalChessInterface
         
         Span<int> timeForColor = stackalloc int[2];
         Span<int> timeIncForColor = stackalloc int[2];
-        PieceColor color = Board.WhiteTurn ? PieceColor.White : PieceColor.Black;
         if (input.ToLower().Contains("wtime") || input.ToLower().Contains("btime")) {
             timeForColor[0] = int.Parse(args[2]);
             timeForColor[1] = int.Parse(args[4]);
             timeIncForColor[0] = int.Parse(args[6]);
             timeIncForColor[1] = int.Parse(args[8]);
 
-            time = timeForColor[(int)color] / 20;
+            time = timeForColor[(int)Board.ColorToMove] / 20;
 
             if (MoveCount > 10) {
-                time += timeIncForColor[(int)color] / 2;
+                time += timeIncForColor[(int)Board.ColorToMove] / 2;
             }
 
             if (MoveCount > 20) {
-                int dTime = timeForColor[(int)color] - timeForColor[(int)Util.OppositeColor(color)];
+                int dTime = 
+                    timeForColor[(int)Board.ColorToMove] - timeForColor[(int)Util.OppositeColor(Board.ColorToMove)];
                 if (dTime > 3000) time += dTime / 3;
             }
         } else if (input.ToLower().Contains("movetime")) {

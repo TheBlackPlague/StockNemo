@@ -25,7 +25,7 @@ internal static class OperationCycle
             Promotion promotion = Promotion.None;
             
             FromSelection:
-            string colorToMove = board.WhiteTurn ? "White" : "Black";
+            string colorToMove = board.ColorToMove == PieceColor.White ? "White" : "Black";
 
             if (againstSn && Enum.Parse<PieceColor>(colorToMove, true) == snColor) {
                 MoveSearch moveSearch = new(board, Table);
@@ -114,12 +114,12 @@ internal static class OperationCycle
                     break;
                 case MoveResult.SuccessAndCheck:
                     DrawCycle.Draw(board);
-                    string underCheck = board.WhiteTurn ? "White" : "Black";
+                    string underCheck = board.ColorToMove == PieceColor.White ? "White" : "Black";
                     Console.WriteLine(underCheck + " is under check!");
                     goto FromSelection;
                 case MoveResult.Checkmate:
                     DrawCycle.Draw(board);
-                    string winner = board.WhiteTurn ? "Black" : "White";
+                    string winner = board.ColorToMove == PieceColor.White ? "Black" : "White";
                     Console.WriteLine("CHECKMATE. " + winner + " won!");
                     Exit = true;
                     break;
@@ -131,12 +131,12 @@ internal static class OperationCycle
 
     private static bool VerifyFromIsCorrectTurn(DisplayBoard board, Square from)
     {
-        if (board.WhiteTurn && board.At(from).Item2 == PieceColor.Black) {
+        if (board.ColorToMove == PieceColor.White && board.At(from).Item2 == PieceColor.Black) {
             Console.WriteLine("It's White Turn.");
             return false;
         }
         // ReSharper disable once InvertIf
-        if (!board.WhiteTurn && board.At(from).Item2 == PieceColor.White) {
+        if (board.ColorToMove == PieceColor.Black && board.At(from).Item2 == PieceColor.White) {
             Console.WriteLine("It's Black Turn.");
             return false;
         }

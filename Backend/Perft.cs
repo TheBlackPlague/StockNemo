@@ -86,15 +86,14 @@ public class Perft
         ulong count = 0;
 
         // Figure out color and opposite color from the one set in the board.
-        PieceColor color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
-        PieceColor oppositeColor = Util.OppositeColor(color);
+        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
 
         // Get all squares occupied by our color.
-        BitBoard colored = board.All(color);
+        BitBoard colored = board.All(board.ColorToMove);
         
         // Generate pins and check bitboards.
-        Square kingSq = board.KingLoc(color);
-        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, color, oppositeColor);
+        Square kingSq = board.KingLoc(board.ColorToMove);
+        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, board.ColorToMove, oppositeColor);
         (BitBoard checks, bool doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor);
         
         if (depth < 5) {
@@ -260,15 +259,14 @@ public class Perft
         ulong count = 0;
 
         // Figure out color and opposite color from the one set in the board.
-        PieceColor color = board.WhiteTurn ? PieceColor.White : PieceColor.Black;
-        PieceColor oppositeColor = Util.OppositeColor(color);
+        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
 
         // Get all squares occupied by our color.
-        BitBoard colored = board.All(color);
+        BitBoard colored = board.All(board.ColorToMove);
         
         // Generate pins and check bitboards.
-        Square kingSq = board.KingLoc(color);
-        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, color, oppositeColor);
+        Square kingSq = board.KingLoc(board.ColorToMove);
+        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, board.ColorToMove, oppositeColor);
         (BitBoard checks, bool doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor);
         
         if (depth < 5) {

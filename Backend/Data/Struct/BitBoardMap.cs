@@ -17,8 +17,8 @@ public struct BitBoardMap
 
     private BitBoard White;
     private BitBoard Black;
-        
-    public bool WhiteTurn;
+
+    public PieceColor ColorToMove;
         
     public byte WhiteKCastle;
     public byte WhiteQCastle;
@@ -120,7 +120,7 @@ public struct BitBoardMap
             }
         }
 
-        WhiteTurn = turnData[0] == 'w';
+        ColorToMove = turnData[0] == 'w' ? PieceColor.White : PieceColor.Black;
         WhiteKCastle = castlingData.Contains('K') ? (byte)0x1 : (byte)0x0;
         WhiteQCastle = castlingData.Contains('Q') ? (byte)0x2 : (byte)0x0;
         BlackKCastle = castlingData.Contains('k') ? (byte)0x4 : (byte)0x0;
@@ -155,7 +155,7 @@ public struct BitBoardMap
         WhiteQCastle = map.WhiteQCastle;
         BlackKCastle = map.BlackKCastle;
         BlackQCastle = map.BlackQCastle;
-        WhiteTurn = map.WhiteTurn;
+        ColorToMove = map.ColorToMove;
         EnPassantTarget = map.EnPassantTarget;
             
         PiecesAndColors = new byte[64];

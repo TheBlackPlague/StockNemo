@@ -14,7 +14,7 @@ public class Board
         
     protected const string DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    public bool WhiteTurn => Map.WhiteTurn;
+    public PieceColor ColorToMove => Map.ColorToMove;
     public Square EnPassantTarget => Map.EnPassantTarget;
     public ulong ZobristHash => Map.ZobristHash;
     public int PieceDevelopmentEvaluation => Map.PieceDevelopmentEvaluation;
@@ -261,7 +261,7 @@ public class Board
         );
 
         // Flip the turn.
-        Map.WhiteTurn = !WhiteTurn;
+        Map.ColorToMove = Util.OppositeColor(Map.ColorToMove);
         
         // Update Zobrist.
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);
@@ -302,7 +302,7 @@ public class Board
             Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
 
         // Revert to previous turn.
-        Map.WhiteTurn = rv.WhiteTurn;
+        Map.ColorToMove = rv.ColorToMove;
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);
 
         if (rv.Promotion) {
@@ -360,7 +360,7 @@ public class Board
     protected string GenerateFen()
     {
         string boardData = Map.GenerateBoardFen();
-        string turnData = WhiteTurn ? "w" : "b";
+        string turnData = ColorToMove == PieceColor.White ? "w" : "b";
             
         string castlingRight = "";
         // ReSharper disable once ConvertIfStatementToSwitchStatement

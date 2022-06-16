@@ -18,7 +18,7 @@ public static class Evaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int RelativeEvaluation(Board board)
     {
-        return (Material(board) + board.PieceDevelopmentEvaluation) * (board.WhiteTurn ? 1 : -1);
+        return (Material(board) + board.PieceDevelopmentEvaluation) * (-2 * (int)board.ColorToMove + 1);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
