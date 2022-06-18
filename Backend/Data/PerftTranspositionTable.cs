@@ -9,6 +9,7 @@ public class PerftTranspositionTable
 {
 
     private const int HASH_FILTER = 0xFFFFFFF;
+    private const int PARTITION_SIZE = 4096; // 2^12
 
     private readonly PerftTranspositionTableEntry[] Internal = 
         new PerftTranspositionTableEntry[HASH_FILTER + 1];
@@ -17,12 +18,13 @@ public class PerftTranspositionTable
 
     public PerftTranspositionTable()
     {
-        int partitionLength = Internal.Length / (Environment.ProcessorCount * 2);
-        Parallel.For(0, Environment.ProcessorCount * 2, p =>
+        int partitionLength = Internal.Length / PARTITION_SIZE;
+        Parallel.For(0, PARTITION_SIZE, p =>
         {
             int start = p * partitionLength;
             int end = start + partitionLength;
-            for (int i = start; i < end; i++) Internal[i] = new PerftTranspositionTableEntry();
+            for (int i = start; i < end; i++)
+                Internal[i] = new PerftTranspositionTableEntry();
         });
 
         HitCount = 0;

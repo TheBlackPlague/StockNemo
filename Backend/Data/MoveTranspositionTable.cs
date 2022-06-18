@@ -1,7 +1,6 @@
 ﻿#if DEBUG
 using System;
 #endif
-using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Backend.Data.Enum;
@@ -29,15 +28,9 @@ public unsafe class MoveTranspositionTable
         }
 
         int length = HashFilter + 1;
-        int partitionLength = length / (Environment.ProcessorCount * 2);
         Internal = new MoveTranspositionTableEntry[length];
 
-        Parallel.For(0, Environment.ProcessorCount * 2, p =>
-        {
-            int start = p * partitionLength;
-            int end = start + partitionLength;
-            for (int i = start; i < end; i++) Internal[i] = new MoveTranspositionTableEntry();
-        });
+        Parallel.For(0, length, i => Internal[i] = new MoveTranspositionTableEntry());
 
 #if DEBUG
         Console.WriteLine("Allocated " + length * sizeof(MoveTranspositionTableEntry) + 
