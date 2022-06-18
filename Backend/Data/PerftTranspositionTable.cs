@@ -15,11 +15,7 @@ public class PerftTranspositionTable
 
     public PerftTranspositionTable()
     {
-        for (int i = 0; i < Internal.Length; i++) {
-            Internal[i] = new PerftTranspositionTableEntry();
-        }
-
-        HitCount = 0;
+        for (int i = 0; i < Internal.Length; i++) Internal[i] = new PerftTranspositionTableEntry();
     }
 
     public ulong this[ulong hash, int depth]
