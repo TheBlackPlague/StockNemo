@@ -341,9 +341,6 @@ public class Board
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemovePiece(Piece piece, PieceColor color, Square sq) => Map.Empty(piece, color, sq);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void RemovePiece(Square sq) => Map.Empty(sq);
-
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

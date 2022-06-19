@@ -353,8 +353,8 @@ public ref struct MoveList
             // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
             // if our king is under attacked.
             
-            Board.RemovePiece(From);
-            Board.RemovePiece(epPieceSq);
+            Board.RemovePiece(Piece.Pawn, color, From);
+            Board.RemovePiece(Piece.Pawn, oppositeColor, epPieceSq);
             Board.InsertPiece(Board.EnPassantTarget, Piece.Pawn, color);
             
             Square kingSq = Board.KingLoc(color);
@@ -365,7 +365,7 @@ public ref struct MoveList
             
             Board.InsertPiece(From, Piece.Pawn, color);
             Board.InsertPiece(epPieceSq, Piece.Pawn, oppositeColor);
-            Board.RemovePiece(Board.EnPassantTarget);
+            Board.RemovePiece(Piece.Pawn, color, Board.EnPassantTarget);
 
             // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
             if (Moves[Board.EnPassantTarget] && !C[epPieceSq]) Moves &= ~(1UL << (int)Board.EnPassantTarget);
@@ -429,7 +429,7 @@ public ref struct MoveList
         PieceColor oppositeColor = Util.OppositeColor(color);
         BitBoardIterator kingMovesIterator = kingMoves.GetEnumerator();
         Square move = kingMovesIterator.Current;
-        Board.RemovePiece(From);
+        Board.RemovePiece(Piece.King, color, From);
         while (kingMovesIterator.MoveNext()) {
             if (UnderAttack(Board, move, oppositeColor)) kingMoves[move] = false;
             
