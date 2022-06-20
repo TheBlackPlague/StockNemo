@@ -27,10 +27,9 @@ public unsafe class MoveTranspositionTable
             HashFilter = i;
         }
 
-        int length = HashFilter + 1;
-        Internal = new MoveTranspositionTableEntry[length];
+        Internal = new MoveTranspositionTableEntry[HashFilter];
 
-        Parallel.For(0, length, i => Internal[i] = new MoveTranspositionTableEntry());
+        Parallel.For(0, HashFilter, i => Internal[i] = new MoveTranspositionTableEntry());
 
 #if DEBUG
         Console.WriteLine("Allocated " + length * sizeof(MoveTranspositionTableEntry) + 

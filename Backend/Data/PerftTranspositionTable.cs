@@ -9,7 +9,7 @@ public class PerftTranspositionTable
     private const int HASH_FILTER = 0xFFFFFFF;
 
     private readonly PerftTranspositionTableEntry[] Internal = 
-        new PerftTranspositionTableEntry[HASH_FILTER + 1];
+        new PerftTranspositionTableEntry[HASH_FILTER];
 
     public ulong HitCount;
 
