@@ -32,7 +32,7 @@ public class Board
         return new Board(parts[0], parts[1], parts[2], parts[3]);
     }
 
-    private Board(Board board)
+    protected Board(Board board)
     {
         Map = board.Map.Copy();
     }
