@@ -6,7 +6,8 @@ namespace Backend.Data.Struct;
 
 public readonly ref struct OrderedMoveList
 {
-    
+
+    public const int SIZE = 128;
     private const int PRIORITY = int.MaxValue;
 
     private static readonly int[][] MvvLvaTable =

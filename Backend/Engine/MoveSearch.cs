@@ -142,7 +142,7 @@ public class MoveSearch
         #region Move List Creation
 
         // Allocate memory on the stack to be used for our move-list.
-        Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[128];
+        Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
         OrderedMoveList moveList = new(board, ref moveSpan, transpositionMove);
         
         if (moveList.Count == 0) {
