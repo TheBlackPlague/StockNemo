@@ -12,7 +12,7 @@ public class HashHistory
     private int Index = 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Append(ulong zobristHash) => Internal[Index++] = zobristHash;
+    public void Append(ulong zobristHash) => Internal.AA(Index++) = zobristHash;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveLast() => Index--;
@@ -21,7 +21,7 @@ public class HashHistory
     public int Count(ulong zobristHash)
     {
         int count = 0;
-        for (int i = Index; i > -1; i--) if (Internal[i] == zobristHash) count++;
+        for (int i = Index; i > -1; i--) if (Internal.AA(i) == zobristHash) count++;
         return count;
     }
 
