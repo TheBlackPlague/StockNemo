@@ -89,7 +89,7 @@ public class PieceDevelopmentTable
     public int this[Piece piece, Square sq]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Internal[(int)piece * 64 + (int)sq];
+        get => Internal.AA((int)piece * 64 + (int)sq);
     }
 
 }

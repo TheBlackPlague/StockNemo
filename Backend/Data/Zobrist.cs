@@ -49,9 +49,9 @@ public static class Zobrist
         }
 
         if (map.ColorToMove == PieceColor.White) zobristHash ^= TurnKey;
-        if (map.EnPassantTarget != Square.Na) zobristHash ^= EnPassantKeys[(int)map.EnPassantTarget];
+        if (map.EnPassantTarget != Square.Na) zobristHash ^= EnPassantKeys.AA((int)map.EnPassantTarget);
         
-        zobristHash ^= CastlingKeys[map.WhiteKCastle | map.WhiteQCastle | map.BlackKCastle | map.BlackQCastle];
+        zobristHash ^= CastlingKeys.AA(map.WhiteKCastle | map.WhiteQCastle | map.BlackKCastle | map.BlackQCastle);
 
         return zobristHash;
     }
@@ -62,12 +62,12 @@ public static class Zobrist
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void HashCastlingRights(ref ulong zobristHash, byte wk, byte wq, byte bk, byte bq) => 
-        zobristHash ^= CastlingKeys[wk | wq | bk | bq];
+        zobristHash ^= CastlingKeys.AA(wk | wq | bk | bq);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void FlipTurnInHash(ref ulong zobristHash) => zobristHash ^= TurnKey;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void HashEp(ref ulong zobristHash, Square ep) => zobristHash ^= EnPassantKeys[(int)ep];
+    public static void HashEp(ref ulong zobristHash, Square ep) => zobristHash ^= EnPassantKeys.AA((int)ep);
 
 }

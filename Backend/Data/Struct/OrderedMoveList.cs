@@ -47,7 +47,7 @@ public readonly ref struct OrderedMoveList
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int MvvLva(Piece attacker, Piece victim) => MvvLvaTable[(int)victim][(int)attacker];
+    private static int MvvLva(Piece attacker, Piece victim) => MvvLvaTable.DJAA((int)victim, (int)attacker);
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public OrderedMoveList(

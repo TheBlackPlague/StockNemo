@@ -176,7 +176,7 @@ public struct BitBoardMap
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
-            byte r = PiecesAndColors[(int)sq];
+            byte r = PiecesAndColors.AA((int)sq);
             return ((Piece)(r & 0xF), (PieceColor)(r >> 4));
         }
     }
@@ -199,7 +199,7 @@ public struct BitBoardMap
     public readonly BitBoard this[Piece piece, PieceColor color]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Bb[(int)color][(int)piece];
+        get => Bb.DJAA((int)color, (int)piece);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -215,7 +215,7 @@ public struct BitBoardMap
     {
         if (pT != Piece.Empty) {
             // If moving to piece isn't empty, then we capture.
-            Bb[(int)cT][(int)pT][to] = false;
+            Bb.DJAA((int)cT, (int)pT)[to] = false;
                 
             // Remove from color bitboards.
             if (cT == PieceColor.White) {
@@ -229,16 +229,18 @@ public struct BitBoardMap
             // Update Zobrist.
             Zobrist.HashPiece(ref ZobristHash, pT, cT, to);
         }
-            
+        
+        ref BitBoard edit = ref Bb.DJAA((int)cF, (int)pF);
+        
         // We remove from original square.
-        Bb[(int)cF][(int)pF][from] = false;
+        edit[from] = false;
 
         // Set at next square.
-        Bb[(int)cF][(int)pF][to] = true;
+        edit[to] = true;
 
         // Make sure to update the pieces and colors.
-        PiecesAndColors[(int)to] = PiecesAndColors[(int)from];
-        PiecesAndColors[(int)from] = 0x26;
+        PiecesAndColors.AA((int)to) = PiecesAndColors.AA((int)from);
+        PiecesAndColors.AA((int)from) = 0x26;
 
         // Update color bitboards.
         if (cF == PieceColor.White) {
@@ -269,10 +271,10 @@ public struct BitBoardMap
     public void Empty(Piece piece, PieceColor color, Square sq)
     {
         // Remove from square.
-        Bb[(int)color][(int)piece][sq] = false;
+        Bb.DJAA((int)color, (int)piece)[sq] = false;
             
         // Set empty in pieces and colors.
-        PiecesAndColors[(int)sq] = 0x26;
+        PiecesAndColors.AA((int)sq) = 0x26;
 
         // Remove from color bitboards.
         if (color == PieceColor.White) {
@@ -291,7 +293,7 @@ public struct BitBoardMap
     public void InsertPiece(Square sq, Piece piece, PieceColor color)
     {
         // Insert the piece at square.
-        Bb[(int)color][(int)piece][sq] = true;
+        Bb.DJAA((int)color, (int)piece)[sq] = true;
             
         // Insert into color bitboards.
         if (color == PieceColor.White) {
@@ -304,7 +306,7 @@ public struct BitBoardMap
             
         // Set piece in pieces and colors.
         int offset = color == PieceColor.White ? 0x0 : 0x10;
-        PiecesAndColors[(int)sq] = (byte)((int)piece | offset);
+        PiecesAndColors.AA((int)sq) = (byte)((int)piece | offset);
         
         // Update Zobrist.
         Zobrist.HashPiece(ref ZobristHash, piece, color, sq);
