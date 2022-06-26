@@ -18,7 +18,7 @@ public static class UniversalChessInterface
     private static MoveTranspositionTable TranspositionTable;
     private static int TranspositionTableSizeMb = 16;
 
-    private static Board Board;
+    private static EngineBoard Board;
     private static bool Busy;
     private static CancellationTokenSource SearchCancellationSource;
     private static int MoveCount;
@@ -98,7 +98,7 @@ public static class UniversalChessInterface
         int argsParsed = 1;
         switch (args[1].ToLower()) {
             case "startpos":
-                Board = Board.Default();
+                Board = EngineBoard.Default();
 
                 argsParsed++;
                 break;
@@ -108,7 +108,7 @@ public static class UniversalChessInterface
                 string c = args[4];
                 string ep = args[5];
 
-                Board = Board.FromFen(p + " " + s + " " + c + " " + ep);
+                Board = EngineBoard.FromFen(p + " " + s + " " + c + " " + ep);
                 
                 argsParsed += 7;
                 break;

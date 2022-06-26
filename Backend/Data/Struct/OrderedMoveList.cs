@@ -6,7 +6,10 @@ namespace Backend.Data.Struct;
 
 public readonly ref struct OrderedMoveList
 {
-    
+
+    // Technically, there do exist positions where we'd have 218 legal moves.
+    // However, they are so unlikely that 128 seems like an okay number.
+    public const int SIZE = 128;
     private const int PRIORITY = int.MaxValue;
 
     private static readonly int[][] MvvLvaTable =

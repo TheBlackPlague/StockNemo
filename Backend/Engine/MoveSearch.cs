@@ -17,13 +17,13 @@ public class MoveSearch
     public int TableCutoffCount;
     private int TotalNodeSearchCount;
 
-    private readonly Board Board;
+    private readonly EngineBoard Board;
     private readonly CancellationToken Token;
     private readonly MoveTranspositionTable Table;
 
     private SearchedMove BestMove;
 
-    public MoveSearch(Board board, MoveTranspositionTable table, CancellationToken token = default)
+    public MoveSearch(EngineBoard board, MoveTranspositionTable table, CancellationToken token = default)
     {
         Board = board;
         Table = table;
@@ -54,7 +54,7 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private int AbSearch(Board board, int plyFromRoot, int depth, int alpha, int beta)
+    private int AbSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
     {
         #region Cancellation
 
@@ -69,6 +69,7 @@ public class MoveSearch
         
         #region Mate Pruning & Piece-Count Draw-Checks
 
+        if (plyFromRoot > 0 && board.IsRepetition()) return 0;
         if (plyFromRoot != 0) {
             int allPiecesCount = board.All().Count;
             // If only the kings are left, it's a draw.
@@ -141,7 +142,7 @@ public class MoveSearch
         #region Move List Creation
 
         // Allocate memory on the stack to be used for our move-list.
-        Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[128];
+        Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
         OrderedMoveList moveList = new(board, ref moveSpan, transpositionMove);
         
         if (moveList.Count == 0) {
@@ -195,7 +196,7 @@ public class MoveSearch
                 
                 // Make the move.
                 OrderedMoveEntry move = moveList[i];
-                RevertMove rv = board.Move(move.From, move.To, move.Promotion);
+                RevertMove rv = board.Move(ref move);
                 TotalNodeSearchCount++;
         
                 // Evaluate position by getting the relative evaluation and negating it. An evaluation that's good for
@@ -222,7 +223,7 @@ public class MoveSearch
                 
                 // Make the move.
                 OrderedMoveEntry move = moveList[i];
-                RevertMove rv = board.Move(move.From, move.To, move.Promotion);
+                RevertMove rv = board.Move(ref move);
                 TotalNodeSearchCount++;
         
                 // Evaluate position by searching deeper and negating the result. An evaluation that's good for

@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
-using Backend;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Engine;
 using BetterConsoles.Core;
 using BetterConsoles.Tables;
 using BetterConsoles.Tables.Builders;
@@ -10,7 +10,7 @@ using BetterConsoles.Tables.Models;
 
 namespace Terminal;
 
-internal class DisplayBoard : Board
+internal class DisplayBoard : EngineBoard
 {
 
     private BitBoard HighlightedMoves = BitBoard.Default;
