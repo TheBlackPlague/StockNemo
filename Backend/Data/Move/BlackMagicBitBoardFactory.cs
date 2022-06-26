@@ -108,7 +108,7 @@ internal static class BlackMagicBitBoardFactory
         };
             
         // Get magic.
-        (BitBoard magic, BitBoard mask, int offset) = args.Item1[(int)sq];
+        (BitBoard magic, BitBoard mask, int offset) = args.Item1.AA((int)sq);
             
         // Get the relevant occupied squares.
         BitBoard relevantOccupied = occupied | mask;
@@ -117,7 +117,7 @@ internal static class BlackMagicBitBoardFactory
         BitBoard hash = relevantOccupied * magic;
             
         // Return with offset.
-        return offset + (int)(ulong)(hash >> (64 - args.Item2));
+        return offset + (int)(ulong)(hash >> 64 - args.Item2);
     }
 
     private static BitBoard GenerateRookOccupiedMask(Square sq)
@@ -144,7 +144,7 @@ internal static class BlackMagicBitBoardFactory
             int hD = Math.Abs(hI - h);
             int vD = Math.Abs(vI - v);
 
-            if (hD == vD && vD != 0) rays |= 1UL << (vI * 8 + hI);
+            if (hD == vD && vD != 0) rays |= 1UL << vI * 8 + hI;
         }
 
         // All rays inside.

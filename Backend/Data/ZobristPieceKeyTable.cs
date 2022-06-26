@@ -22,7 +22,7 @@ public class ZobristPieceKeyTable
     public ulong this[Piece piece, PieceColor color, Square sq]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Internal[(int)color * 384 + (int)piece * 64 + (int)sq];
+        get => Internal.AA((int)color * 384 + (int)piece * 64 + (int)sq);
     }
 
 }

@@ -26,15 +26,15 @@ public class PerftTranspositionTableEntry
         get
         {
             lock (this) {
-                return DepthCount[depth - 1];
+                return DepthCount.AA(depth - 1);
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set
         {
             lock (this) {
-                DepthSet[depth - 1] = true;
-                DepthCount[depth - 1] = value;
+                DepthSet.AA(depth - 1) = true;
+                DepthCount.AA(depth - 1) = value;
             }
         }
     }
@@ -43,7 +43,7 @@ public class PerftTranspositionTableEntry
     public bool VerifyDepthSet(int depth)
     {
         lock (this) {
-            return DepthSet[depth - 1];
+            return DepthSet.AA(depth - 1);
         }
     }
 

@@ -40,14 +40,14 @@ public unsafe class MoveTranspositionTable
     public ref MoveTranspositionTableEntry this[ulong zobristHash]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => ref Internal[(int)zobristHash & HashFilter];
+        get => ref Internal.AA((int)zobristHash & HashFilter);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void InsertEntry(ulong zobristHash, ref MoveTranspositionTableEntry entry)
     {
         int index = (int)zobristHash & HashFilter;
-        ref MoveTranspositionTableEntry oldEntry = ref Internal[index];
+        ref MoveTranspositionTableEntry oldEntry = ref Internal.AA(index);
         
         if (oldEntry.Type == MoveTranspositionTableEntryType.Invalid) {
             Internal[index] = entry;
@@ -55,7 +55,7 @@ public unsafe class MoveTranspositionTable
         }
         
         if (oldEntry.Depth - 3 > entry.Depth) return;
-        Internal[index] = entry;
+        Internal.AA(index) = entry;
     }
 
     public void FreeMemory() => Internal = null;

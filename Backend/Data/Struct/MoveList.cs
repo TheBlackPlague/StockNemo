@@ -31,13 +31,13 @@ public ref struct MoveList
         // To do this, we generate a reverse attack mask, letting our square act as a pawn and seeing if opposing
         // pawns exist on the squares in the mask. If so, our square can be attacked by pawns.
         BitBoard pawnAttack = by == PieceColor.White ? 
-            AttackTable.BlackPawnAttacks[s] : AttackTable.WhitePawnAttacks[s];
+            AttackTable.BlackPawnAttacks.AA(s) : AttackTable.WhitePawnAttacks.AA(s);
         if (pawnAttack & board.All(Piece.Pawn, by)) return true;
             
         // Then, we check if the square is being attacked by knights.
         // To do this, we generate a reverse attack mask, letting our square act as a knight and seeing if opposing
         // knights exist on the squares in the mask. If so, our square can be attacked by knights.
-        if (AttackTable.KnightMoves[s] & board.All(Piece.Knight, by)) return true;
+        if (AttackTable.KnightMoves.AA(s) & board.All(Piece.Knight, by)) return true;
             
         // Next, we check if the square is being attacked by sliding pieces.
         // To do this, first we need to find all occupied squares (by our and opposing pieces).
@@ -49,19 +49,19 @@ public ref struct MoveList
         // Generate a reverse attack mask for rook, letting our square act as a rook and seeing if opposing rook or
         // queen exist on the squares in the mask. If so, our square can be attacked by either rook or queen.
         int mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, occupied, sq);
-        if (AttackTable.SlidingMoves[mIndex] & (queen | board.All(Piece.Rook, by))) return true;
+        if (AttackTable.SlidingMoves.AA(mIndex) & (queen | board.All(Piece.Rook, by))) return true;
                 
         // Generate a reverse attack mask for bishop, letting our square act as a rook and seeing if opposing
         // bishop or queen exist on the squares in the mask. If so, our square can be attacked by either bishop
         // or queen.
         mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, occupied, sq);
-        if (AttackTable.SlidingMoves[mIndex] & (queen | board.All(Piece.Bishop, by))) return true;
+        if (AttackTable.SlidingMoves.AA(mIndex) & (queen | board.All(Piece.Bishop, by))) return true;
                 
         // Lastly, we check if our square is being attacked by a king.
         // We generate a reverse attack mask, letting our square act as king and then check if there if opposing
         // king exists on the squares in the mask. If so, our square can be attacked by king.
         // Otherwise, this square is completely safe from all pieces.
-        return AttackTable.KingMoves[s] & board.All(Piece.King, by);
+        return AttackTable.KingMoves.AA(s) & board.All(Piece.King, by);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -73,11 +73,11 @@ public ref struct MoveList
         
         // First we generate a pawn check.
         BitBoard pawnAttack = by == PieceColor.White ? 
-            AttackTable.BlackPawnAttacks[s] : AttackTable.WhitePawnAttacks[s];
+            AttackTable.BlackPawnAttacks.AA(s) : AttackTable.WhitePawnAttacks.AA(s);
         BitBoard pawnCheck = pawnAttack & board.All(Piece.Pawn, by);
         
         // Next, we generate a knight check.
-        BitBoard knightCheck = AttackTable.KnightMoves[s] & board.All(Piece.Knight, by);
+        BitBoard knightCheck = AttackTable.KnightMoves.AA(s) & board.All(Piece.Knight, by);
         
         // For sliding pieces, we use a BitBoard of all pieces.
         BitBoard occupied = ~board.All(PieceColor.None);
@@ -87,11 +87,11 @@ public ref struct MoveList
         
         // Now, we generate a rook or queen (straight only) check.
         int mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, occupied, sq);
-        BitBoard rookQueenCheck = AttackTable.SlidingMoves[mIndex] & (queen | board.All(Piece.Rook, by));
+        BitBoard rookQueenCheck = AttackTable.SlidingMoves.AA(mIndex) & (queen | board.All(Piece.Rook, by));
         
         // Next, we generate a bishop or queen (diagonal only) check.
         mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, occupied, sq);
-        BitBoard bishopQueenCheck = AttackTable.SlidingMoves[mIndex] & (queen | board.All(Piece.Bishop, by));
+        BitBoard bishopQueenCheck = AttackTable.SlidingMoves.AA(mIndex) & (queen | board.All(Piece.Bishop, by));
         
         if (pawnCheck) {
             // If there is a pawn check, we must add it to the checks and raise the check count.
@@ -108,7 +108,7 @@ public ref struct MoveList
             // rook or queen.
             Square rqSq = rookQueenCheck;
             
-            checks |= UtilityTable.Between[s][(int)rqSq] | rqSq;
+            checks |= UtilityTable.Between.AA(s)[(int)rqSq] | rqSq;
             count++;
             
             // In the case where pawn promotes to queen or rook, we have a secondary check as well.
@@ -121,7 +121,7 @@ public ref struct MoveList
             // bishop or queen.
             Square bqSq = bishopQueenCheck;
             
-            checks |= UtilityTable.Between[s][(int)bqSq] | bqSq;
+            checks |= UtilityTable.Between.AA(s)[(int)bqSq] | bqSq;
             count++;
         }
         
@@ -144,11 +144,11 @@ public ref struct MoveList
         
         // First, we generate all rook / queen (straight only) attacks.
         int mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, byBoard, sq);
-        BitBoard rookQueenCheck = AttackTable.SlidingMoves[mIndex] & (queen | board.All(Piece.Rook, by));
+        BitBoard rookQueenCheck = AttackTable.SlidingMoves.AA(mIndex) & (queen | board.All(Piece.Rook, by));
         
         // Next, we generate all bishop / queen (diagonal only) attacks.
         mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, byBoard, sq);
-        BitBoard bishopQueenCheck = AttackTable.SlidingMoves[mIndex] & (queen | board.All(Piece.Bishop, by));
+        BitBoard bishopQueenCheck = AttackTable.SlidingMoves.AA(mIndex) & (queen | board.All(Piece.Bishop, by));
 
         BitBoard horizontalVerticalPin = BitBoard.Default;
         BitBoard diagonalPin = BitBoard.Default;
@@ -159,7 +159,7 @@ public ref struct MoveList
         Square rqSq = rookQueenIterator.Current;
         while (rookQueenIterator.MoveNext()) {
             int rqS = (int)rqSq;
-            BitBoard possiblePin = UtilityTable.Between[s][rqS] | rqSq;
+            BitBoard possiblePin = UtilityTable.Between.AA(s)[rqS] | rqSq;
 
             if ((possiblePin & board.All(us)).Count == 1) horizontalVerticalPin |= possiblePin;
             
@@ -173,7 +173,7 @@ public ref struct MoveList
         Square bqSq = bishopQueenIterator.Current;
         while (bishopQueenIterator.MoveNext()) {
             int bqS = (int)bqSq;
-            BitBoard possiblePin = UtilityTable.Between[s][bqS] | bqSq;
+            BitBoard possiblePin = UtilityTable.Between.AA(s)[bqS] | bqSq;
 
             if ((possiblePin & board.All(us)).Count == 1) diagonalPin |= possiblePin;
             
@@ -301,7 +301,7 @@ public ref struct MoveList
         
         // Attack Moves.
         BitBoard attack = color == PieceColor.White ? 
-            AttackTable.WhitePawnAttacks[(int)From] : AttackTable.BlackPawnAttacks[(int)From];
+            AttackTable.WhitePawnAttacks.AA((int)From) : AttackTable.BlackPawnAttacks.AA((int)From);
 
         // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
         // our pieces).
@@ -382,7 +382,7 @@ public ref struct MoveList
         
         // Calculate pseudo-legal moves within check board.
         int mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, ~Board.All(PieceColor.None), From);
-        Moves |= AttackTable.SlidingMoves[mIndex] & ~Board.All(color) & C;
+        Moves |= AttackTable.SlidingMoves.AA(mIndex) & ~Board.All(color) & C;
 
         // If rook is horizontally or vertically pinned, it can only move within the pin.
         if (Hv[From]) Moves &= Hv;
@@ -393,7 +393,7 @@ public ref struct MoveList
     {
         if (Hv[From] || D[From]) return;
 
-        Moves |= AttackTable.KnightMoves[(int)From] & ~Board.All(color) & C;
+        Moves |= AttackTable.KnightMoves.AA((int)From) & ~Board.All(color) & C;
     }
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -404,7 +404,7 @@ public ref struct MoveList
 
         // Calculate pseudo-legal moves within check board.
         int mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, ~Board.All(PieceColor.None), From);
-        Moves |= AttackTable.SlidingMoves[mIndex] & ~Board.All(color) & C;
+        Moves |= AttackTable.SlidingMoves.AA(mIndex) & ~Board.All(color) & C;
 
         // If bishop is diagonally pinned, it can only move within the pin.
         if (D[From]) Moves &= D;
@@ -423,7 +423,7 @@ public ref struct MoveList
     {
         #region Normal
 
-        BitBoard kingMoves = AttackTable.KingMoves[(int)From];
+        BitBoard kingMoves = AttackTable.KingMoves.AA((int)From);
         kingMoves &= ~Board.All(color);
 
         PieceColor oppositeColor = Util.OppositeColor(color);

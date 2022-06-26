@@ -24,12 +24,12 @@ public class PerftTranspositionTable
         get
         {
             Interlocked.Increment(ref HitCount);
-            return Internal[(int)hash & HASH_FILTER][depth];
+            return Internal.AA((int)hash & HASH_FILTER)[depth];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set
         {
-            PerftTranspositionTableEntry entry = Internal[(int)hash & HASH_FILTER];
+            PerftTranspositionTableEntry entry = Internal.AA((int)hash & HASH_FILTER);
             if (!entry.Set) entry.SetZobristHash(hash);
             if (entry.ZobristHash != hash) return;
             entry[depth] = value;
@@ -39,7 +39,7 @@ public class PerftTranspositionTable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool VerifyDepth(ulong hash, int depth)
     {
-        PerftTranspositionTableEntry entry = Internal[(int)hash & HASH_FILTER];
+        PerftTranspositionTableEntry entry = Internal.AA((int)hash & HASH_FILTER);
         return entry.Set && entry.ZobristHash == hash && entry.VerifyDepthSet(depth);
     }
 
