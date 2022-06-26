@@ -9,7 +9,7 @@ public class HashHistory
     private const int SIZE = 1024;
     
     private readonly ulong[] Internal = GC.AllocateUninitializedArray<ulong>(SIZE);
-    private int Index = 0;
+    private int Index;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Append(ulong zobristHash) => Internal.AA(Index++) = zobristHash;
@@ -30,6 +30,7 @@ public class HashHistory
     {
         HashHistory history = new();
         Array.Copy(Internal, history.Internal, Index + 1);
+        history.Index = Index;
         return history;
     }
 
