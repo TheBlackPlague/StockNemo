@@ -20,6 +20,8 @@ internal static class Program
 
     private static void Main()
     {
+        Util.RunStaticConstructor();
+        
         TaskFactory factory = new();
         Task hardwareInitializationTask = factory.StartNew(HardwareInitializer.Setup);
         

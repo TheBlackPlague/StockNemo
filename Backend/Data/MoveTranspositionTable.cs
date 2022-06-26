@@ -50,7 +50,7 @@ public unsafe class MoveTranspositionTable
         ref MoveTranspositionTableEntry oldEntry = ref Internal.AA(index);
         
         if (oldEntry.Type == MoveTranspositionTableEntryType.Invalid) {
-            Internal[index] = entry;
+            Internal.AA(index) = entry;
             return;
         }
         

@@ -1,4 +1,5 @@
-﻿using Backend.Data.Move;
+﻿using Backend;
+using Backend.Data.Move;
 using BenchmarkDotNet.Running;
 
 namespace Benchmark;
@@ -34,6 +35,7 @@ public static class Program
 
     private static void PreMark()
     {
+        Util.RunStaticConstructor();
         AttackTable.SetUp();
     }
 
