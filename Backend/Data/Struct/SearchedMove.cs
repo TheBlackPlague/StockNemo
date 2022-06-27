@@ -8,6 +8,8 @@ public readonly struct SearchedMove
 #pragma warning restore CS0660, CS0661
 {
 
+    public static readonly SearchedMove Default = new(Square.Na, Square.Na, Promotion.None, 0);
+
     public readonly Square From;
     public readonly Square To;
     public readonly Promotion Promotion;
