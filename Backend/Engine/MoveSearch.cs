@@ -238,6 +238,7 @@ public class MoveSearch
         return bestEvaluation;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int QSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
     {
         #region Cancellation
@@ -270,15 +271,14 @@ public class MoveSearch
         OrderedMoveList moveList = new(ref moveSpan);
         int moveCount = moveList.QSearchMoveGeneration(board, SearchedMove.Default);
         
-        if (moveCount == 0) {
-            // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
-            // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
-            // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
-            // that's bad for us, so returning 0 is fine here.
-            PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
-            Square kingSq = board.KingLoc(board.ColorToMove);
-            return MoveList.UnderAttack(board, kingSq, oppositeColor) ? -MATE + plyFromRoot : 0;
-        }
+        // if (moveCount == 0) {
+        //     // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
+        //     // means we lost as nothing can save the king anymore. Otherwise, we should just return our best evaluation
+        //     // so far.
+        //     PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        //     Square kingSq = board.KingLoc(board.ColorToMove);
+        //     return MoveList.UnderAttack(board, kingSq, oppositeColor) ? -MATE + plyFromRoot : alpha;
+        // }
 
         #endregion
         
