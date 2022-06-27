@@ -121,9 +121,9 @@ public readonly unsafe struct BoardMoveExecutor
 
         return SpecializedMethod;
     }
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static void ExecuteMove(ref BitBoardMap Map, nint ID)
+    public static void ExecuteMove(ref BitBoardMap Map, nint ID) //Do NOT reorder params! It will incur an additional reg to reg mov!
     {
         FPs[ID](ref Map);
     }
