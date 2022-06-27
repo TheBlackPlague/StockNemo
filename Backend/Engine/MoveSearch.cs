@@ -27,7 +27,7 @@ public class MoveSearch
     {
         Board = board;
         Table = table;
-        BestMove = new SearchedMove(Square.Na, Square.Na, Promotion.None, NEG_INFINITY);
+        BestMove = SearchedMove.Default;
         Token = token;
     }
 
@@ -45,7 +45,8 @@ public class MoveSearch
         try {
             int depth = 1;
             while (!Token.IsCancellationRequested && depth <= selectedDepth) {
-                bestMove = SearchAndReturn(depth);
+                AbSearch(Board, 0, depth, NEG_INFINITY, POS_INFINITY);
+                bestMove = BestMove;
                 DepthSearchLog(depth);
                 depth++;
             }
@@ -99,7 +100,7 @@ public class MoveSearch
 
         ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
         bool valid = storedEntry.Type != MoveTranspositionTableEntryType.Invalid;
-        SearchedMove transpositionMove = new(Square.Na, Square.Na, Promotion.None, 0);
+        SearchedMove transpositionMove = SearchedMove.Default;
         if (valid && storedEntry.ZobristHash == board.ZobristHash && storedEntry.Depth >= depth && plyFromRoot != 0) {
             // Check what type of evaluation we have stored.
             switch (storedEntry.Type) {
