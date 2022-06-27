@@ -315,6 +315,11 @@ public ref struct MoveList
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void LegalPawnMoveSetCapture(PieceColor color)
     {
+        if (Hv[From]) {
+            // If pawn is horizontally pinned, then we have no moves.
+            return;
+        }
+        
         PieceColor oppositeColor = Util.OppositeColor(color);
         BitBoard opposite = Board.All(oppositeColor);
         Square epPieceSq = Square.Na;

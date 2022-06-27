@@ -186,6 +186,11 @@ public readonly ref struct OrderedMoveList
                 MoveList moveList = new(board, from, ref hv, ref d, ref checks);
                 moveList.LegalPawnMoveSetCapture(board.ColorToMove);
                 BitBoardIterator moves = moveList.Moves.GetEnumerator();
+                // MoveList moveList = new(
+                //     board, from, Piece.Pawn, board.ColorToMove, 
+                //     ref hv, ref d, ref checks
+                // );
+                // BitBoardIterator moves = (moveList.Moves & opposite).GetEnumerator();
                 Square move = moves.Current;
                 
                 while (moves.MoveNext()) {
