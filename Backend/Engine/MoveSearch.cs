@@ -65,6 +65,12 @@ public class MoveSearch
         if (Token.IsCancellationRequested) throw new OperationCanceledException();
 
         #endregion
+        
+        #region QSearch Jump
+
+        if (depth == 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
+        
+        #endregion
 
         int originalAlpha = alpha;
         
@@ -144,9 +150,10 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(board, ref moveSpan, transpositionMove);
+        OrderedMoveList moveList = new(ref moveSpan);
+        int moveCount = moveList.NormalMoveGeneration(board, transpositionMove);
         
-        if (moveList.Count == 0) {
+        if (moveCount == 0) {
             // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
             // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
             // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
@@ -158,7 +165,7 @@ public class MoveSearch
 
         #endregion
 
-        #region Alpha Beta Negamax
+        #region Fail-soft Alpha Beta Negamax
         
         int bestEvaluation = NEG_INFINITY;
         int bestMoveIndex = -1;
@@ -185,59 +192,31 @@ public class MoveSearch
             return evaluation < beta;
         }
         
+        // Calculate next iteration variables before getting into the loop.
+        int nextDepth = depth - 1;
+        int nextPlyFromRoot = plyFromRoot + 1;
+            
         int i = 0;
-        if (depth == 1) {
-            // If depth is equal to 1, then we we will just be evaluating the state of the board.
-            // While we could do this at depth zero, and use the same logic as all depths > 1, it is beneficial to 
-            // avoid another recursive call.
-            while (i < moveList.Count) {
-                // We should being the move that's likely to be the best move at this depth to the top. This ensures
-                // that we are searching through the likely best moves first, allowing us to return early.
-                moveList.SortNext(i);
+        while (i < moveCount) {
+            // We should being the move that's likely to be the best move at this depth to the top. This ensures
+            // that we are searching through the likely best moves first, allowing us to return early.
+            moveList.SortNext(i, moveCount);
                 
-                // Make the move.
-                OrderedMoveEntry move = moveList[i];
-                RevertMove rv = board.Move(ref move);
-                TotalNodeSearchCount++;
+            // Make the move.
+            OrderedMoveEntry move = moveList[i];
+            RevertMove rv = board.Move(ref move);
+            TotalNodeSearchCount++;
         
-                // Evaluate position by getting the relative evaluation and negating it. An evaluation that's good for
-                // our opponent will obviously be bad for us.
-                int evaluation = -Evaluation.RelativeEvaluation(board);
+            // Evaluate position by searching deeper and negating the result. An evaluation that's good for
+            // our opponent will obviously be bad for us.
+            int evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 
-                // Undo the move.
-                board.UndoMove(ref rv);
-
-                if (!HandleEvaluation(evaluation, i)) break;
-
-                i++;
-            }
-        } else {
-            // If the depth isn't equal to 1, we must search deeper by recursive calls.
-            // Calculate next iteration variables before getting into the loop.
-            int nextDepth = depth - 1;
-            int nextPlyFromRoot = plyFromRoot + 1;
+            // Undo the move.
+            board.UndoMove(ref rv);
+                
+            if (!HandleEvaluation(evaluation, i)) break;
             
-            while (i < moveList.Count) {
-                // We should being the move that's likely to be the best move at this depth to the top. This ensures
-                // that we are searching through the likely best moves first, allowing us to return early.
-                moveList.SortNext(i);
-                
-                // Make the move.
-                OrderedMoveEntry move = moveList[i];
-                RevertMove rv = board.Move(ref move);
-                TotalNodeSearchCount++;
-        
-                // Evaluate position by searching deeper and negating the result. An evaluation that's good for
-                // our opponent will obviously be bad for us.
-                int evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
-                
-                // Undo the move.
-                board.UndoMove(ref rv);
-                
-                if (!HandleEvaluation(evaluation, i)) break;
-            
-                i++;
-            }
+            i++;
         }
         
         #endregion
@@ -288,12 +267,10 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(
-            board, ref moveSpan, 
-            SearchedMove.Default
-        );
+        OrderedMoveList moveList = new(ref moveSpan);
+        int moveCount = moveList.QSearchMoveGeneration(board, SearchedMove.Default);
         
-        if (moveList.Count == 0) {
+        if (moveCount == 0) {
             // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
             // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
             // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
@@ -304,9 +281,40 @@ public class MoveSearch
         }
 
         #endregion
+        
+        #region Fail-hard Alpha Beta Negamax
 
-        int bestEvaluation;
-        return 0;
+        // Calculate next iteration variables before getting into the loop.
+        int nextDepth = depth - 1;
+        int nextPlyFromRoot = plyFromRoot + 1;
+            
+        int i = 0;
+        while (i < moveCount) {
+            // We should being the move that's likely to be the best move at this depth to the top. This ensures
+            // that we are searching through the likely best moves first, allowing us to return early.
+            moveList.SortNext(i, moveCount);
+                
+            // Make the move.
+            OrderedMoveEntry move = moveList[i];
+            RevertMove rv = board.Move(ref move);
+            TotalNodeSearchCount++;
+        
+            // Evaluate position by searching deeper and negating the result. An evaluation that's good for
+            // our opponent will obviously be bad for us.
+            int evaluation = -QSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+                
+            // Undo the move.
+            board.UndoMove(ref rv);
+
+            if (evaluation >= beta) return beta;
+            if (evaluation > alpha) alpha = evaluation;
+            
+            i++;
+        }
+        
+        #endregion
+        
+        return alpha;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
