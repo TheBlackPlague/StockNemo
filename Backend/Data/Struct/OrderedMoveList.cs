@@ -56,12 +56,15 @@ public readonly ref struct OrderedMoveList
     public OrderedMoveList(
         Board board, 
         ref Span<OrderedMoveEntry> memory, 
-        SearchedMove transpositionMove
+        SearchedMove transpositionMove,
+        bool captureOnly = false
         )
     {
         Internal = memory;
 
         PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        // If we only want capture moves, we should also define our opposite board.
+        BitBoard opposite = captureOnly ? board.All(oppositeColor) : BitBoard.Filled;
 
         // Generate pins and check bitboards.
         Square kingSq = board.KingLoc(board.ColorToMove);
@@ -80,10 +83,16 @@ public readonly ref struct OrderedMoveList
             fromIterator = board.All(Piece.Pawn, board.ColorToMove).GetEnumerator();
             from = fromIterator.Current;
             while (fromIterator.MoveNext()) {
-                MoveList moveList = new(
-                    board, from, Piece.Pawn, board.ColorToMove, 
-                    ref hv, ref d, ref checks
-                );
+                MoveList moveList;
+                if (captureOnly) {
+                    moveList = new MoveList(board, from, ref hv, ref d, ref checks);
+                    moveList.LegalPawnMoveSetCapture(board.ColorToMove);
+                } else {
+                    moveList = new MoveList(
+                        board, from, Piece.Pawn, board.ColorToMove, 
+                        ref hv, ref d, ref checks
+                    );
+                }
                 BitBoardIterator moves = moveList.Moves.GetEnumerator();
                 Square move = moves.Current;
                 
@@ -118,7 +127,7 @@ public readonly ref struct OrderedMoveList
                         board, from, (Piece)piece, board.ColorToMove, 
                         ref hv, ref d, ref checks
                     );
-                    BitBoardIterator moves = moveList.Moves.GetEnumerator();
+                    BitBoardIterator moves = (moveList.Moves & opposite).GetEnumerator();
                     Square move = moves.Current;
 
                     while (moves.MoveNext()) {
@@ -144,7 +153,7 @@ public readonly ref struct OrderedMoveList
                 board, from, Piece.King, board.ColorToMove, 
                 ref hv, ref d, ref checks
             );
-            BitBoardIterator moves = moveList.Moves.GetEnumerator();
+            BitBoardIterator moves = (moveList.Moves & opposite).GetEnumerator();
             Square move = moves.Current;
 
             while (moves.MoveNext()) {
