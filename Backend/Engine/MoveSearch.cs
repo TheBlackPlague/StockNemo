@@ -306,7 +306,12 @@ public class MoveSearch
             // Undo the move.
             board.UndoMove(ref rv);
 
+            // In the case our evaluation is better than our beta, it means the evaluation is too good and we can
+            // return early here.
             if (evaluation >= beta) return beta;
+            
+            // If the evaluation is better than our alpha, we should set our new alpha to amke sure we account for next
+            // good moves if they exist, while making sure we don't dismiss this good move.
             if (evaluation > alpha) alpha = evaluation;
             
             i++;
