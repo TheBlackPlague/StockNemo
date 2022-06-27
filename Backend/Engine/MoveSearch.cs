@@ -259,6 +259,56 @@ public class MoveSearch
         return bestEvaluation;
     }
 
+    private int QSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
+    {
+        #region Cancellation
+
+        // If we're cancelled, we should abort as soon as possible. Note, this requires a cloned Board to be
+        // provided. If provided without cloning, there's no guarantee the original state will be maintained after
+        // search.
+        if (Token.IsCancellationRequested) throw new OperationCanceledException();
+
+        #endregion
+        
+        #region Early Evaluation
+        
+        int earlyEval = Evaluation.RelativeEvaluation(board);
+        
+        // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
+        // as this position is overwhelmingly winning.
+        if (earlyEval >= beta) return beta;
+        
+        // In the case that our current evaluation is better than our alpha, we need to recalibrate alpha to make sure
+        // we don't skip over our already good move.
+        if (earlyEval > alpha) alpha = earlyEval;
+        
+        #endregion
+        
+        #region Move List Creation
+
+        // Allocate memory on the stack to be used for our move-list.
+        Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
+        OrderedMoveList moveList = new(
+            board, ref moveSpan, 
+            SearchedMove.Default
+        );
+        
+        if (moveList.Count == 0) {
+            // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
+            // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
+            // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
+            // that's bad for us, so returning 0 is fine here.
+            PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+            Square kingSq = board.KingLoc(board.ColorToMove);
+            return MoveList.UnderAttack(board, kingSq, oppositeColor) ? -MATE + plyFromRoot : 0;
+        }
+
+        #endregion
+
+        int bestEvaluation;
+        return 0;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void DepthSearchLog(int depth)
     {
