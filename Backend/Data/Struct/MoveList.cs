@@ -240,6 +240,60 @@ public ref struct MoveList
                 );
         }
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public MoveList(Board board, Square from, Piece piece, PieceColor color, ref BitBoard horizontalVertical, 
+        ref BitBoard diagonal, ref BitBoard checks)
+    {
+        Board = board;
+        From = from;
+        Moves = BitBoard.Default;
+        Promotion = false;
+        Hv = horizontalVertical;
+        D = diagonal;
+        C = checks;
+        
+        // Generate Legal Moves
+        switch (piece) {
+            case Piece.Pawn:
+                LegalPawnMoveSet(color);
+                break;
+            case Piece.Rook:
+                LegalRookMoveSet(color);
+                break;
+            case Piece.Knight:
+                LegalKnightMoveSet(color);
+                break;
+            case Piece.Bishop:
+                LegalBishopMoveSet(color);
+                break;
+            case Piece.Queen:
+                LegalQueenMoveSet(color);
+                break;
+            case Piece.King:
+                LegalKingMoveSet(color);
+                break;
+            case Piece.Empty:
+            default:
+                throw InvalidMoveLookupException.FromBoard(
+                    board, 
+                    "Cannot generate move for empty piece: " + from
+                );
+        }
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public MoveList(Board board, Square from, ref BitBoard horizontalVertical, 
+        ref BitBoard diagonal, ref BitBoard checks)
+    {
+        Board = board;
+        From = from;
+        Moves = BitBoard.Default;
+        Promotion = false;
+        Hv = horizontalVertical;
+        D = diagonal;
+        C = checks;
+    }
 
     public MoveList(Board board, PieceColor color)
     {

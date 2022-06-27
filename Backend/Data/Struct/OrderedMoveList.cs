@@ -82,7 +82,7 @@ public readonly ref struct OrderedMoveList
             while (fromIterator.MoveNext()) {
                 MoveList moveList = new(
                     board, from, Piece.Pawn, board.ColorToMove, 
-                    ref hv, ref d, ref checks, false
+                    ref hv, ref d, ref checks
                 );
                 BitBoardIterator moves = moveList.Moves.GetEnumerator();
                 Square move = moves.Current;
@@ -116,7 +116,7 @@ public readonly ref struct OrderedMoveList
                 while (fromIterator.MoveNext()) {
                     MoveList moveList = new(
                         board, from, (Piece)piece, board.ColorToMove, 
-                        ref hv, ref d, ref checks, false
+                        ref hv, ref d, ref checks
                     );
                     BitBoardIterator moves = moveList.Moves.GetEnumerator();
                     Square move = moves.Current;
@@ -142,7 +142,7 @@ public readonly ref struct OrderedMoveList
         while (fromIterator.MoveNext()) {
             MoveList moveList = new(
                 board, from, Piece.King, board.ColorToMove, 
-                ref hv, ref d, ref checks, false
+                ref hv, ref d, ref checks
             );
             BitBoardIterator moves = moveList.Moves.GetEnumerator();
             Square move = moves.Current;
