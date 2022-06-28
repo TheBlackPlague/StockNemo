@@ -3,7 +3,7 @@
 public static class Version
 {
 
-    private const string VERSION = "1.0.0";
+    private const string VERSION = "2.0.0.0";
 
     public static string Get()
     {
