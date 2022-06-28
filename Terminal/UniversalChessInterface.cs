@@ -139,7 +139,7 @@ public static class UniversalChessInterface
                     };
                 }
 
-                Board.SecureMove(from, to, promotion);
+                Board.GuiMove(from, to, promotion);
             }
         }
 

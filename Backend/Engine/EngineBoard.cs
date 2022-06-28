@@ -1,5 +1,7 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using Backend.Data;
+using Backend.Data.Enum;
 using Backend.Data.Struct;
 
 namespace Backend.Engine;
@@ -27,6 +29,18 @@ public class EngineBoard : Board
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsRepetition() => History.Count(ZobristHash) > 1;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void GuiMove(Square from, Square to, Promotion promotion)
+    {
+        MoveList moveList = MoveList.WithoutProvidedPins(this, from);
+        if (!moveList.Moves[to]) throw new InvalidOperationException("Invalid move provided by GUI.");
+        if (promotion != Promotion.None && !moveList.Promotion) 
+            throw new InvalidOperationException("Invalid move provided by GUI.");
+        
+        OrderedMoveEntry entry = new(from, to, promotion);
+        Move(ref entry);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RevertMove Move(ref OrderedMoveEntry move)
