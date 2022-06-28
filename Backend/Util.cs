@@ -23,15 +23,23 @@ public static class Util
     // ReSharper disable once InconsistentNaming
     public static ref T AA<T>(this T[] array, int index)
     {
+#if DEBUG
+        return ref array[index];
+#else
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(array), index);
+#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     // ReSharper disable once InconsistentNaming
     public static ref T DJAA<T>(this T[][] array, int firstIndex, int secondIndex)
     {
+#if DEBUG
+        return ref array.AA(firstIndex)[secondIndex];
+#else
         return 
             ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(array.AA(firstIndex)), secondIndex);
+#endif
     }
 
 }

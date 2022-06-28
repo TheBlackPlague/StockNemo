@@ -26,7 +26,7 @@ public class EngineBoard : Board
         base(boardData, turnData, castlingData, enPassantTargetData) => History = new HashHistory();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsRepetition() => History.Count(ZobristHash) > 2;
+    public bool IsRepetition() => History.Count(ZobristHash) > 1;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RevertMove Move(ref OrderedMoveEntry move)

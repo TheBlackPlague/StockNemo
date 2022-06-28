@@ -21,8 +21,6 @@ public readonly ref struct OrderedMoveList
         new[] { 6005, 6002, 6004, 6003, 6001, 6000 },
         new[] { 7005, 7002, 7004, 7003, 7001, 7000 }
     };
-
-    public int Count { get; }
     
     private readonly Span<OrderedMoveEntry> Internal;
     
@@ -52,15 +50,15 @@ public readonly ref struct OrderedMoveList
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int MvvLva(Piece attacker, Piece victim) => MvvLvaTable.DJAA((int)victim, (int)attacker);
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public OrderedMoveList(
-        Board board, 
-        ref Span<OrderedMoveEntry> memory, 
-        SearchedMove transpositionMove
-        )
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public OrderedMoveList(ref Span<OrderedMoveEntry> memory)
     {
         Internal = memory;
+    }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public int NormalMoveGeneration(Board board, SearchedMove transpositionMove)
+    {
         PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
 
         // Generate pins and check bitboards.
@@ -82,7 +80,7 @@ public readonly ref struct OrderedMoveList
             while (fromIterator.MoveNext()) {
                 MoveList moveList = new(
                     board, from, Piece.Pawn, board.ColorToMove, 
-                    ref hv, ref d, ref checks, false
+                    ref hv, ref d, ref checks
                 );
                 BitBoardIterator moves = moveList.Moves.GetEnumerator();
                 Square move = moves.Current;
@@ -116,7 +114,7 @@ public readonly ref struct OrderedMoveList
                 while (fromIterator.MoveNext()) {
                     MoveList moveList = new(
                         board, from, (Piece)piece, board.ColorToMove, 
-                        ref hv, ref d, ref checks, false
+                        ref hv, ref d, ref checks
                     );
                     BitBoardIterator moves = moveList.Moves.GetEnumerator();
                     Square move = moves.Current;
@@ -142,7 +140,7 @@ public readonly ref struct OrderedMoveList
         while (fromIterator.MoveNext()) {
             MoveList moveList = new(
                 board, from, Piece.King, board.ColorToMove, 
-                ref hv, ref d, ref checks, false
+                ref hv, ref d, ref checks
             );
             BitBoardIterator moves = moveList.Moves.GetEnumerator();
             Square move = moves.Current;
@@ -158,7 +156,115 @@ public readonly ref struct OrderedMoveList
             from = fromIterator.Current;
         }
 
-        Count = i;
+        return i;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public int QSearchMoveGeneration(Board board, SearchedMove transpositionMove)
+    {
+        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        // If we only want capture moves, we should also define our opposite board.
+        BitBoard opposite = board.All(oppositeColor);
+
+        // Generate pins and check bitboards.
+        Square kingSq = board.KingLoc(board.ColorToMove);
+        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, board.ColorToMove, oppositeColor);
+        (BitBoard checks, bool doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor);
+
+        // Define the list.
+        int i = 0;
+        BitBoardIterator fromIterator;
+        Square from;
+        if (!doubleChecked) {
+            // We can only do this if we're not double checked.
+            // In case of double-checked (discovered + normal), only the king can move so we should skip this.
+            
+            // Generate all pawn moves.
+            fromIterator = board.All(Piece.Pawn, board.ColorToMove).GetEnumerator();
+            from = fromIterator.Current;
+            while (fromIterator.MoveNext()) {
+                MoveList moveList = new(board, from, ref hv, ref d, ref checks);
+                moveList.LegalPawnMoveSetCapture(board.ColorToMove);
+                BitBoardIterator moves = moveList.Moves.GetEnumerator();
+                // MoveList moveList = new(
+                //     board, from, Piece.Pawn, board.ColorToMove, 
+                //     ref hv, ref d, ref checks
+                // );
+                // BitBoardIterator moves = (moveList.Moves & opposite).GetEnumerator();
+                Square move = moves.Current;
+                
+                while (moves.MoveNext()) {
+                    if (moveList.Promotion) {
+                        int p = 1;
+                        while (p < 5) {
+                            Internal[i] = new OrderedMoveEntry(from, move, (Promotion)p);
+                            Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                            i++;
+                            p++;
+                        }
+                    } else {
+                        Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
+                        Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                        i++;
+                    }
+                    
+                    move = moves.Current;
+                }
+                
+                from = fromIterator.Current;
+            }
+
+            // Generate moves for rook, knight, bishop, and queen.
+            sbyte piece = 1;
+            while (piece < 5) {
+                fromIterator = board.All((Piece)piece, board.ColorToMove).GetEnumerator();
+                from = fromIterator.Current;
+                while (fromIterator.MoveNext()) {
+                    MoveList moveList = new(
+                        board, from, (Piece)piece, board.ColorToMove, 
+                        ref hv, ref d, ref checks
+                    );
+                    BitBoardIterator moves = (moveList.Moves & opposite).GetEnumerator();
+                    Square move = moves.Current;
+
+                    while (moves.MoveNext()) {
+                        Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
+                        Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                        i++;
+                    
+                        move = moves.Current;
+                    }
+
+                    from = fromIterator.Current;
+                }
+
+                piece++;
+            }
+        }
+        
+        // Generate all king moves.
+        fromIterator = board.All(Piece.King, board.ColorToMove).GetEnumerator();
+        from = fromIterator.Current;
+        while (fromIterator.MoveNext()) {
+            MoveList moveList = new(
+                board, from, Piece.King, board.ColorToMove, 
+                ref hv, ref d, ref checks
+            );
+            BitBoardIterator moves = (moveList.Moves & opposite).GetEnumerator();
+            Square move = moves.Current;
+
+            while (moves.MoveNext()) {
+                Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
+                Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                i++;
+                    
+                move = moves.Current;
+            }
+
+            from = fromIterator.Current;
+        }
+
+        return i;
     }
 
     public ref OrderedMoveEntry this[int i]
@@ -168,11 +274,11 @@ public readonly ref struct OrderedMoveList
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SortNext(int sorted)
+    public void SortNext(int sorted, int maxSelection)
     {
         int index = sorted;
         int i = 1 + sorted;
-        while (i < Count) {
+        while (i < maxSelection) {
             if (Internal[i].Score > Internal[index].Score) index = i;
             i++;
         }

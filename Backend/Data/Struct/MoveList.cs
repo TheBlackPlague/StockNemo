@@ -240,6 +240,60 @@ public ref struct MoveList
                 );
         }
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public MoveList(Board board, Square from, Piece piece, PieceColor color, ref BitBoard horizontalVertical, 
+        ref BitBoard diagonal, ref BitBoard checks)
+    {
+        Board = board;
+        From = from;
+        Moves = BitBoard.Default;
+        Promotion = false;
+        Hv = horizontalVertical;
+        D = diagonal;
+        C = checks;
+        
+        // Generate Legal Moves
+        switch (piece) {
+            case Piece.Pawn:
+                LegalPawnMoveSet(color);
+                break;
+            case Piece.Rook:
+                LegalRookMoveSet(color);
+                break;
+            case Piece.Knight:
+                LegalKnightMoveSet(color);
+                break;
+            case Piece.Bishop:
+                LegalBishopMoveSet(color);
+                break;
+            case Piece.Queen:
+                LegalQueenMoveSet(color);
+                break;
+            case Piece.King:
+                LegalKingMoveSet(color);
+                break;
+            case Piece.Empty:
+            default:
+                throw InvalidMoveLookupException.FromBoard(
+                    board, 
+                    "Cannot generate move for empty piece: " + from
+                );
+        }
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public MoveList(Board board, Square from, ref BitBoard horizontalVertical, 
+        ref BitBoard diagonal, ref BitBoard checks)
+    {
+        Board = board;
+        From = from;
+        Moves = BitBoard.Default;
+        Promotion = false;
+        Hv = horizontalVertical;
+        D = diagonal;
+        C = checks;
+    }
 
     public MoveList(Board board, PieceColor color)
     {
@@ -256,6 +310,98 @@ public ref struct MoveList
             MoveList moveList = WithoutProvidedPins(board, sq);
             Moves |= moveList.Moves;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void LegalPawnMoveSetCapture(PieceColor color)
+    {
+        if (Hv[From]) {
+            // If pawn is horizontally pinned, then we have no moves.
+            return;
+        }
+        
+        PieceColor oppositeColor = Util.OppositeColor(color);
+        BitBoard opposite = Board.All(oppositeColor);
+        Square epPieceSq = Square.Na;
+        
+        #region Promotion Flag
+
+        // If we're at rank 7 for white or rank 1 for black, we should set the promotion flag to true.
+        // It is important to set it earlier rather than later, because if there is a diagonal pin capture
+        // leading to a promotion, we must make sure to record that as 4 moves.
+        // FEN: 2q5/1Pp5/K2p4/7r/6Pk/8/8/1R6 w - -
+        Promotion = color == PieceColor.White && From is > Square.H6 and < Square.A8 || 
+                    color == PieceColor.Black && From is > Square.H1 and < Square.A3;
+
+        #endregion
+        
+        #region Attack moves
+
+        // En Passant.
+        if (Board.EnPassantTarget != Square.Na) {
+            // If EP exists, then we need to check if a piece exists on square that's under attack from Ep, not
+            // where we move to.
+            epPieceSq = color == PieceColor.White ? 
+                Board.EnPassantTarget - 8 : Board.EnPassantTarget + 8;
+            bool epTargetPieceExists = Board.All(Piece.Pawn, oppositeColor)[epPieceSq];
+                
+            // We need to check if a piece of ours exists to actually execute the EP.
+            // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
+            BitBoard reverseCorner = color == PieceColor.White
+                ? AttackTable.BlackPawnAttacks[(int)Board.EnPassantTarget]
+                : AttackTable.WhitePawnAttacks[(int)Board.EnPassantTarget];
+                
+            if (epTargetPieceExists & reverseCorner[From]) {
+                // If both the enemy EP piece and our piece that can theoretically EP exist...
+                Moves |= Board.EnPassantTarget;
+            }
+        }
+        
+        // Attack Moves.
+        BitBoard attack = color == PieceColor.White ? 
+            AttackTable.WhitePawnAttacks.AA((int)From) : AttackTable.BlackPawnAttacks.AA((int)From);
+
+        // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
+        // our pieces).
+        Moves |= attack & opposite & C;
+
+        if (D[From]) {
+            // If pawn is pinned diagonally, we can only do attacks and EP on the pin.
+            Moves &= D;
+            return;
+        }
+            
+        #endregion
+        
+        #region Special EP case
+
+        // ReSharper disable once InvertIf
+        if (epPieceSq != Square.Na) {
+            // If the pawn isn't pinned diagonally or horizontally/vertically, we must do one final check for EP:
+            // In the rare EP-pin position: 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -
+            // If we do EP here, our king can be attacked by rook.
+            // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
+            // if our king is under attacked.
+            
+            Board.RemovePiece(Piece.Pawn, color, From);
+            Board.RemovePiece(Piece.Pawn, oppositeColor, epPieceSq);
+            Board.InsertPiece(Board.EnPassantTarget, Piece.Pawn, color);
+            
+            Square kingSq = Board.KingLoc(color);
+            
+            // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
+            // caused a discovered pin. Thus, we must remove it from our legal moves.
+            if (UnderAttack(Board, kingSq, oppositeColor)) Moves &= ~(1UL << (int)Board.EnPassantTarget);
+            
+            Board.InsertPiece(From, Piece.Pawn, color);
+            Board.InsertPiece(epPieceSq, Piece.Pawn, oppositeColor);
+            Board.RemovePiece(Piece.Pawn, color, Board.EnPassantTarget);
+
+            // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
+            if (Moves[Board.EnPassantTarget] && !C[epPieceSq]) Moves &= ~(1UL << (int)Board.EnPassantTarget);
+        }
+
+        #endregion
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
