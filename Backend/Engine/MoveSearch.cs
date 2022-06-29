@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Backend.Data;
@@ -44,10 +45,11 @@ public class MoveSearch
         SearchedMove bestMove = BestMove;
         try {
             int depth = 1;
+            Stopwatch stopwatch = Stopwatch.StartNew();
             while (!Token.IsCancellationRequested && depth <= selectedDepth) {
                 AbSearch(Board, 0, depth, NEG_INFINITY, POS_INFINITY);
                 bestMove = BestMove;
-                DepthSearchLog(depth);
+                DepthSearchLog(depth, stopwatch);
                 depth++;
             }
         } catch (OperationCanceledException) {}
@@ -282,7 +284,30 @@ public class MoveSearch
 
         #endregion
         
-        #region Fail-hard Alpha Beta Negamax
+        #region Fail-soft Alpha Beta Negamax
+        
+        int bestEvaluation = earlyEval;
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool HandleEvaluation(int evaluation)
+        {
+            if (evaluation <= bestEvaluation) return true;
+            
+            // If our evaluation was better than our current best evaluation, we should update our evaluation
+            // with the new evaluation.
+            bestEvaluation = evaluation;
+
+            if (evaluation <= alpha) return true;
+
+            // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
+            // replace our alpha with our evaluation.
+            alpha = evaluation;
+            
+            // If the evaluation was better than beta, it means the position was too good. Thus, there
+            // is a good chance that the opponent will avoid this path. Hence, there is currently no
+            // reason to evaluate it further.
+            return evaluation < beta;
+        }
 
         // Calculate next iteration variables before getting into the loop.
         int nextDepth = depth - 1;
@@ -306,29 +331,23 @@ public class MoveSearch
             // Undo the move.
             board.UndoMove(ref rv);
 
-            // In the case our evaluation is better than our beta, it means the evaluation is too good and we can
-            // return early here.
-            if (evaluation >= beta) return beta;
-            
-            // If the evaluation is better than our alpha, we should set our new alpha to amke sure we account for next
-            // good moves if they exist, while making sure we don't dismiss this good move.
-            if (evaluation > alpha) alpha = evaluation;
+            if (!HandleEvaluation(evaluation)) break;
             
             i++;
         }
         
         #endregion
         
-        return alpha;
+        return bestEvaluation;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DepthSearchLog(int depth)
+    private void DepthSearchLog(int depth, Stopwatch stopwatch)
     {
         Console.Write(
             "info depth " + depth + " score cp " + BestMove.Evaluation + " nodes " + 
-            TotalNodeSearchCount + " pv " + BestMove.From.ToString().ToLower() + 
-            BestMove.To.ToString().ToLower()
+            TotalNodeSearchCount + " nps " + (int)(TotalNodeSearchCount / ((float)stopwatch.ElapsedMilliseconds / 1000)) 
+            + " pv " + BestMove.From.ToString().ToLower() + BestMove.To.ToString().ToLower()
         );
         if (BestMove.Promotion != Promotion.None)
             Console.Write(BestMove.Promotion.ToString().ToLower()[0]);
