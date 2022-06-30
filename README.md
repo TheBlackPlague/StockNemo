@@ -9,7 +9,7 @@ Featured Games: [Watch](FEATUREDGAMES.md)
 - UCI Compatible
 - Beautiful CLI:
 
-| <img src=".readme/b1.png" alt="Start" width="300" height="185"/> | <img src=".readme/b1.png" alt="Start" width="300" height="185"/> |
+| <img src=".readme/b1.png" alt="Start" width="300" height="185"/> | <img src=".readme/b2.png" alt="Start" width="300" height="185"/> |
 |------------------------------------------------------------------|------------------------------------------------------------------|
 <img src=".readme/b3.png" alt="Checkmate" width="600" height="370"/>
 

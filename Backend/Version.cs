@@ -1,10 +1,13 @@
-﻿namespace Backend;
+﻿using System.Runtime.CompilerServices;
+
+namespace Backend;
 
 public static class Version
 {
 
-    private const string VERSION = "1.0.0";
+    private const string VERSION = "2.0.0.2";
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string Get()
     {
         return VERSION;

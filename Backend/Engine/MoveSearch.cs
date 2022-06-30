@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Backend.Data;
@@ -13,6 +14,9 @@ public class MoveSearch
     private const int POS_INFINITY = 100000000;
     private const int NEG_INFINITY = -POS_INFINITY;
     private const int MATE = POS_INFINITY - 1;
+
+    private const int NULL_MOVE_REDUCTION = 3;
+    private const int NULL_MOVE_DEPTH = NULL_MOVE_REDUCTION - 1;
 
     public int TableCutoffCount;
     private int TotalNodeSearchCount;
@@ -44,10 +48,11 @@ public class MoveSearch
         SearchedMove bestMove = BestMove;
         try {
             int depth = 1;
+            Stopwatch stopwatch = Stopwatch.StartNew();
             while (!Token.IsCancellationRequested && depth <= selectedDepth) {
                 AbSearch(Board, 0, depth, NEG_INFINITY, POS_INFINITY);
                 bestMove = BestMove;
-                DepthSearchLog(depth);
+                DepthSearchLog(depth, stopwatch);
                 depth++;
             }
         } catch (OperationCanceledException) {}
@@ -65,33 +70,44 @@ public class MoveSearch
         if (Token.IsCancellationRequested) throw new OperationCanceledException();
 
         #endregion
+        
+        #region QSearch Jump
+
+        if (depth == 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
+        
+        #endregion
 
         int originalAlpha = alpha;
+        bool notRootNode = plyFromRoot != 0;
         
         #region Mate Pruning & Piece-Count Draw-Checks
 
-        if (plyFromRoot > 0 && board.IsRepetition()) return 0;
-        if (plyFromRoot != 0) {
-            int allPiecesCount = board.All().Count;
-            // If only the kings are left, it's a draw.
-            if (allPiecesCount == 2) return 0;
+        switch (notRootNode) {
+            case true when board.IsRepetition():
+                // We ran into a three-fold repetition, so we can draw earlier here.
+                return 0;
+            case true:
+                int allPiecesCount = board.All().Count;
+                // If only the kings are left, it's a draw.
+                if (allPiecesCount == 2) return 0;
             
-            bool knightLeft =
-                (bool)board.All(Piece.Knight, PieceColor.White) || board.All(Piece.Knight, PieceColor.Black);
-            // If only the kings and one knight is left, it's a draw.
-            if (allPiecesCount == 3 && knightLeft) return 0;
+                bool knightLeft =
+                    (bool)board.All(Piece.Knight, PieceColor.White) || board.All(Piece.Knight, PieceColor.Black);
+                // If only the kings and one knight is left, it's a draw.
+                if (allPiecesCount == 3 && knightLeft) return 0;
             
-            bool bishopLeft = 
-                (bool)board.All(Piece.Bishop, PieceColor.White) || board.All(Piece.Bishop, PieceColor.Black);
-            // If only the kings and one bishop is left, it's a draw.
-            if (allPiecesCount == 3 && bishopLeft) return 0;
+                bool bishopLeft = 
+                    (bool)board.All(Piece.Bishop, PieceColor.White) || board.All(Piece.Bishop, PieceColor.Black);
+                // If only the kings and one bishop is left, it's a draw.
+                if (allPiecesCount == 3 && bishopLeft) return 0;
 
-            // If we are not at the root, we should check and see if there is a ready mate.
-            // If there is, we shouldn't really care about other moves or slower mates, but instead
-            // we should prune as fast as possible. It's crucial to ensuring we hit high depths.
-            alpha = Math.Max(alpha, -MATE + plyFromRoot);
-            beta = Math.Min(beta, MATE - plyFromRoot - 1);
-            if (alpha >= beta) return alpha;
+                // If we are not at the root, we should check and see if there is a ready mate.
+                // If there is, we shouldn't really care about other moves or slower mates, but instead
+                // we should prune as fast as possible. It's crucial to ensuring we hit high depths.
+                alpha = Math.Max(alpha, -MATE + plyFromRoot);
+                beta = Math.Min(beta, MATE - plyFromRoot - 1);
+                if (alpha >= beta) return alpha;
+                break;
         }
 
         #endregion
@@ -139,26 +155,54 @@ public class MoveSearch
         }
         
         #endregion
+        
+        #region Null Move Pruning
+        
+        // Reduction ply and depth for null move pruning.
+        int reductionDepth = depth - NULL_MOVE_REDUCTION;
+        int nextPlyFromRoot = plyFromRoot + 1;
+        
+        // Determine whether we should prune null moves.
+        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        Square kingSq = board.KingLoc(board.ColorToMove);
+        bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
+        
+        if (notRootNode && depth > NULL_MOVE_DEPTH && !inCheck) {
+            // For null move pruning, we give the turn to the opponent and let them make the move.
+            RevertNullMove rv = board.NullMove();
+            // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
+            // The idea is that if there are cutoffs, most will be found using this reduced search and we can cutoff
+            // this branch earlier.
+            // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
+            // QSearch).
+            int evaluation = -AbSearch(board, nextPlyFromRoot, reductionDepth, -beta, -beta + 1);
+            // Undo the null move so we can get back to original state of the board.
+            board.UndoNullMove(rv);
+        
+            // In the case our evaluation was better than our beta, we achieved a cutoff here. 
+            if (evaluation >= beta) return beta;
+        }
+        
+        #endregion
 
         #region Move List Creation
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(board, ref moveSpan, transpositionMove);
+        OrderedMoveList moveList = new(ref moveSpan);
+        int moveCount = moveList.NormalMoveGeneration(board, transpositionMove);
         
-        if (moveList.Count == 0) {
+        if (moveCount == 0) {
             // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
             // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
             // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
             // that's bad for us, so returning 0 is fine here.
-            PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
-            Square kingSq = board.KingLoc(board.ColorToMove);
-            return MoveList.UnderAttack(board, kingSq, oppositeColor) ? -MATE + plyFromRoot : 0;
+            return inCheck ? -MATE + plyFromRoot : 0;
         }
 
         #endregion
 
-        #region Alpha Beta Negamax
+        #region Fail-soft Alpha Beta Negamax
         
         int bestEvaluation = NEG_INFINITY;
         int bestMoveIndex = -1;
@@ -185,59 +229,30 @@ public class MoveSearch
             return evaluation < beta;
         }
         
+        // Calculate next iteration variables before getting into the loop.
+        int nextDepth = depth - 1;
+            
         int i = 0;
-        if (depth == 1) {
-            // If depth is equal to 1, then we we will just be evaluating the state of the board.
-            // While we could do this at depth zero, and use the same logic as all depths > 1, it is beneficial to 
-            // avoid another recursive call.
-            while (i < moveList.Count) {
-                // We should being the move that's likely to be the best move at this depth to the top. This ensures
-                // that we are searching through the likely best moves first, allowing us to return early.
-                moveList.SortNext(i);
+        while (i < moveCount) {
+            // We should being the move that's likely to be the best move at this depth to the top. This ensures
+            // that we are searching through the likely best moves first, allowing us to return early.
+            moveList.SortNext(i, moveCount);
                 
-                // Make the move.
-                OrderedMoveEntry move = moveList[i];
-                RevertMove rv = board.Move(ref move);
-                TotalNodeSearchCount++;
+            // Make the move.
+            OrderedMoveEntry move = moveList[i];
+            RevertMove rv = board.Move(ref move);
+            TotalNodeSearchCount++;
         
-                // Evaluate position by getting the relative evaluation and negating it. An evaluation that's good for
-                // our opponent will obviously be bad for us.
-                int evaluation = -Evaluation.RelativeEvaluation(board);
+            // Evaluate position by searching deeper and negating the result. An evaluation that's good for
+            // our opponent will obviously be bad for us.
+            int evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 
-                // Undo the move.
-                board.UndoMove(ref rv);
-
-                if (!HandleEvaluation(evaluation, i)) break;
-
-                i++;
-            }
-        } else {
-            // If the depth isn't equal to 1, we must search deeper by recursive calls.
-            // Calculate next iteration variables before getting into the loop.
-            int nextDepth = depth - 1;
-            int nextPlyFromRoot = plyFromRoot + 1;
+            // Undo the move.
+            board.UndoMove(ref rv);
+                
+            if (!HandleEvaluation(evaluation, i)) break;
             
-            while (i < moveList.Count) {
-                // We should being the move that's likely to be the best move at this depth to the top. This ensures
-                // that we are searching through the likely best moves first, allowing us to return early.
-                moveList.SortNext(i);
-                
-                // Make the move.
-                OrderedMoveEntry move = moveList[i];
-                RevertMove rv = board.Move(ref move);
-                TotalNodeSearchCount++;
-        
-                // Evaluate position by searching deeper and negating the result. An evaluation that's good for
-                // our opponent will obviously be bad for us.
-                int evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
-                
-                // Undo the move.
-                board.UndoMove(ref rv);
-                
-                if (!HandleEvaluation(evaluation, i)) break;
-            
-                i++;
-            }
+            i++;
         }
         
         #endregion
@@ -259,13 +274,114 @@ public class MoveSearch
         return bestEvaluation;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private int QSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
+    {
+        #region Cancellation
+
+        // If we're cancelled, we should abort as soon as possible. Note, this requires a cloned Board to be
+        // provided. If provided without cloning, there's no guarantee the original state will be maintained after
+        // search.
+        if (Token.IsCancellationRequested) throw new OperationCanceledException();
+
+        #endregion
+        
+        #region Early Evaluation
+        
+        int earlyEval = Evaluation.RelativeEvaluation(board);
+        
+        // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
+        // as this position is overwhelmingly winning.
+        if (earlyEval >= beta) return beta;
+        
+        // In the case that our current evaluation is better than our alpha, we need to recalibrate alpha to make sure
+        // we don't skip over our already good move.
+        if (earlyEval > alpha) alpha = earlyEval;
+        
+        #endregion
+        
+        #region Move List Creation
+
+        // Allocate memory on the stack to be used for our move-list.
+        Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
+        OrderedMoveList moveList = new(ref moveSpan);
+        int moveCount = moveList.QSearchMoveGeneration(board, SearchedMove.Default);
+        
+        // if (moveCount == 0) {
+        //     // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
+        //     // means we lost as nothing can save the king anymore. Otherwise, we should just return our best evaluation
+        //     // so far.
+        //     PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        //     Square kingSq = board.KingLoc(board.ColorToMove);
+        //     return MoveList.UnderAttack(board, kingSq, oppositeColor) ? -MATE + plyFromRoot : alpha;
+        // }
+
+        #endregion
+        
+        #region Fail-soft Alpha Beta Negamax
+        
+        int bestEvaluation = earlyEval;
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool HandleEvaluation(int evaluation)
+        {
+            if (evaluation <= bestEvaluation) return true;
+            
+            // If our evaluation was better than our current best evaluation, we should update our evaluation
+            // with the new evaluation.
+            bestEvaluation = evaluation;
+
+            if (evaluation <= alpha) return true;
+
+            // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
+            // replace our alpha with our evaluation.
+            alpha = evaluation;
+            
+            // If the evaluation was better than beta, it means the position was too good. Thus, there
+            // is a good chance that the opponent will avoid this path. Hence, there is currently no
+            // reason to evaluate it further.
+            return evaluation < beta;
+        }
+
+        // Calculate next iteration variables before getting into the loop.
+        int nextDepth = depth - 1;
+        int nextPlyFromRoot = plyFromRoot + 1;
+            
+        int i = 0;
+        while (i < moveCount) {
+            // We should being the move that's likely to be the best move at this depth to the top. This ensures
+            // that we are searching through the likely best moves first, allowing us to return early.
+            moveList.SortNext(i, moveCount);
+                
+            // Make the move.
+            OrderedMoveEntry move = moveList[i];
+            RevertMove rv = board.Move(ref move);
+            TotalNodeSearchCount++;
+        
+            // Evaluate position by searching deeper and negating the result. An evaluation that's good for
+            // our opponent will obviously be bad for us.
+            int evaluation = -QSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+                
+            // Undo the move.
+            board.UndoMove(ref rv);
+
+            if (!HandleEvaluation(evaluation)) break;
+            
+            i++;
+        }
+        
+        #endregion
+        
+        return bestEvaluation;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DepthSearchLog(int depth)
+    private void DepthSearchLog(int depth, Stopwatch stopwatch)
     {
         Console.Write(
             "info depth " + depth + " score cp " + BestMove.Evaluation + " nodes " + 
-            TotalNodeSearchCount + " pv " + BestMove.From.ToString().ToLower() + 
-            BestMove.To.ToString().ToLower()
+            TotalNodeSearchCount + " nps " + (int)(TotalNodeSearchCount / ((float)stopwatch.ElapsedMilliseconds / 1000)) 
+            + " pv " + BestMove.From.ToString().ToLower() + BestMove.To.ToString().ToLower()
         );
         if (BestMove.Promotion != Promotion.None)
             Console.Write(BestMove.Promotion.ToString().ToLower()[0]);
