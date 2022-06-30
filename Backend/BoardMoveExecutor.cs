@@ -8,7 +8,7 @@ using Backend.Data.Struct;
 
 namespace Backend;
 
-public readonly unsafe struct BoardMoveExecutor
+public unsafe readonly struct BoardMoveExecutor
 {
     private readonly struct True { }
 
@@ -21,9 +21,9 @@ public readonly unsafe struct BoardMoveExecutor
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static MethodInfo GetMethodInfo(Delegate Method)
+    private static MethodInfo GetMethodInfo(Delegate method)
     {
-        return Method.Method;
+        return method.Method;
     }
 
     static BoardMoveExecutor()
@@ -32,131 +32,131 @@ public readonly unsafe struct BoardMoveExecutor
         FPs = (delegate*<ref BitBoardMap, void>*) NativeMemory.Alloc(64, 64);
         
         //This is necessary for InASM
-        if (Assembly.GetExecutingAssembly().GetName().Name.Contains('@'))
+        if (Assembly.GetExecutingAssembly().GetName().Name!.Contains('@'))
         {
             return;
         }
         
-        var GMethod = GetMethodInfo(ExecuteMove<True, True, True, True, True, True>).GetGenericMethodDefinition();
+        MethodInfo gMethod = GetMethodInfo(ExecuteMove<True, True, True, True, True, True>).GetGenericMethodDefinition();
 
-        const int GArgsCount = 6;
+        const int gArgsCount = 6;
         
-        var GArgs = new Type[GArgsCount];
+        Type[] gArgs = new Type[gArgsCount];
 
-        ref var FirstArgOffsetByOne = ref Unsafe.Subtract(ref MemoryMarshal.GetArrayDataReference(GArgs), 1);
+        ref Type firstArgOffsetByOne = ref Unsafe.Subtract(ref MemoryMarshal.GetArrayDataReference(gArgs), 1);
 
-        ref var LastArg = ref Unsafe.Add(ref FirstArgOffsetByOne, GArgsCount);
+        ref Type lastArg = ref Unsafe.Add(ref firstArgOffsetByOne, gArgsCount);
 
         for (int I = 0; I < 64; I++)
         {
-            const int ExtractionMask = 1, True = 1; //LSB set
+            const int extractionMask = 1, @true = 1; //LSB set
             
-            ref var CurrentArg = ref LastArg;
+            ref Type currentArg = ref lastArg;
 
-            var ID = I;
+            int id = I;
             
-            for (; !Unsafe.AreSame(ref CurrentArg, ref FirstArgOffsetByOne)
-                 ; CurrentArg = ref Unsafe.Subtract(ref CurrentArg, 1))
+            for (; !Unsafe.AreSame(ref currentArg, ref firstArgOffsetByOne)
+                 ; currentArg = ref Unsafe.Subtract(ref currentArg, 1))
             {
-                var ExtractedState = ID & ExtractionMask;
+                int extractedState = id & extractionMask;
 
-                if (ExtractedState == True)
+                if (extractedState == @true)
                 {
-                    CurrentArg = typeof(True);
+                    currentArg = typeof(True);
                 }
 
                 else
                 {
-                    CurrentArg = typeof(int); //Any type that isn't True will be treated as false
+                    currentArg = typeof(int); //Any type that isn't True will be treated as false
                 }
 
-                ID >>= 1;
+                id >>= 1;
             }
         
-            var SpecializedMethod =  GMethod.MakeGenericMethod(GArgs);
+            MethodInfo specializedMethod =  gMethod.MakeGenericMethod(gArgs);
 
-            var MH = SpecializedMethod.MethodHandle;
+            RuntimeMethodHandle mh = specializedMethod.MethodHandle;
             
             //JIT method before getting FP pointer, allowing FP to point to optimized code
-            RuntimeHelpers.PrepareMethod(MH);
+            RuntimeHelpers.PrepareMethod(mh);
 
-            FPs[I] = (delegate*<ref BitBoardMap, void>) MH.GetFunctionPointer();
+            FPs[I] = (delegate*<ref BitBoardMap, void>) mh.GetFunctionPointer();
         }
     }
 
     //For testing purposes
-    public static MethodInfo PopulateGArgsArrayAndCreateSpecializedMethodInstantiation(int ID)
+    public static MethodInfo PopulateGArgsArrayAndCreateSpecializedMethodInstantiation(int id)
     {
-        var GArgs = new Type[6];
+        Type[] gArgs = new Type[6];
         
-        var GMethod = GetMethodInfo(ExecuteMove<True, True, True, True, True, True>).GetGenericMethodDefinition();
+        MethodInfo gMethod = GetMethodInfo(ExecuteMove<True, True, True, True, True, True>).GetGenericMethodDefinition();
 
-        const int GArgsCount = 6;
+        const int gArgsCount = 6;
         
-        ref var FirstArgOffsetByOne = ref Unsafe.Subtract(ref MemoryMarshal.GetArrayDataReference(GArgs), 1);
+        ref Type firstArgOffsetByOne = ref Unsafe.Subtract(ref MemoryMarshal.GetArrayDataReference(gArgs), 1);
 
-        ref var CurrentArg = ref Unsafe.Add(ref FirstArgOffsetByOne, GArgsCount);
+        ref Type currentArg = ref Unsafe.Add(ref firstArgOffsetByOne, gArgsCount);
 
-        const int ExtractionMask = 1, True = 1; //LSB set
+        const int extractionMask = 1, @true = 1; //LSB set
         
-        for (; !Unsafe.AreSame(ref CurrentArg, ref FirstArgOffsetByOne)
-             ; CurrentArg = ref Unsafe.Subtract(ref CurrentArg, 1))
+        for (; !Unsafe.AreSame(ref currentArg, ref firstArgOffsetByOne)
+             ; currentArg = ref Unsafe.Subtract(ref currentArg, 1))
         {
-            var ExtractedState = ID & ExtractionMask;
+            int extractedState = id & extractionMask;
 
-            if (ExtractedState == True)
+            if (extractedState == @true)
             {
-                CurrentArg = typeof(True);
+                currentArg = typeof(True);
             }
 
             else
             {
-                CurrentArg = typeof(int); //Any type that isn't True will be treated as false
+                currentArg = typeof(int); //Any type that isn't True will be treated as false
             }
 
-            ID >>= 1;
+            id >>= 1;
         }
         
-        var SpecializedMethod = GMethod.MakeGenericMethod(GArgs);
+        MethodInfo specializedMethod = gMethod.MakeGenericMethod(gArgs);
 
-        return SpecializedMethod;
+        return specializedMethod;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static void ExecuteMove(ref BitBoardMap Map, nint ID) //Do NOT reorder params! It will incur an additional reg to reg mov!
+    public static void ExecuteMove(ref BitBoardMap map, nint id) //Do NOT reorder params! It will incur an additional reg to reg mov!
     {
-        FPs[ID](ref Map);
+        FPs[id](ref map);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void ExecuteMove<IsWhiteTurn, IsEnPassantSet, IsWhiteKCastle, IsWhiteQCastle, IsBlackKCastle, IsBlackQCastle>(ref BitBoardMap Map)
+    private static void ExecuteMove<TIsWhiteTurn, TIsEnPassantSet, TIsWhiteKCastle, TIsWhiteQCastle, TIsBlackKCastle, TIsBlackQCastle>(ref BitBoardMap map)
     {
-        if (typeof(IsWhiteTurn) == typeof(True))
+        if (typeof(TIsWhiteTurn) == typeof(True))
         {
             Console.WriteLine("IsWhiteTurn");
         }
         
-        if (typeof(IsEnPassantSet) == typeof(True))
+        if (typeof(TIsEnPassantSet) == typeof(True))
         {
             Console.WriteLine("IsEnPassantSet");
         }
         
-        if (typeof(IsWhiteKCastle) == typeof(True))
+        if (typeof(TIsWhiteKCastle) == typeof(True))
         {
             Console.WriteLine("IsWhiteKCastle");
         }
         
-        if (typeof(IsWhiteQCastle) == typeof(True))
+        if (typeof(TIsWhiteQCastle) == typeof(True))
         {
             Console.WriteLine("IsWhiteQCastle");
         }
         
-        if (typeof(IsBlackKCastle) == typeof(True))
+        if (typeof(TIsBlackKCastle) == typeof(True))
         {
             Console.WriteLine("IsBlackKCastle");
         }
         
-        if (typeof(IsBlackQCastle) == typeof(True))
+        if (typeof(TIsBlackQCastle) == typeof(True))
         {
             Console.WriteLine("IsBlackQCastle");
         }
