@@ -171,8 +171,8 @@ public class MoveSearch
             // For null move pruning, we give the turn to the opponent and let them make the move.
             RevertNullMove rv = board.NullMove();
             // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
-            // The idea is that if there are cutoffs, most will be found using this reduced
-            // search and we can cutoff this branch earlier.
+            // The idea is that if there are cutoffs, most will be found using this reduced search and we can cutoff
+            // this branch earlier.
             // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
             // QSearch).
             int evaluation = -AbSearch(board, nextPlyFromRoot, reductionDepth, -beta, -beta + 1);
