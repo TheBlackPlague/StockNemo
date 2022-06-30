@@ -43,6 +43,32 @@ public class EngineBoard : Board
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public RevertNullMove NullMove()
+    {
+        RevertNullMove rv = RevertNullMove.FromBitBoardMap(ref Map);
+        
+        if (Map.EnPassantTarget != Square.Na) Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
+        Map.EnPassantTarget = Square.Na;
+
+        Map.ColorToMove = Util.OppositeColor(Map.ColorToMove);
+        Zobrist.FlipTurnInHash(ref Map.ZobristHash);
+
+        return rv;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void UndoNullMove(RevertNullMove rv)
+    {
+        if (rv.EnPassantTarget != Square.Na) {
+            Map.EnPassantTarget = rv.EnPassantTarget;
+            Zobrist.HashEp(ref Map.ZobristHash, rv.EnPassantTarget);
+        }
+
+        Map.ColorToMove = Util.OppositeColor(Map.ColorToMove);
+        Zobrist.FlipTurnInHash(ref Map.ZobristHash);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RevertMove Move(ref OrderedMoveEntry move)
     {
         History.Append(ZobristHash);
