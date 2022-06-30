@@ -15,6 +15,9 @@ public class MoveSearch
     private const int NEG_INFINITY = -POS_INFINITY;
     private const int MATE = POS_INFINITY - 1;
 
+    private const int NULL_MOVE_REDUCTION = 3;
+    private const int NULL_MOVE_DEPTH = NULL_MOVE_REDUCTION - 1;
+
     public int TableCutoffCount;
     private int TotalNodeSearchCount;
 
@@ -75,31 +78,36 @@ public class MoveSearch
         #endregion
 
         int originalAlpha = alpha;
+        bool notRootNode = plyFromRoot != 0;
         
         #region Mate Pruning & Piece-Count Draw-Checks
 
-        if (plyFromRoot > 0 && board.IsRepetition()) return 0;
-        if (plyFromRoot != 0) {
-            int allPiecesCount = board.All().Count;
-            // If only the kings are left, it's a draw.
-            if (allPiecesCount == 2) return 0;
+        switch (notRootNode) {
+            case true when board.IsRepetition():
+                // We ran into a three-fold repetition, so we can draw earlier here.
+                return 0;
+            case true:
+                int allPiecesCount = board.All().Count;
+                // If only the kings are left, it's a draw.
+                if (allPiecesCount == 2) return 0;
             
-            bool knightLeft =
-                (bool)board.All(Piece.Knight, PieceColor.White) || board.All(Piece.Knight, PieceColor.Black);
-            // If only the kings and one knight is left, it's a draw.
-            if (allPiecesCount == 3 && knightLeft) return 0;
+                bool knightLeft =
+                    (bool)board.All(Piece.Knight, PieceColor.White) || board.All(Piece.Knight, PieceColor.Black);
+                // If only the kings and one knight is left, it's a draw.
+                if (allPiecesCount == 3 && knightLeft) return 0;
             
-            bool bishopLeft = 
-                (bool)board.All(Piece.Bishop, PieceColor.White) || board.All(Piece.Bishop, PieceColor.Black);
-            // If only the kings and one bishop is left, it's a draw.
-            if (allPiecesCount == 3 && bishopLeft) return 0;
+                bool bishopLeft = 
+                    (bool)board.All(Piece.Bishop, PieceColor.White) || board.All(Piece.Bishop, PieceColor.Black);
+                // If only the kings and one bishop is left, it's a draw.
+                if (allPiecesCount == 3 && bishopLeft) return 0;
 
-            // If we are not at the root, we should check and see if there is a ready mate.
-            // If there is, we shouldn't really care about other moves or slower mates, but instead
-            // we should prune as fast as possible. It's crucial to ensuring we hit high depths.
-            alpha = Math.Max(alpha, -MATE + plyFromRoot);
-            beta = Math.Min(beta, MATE - plyFromRoot - 1);
-            if (alpha >= beta) return alpha;
+                // If we are not at the root, we should check and see if there is a ready mate.
+                // If there is, we shouldn't really care about other moves or slower mates, but instead
+                // we should prune as fast as possible. It's crucial to ensuring we hit high depths.
+                alpha = Math.Max(alpha, -MATE + plyFromRoot);
+                beta = Math.Min(beta, MATE - plyFromRoot - 1);
+                if (alpha >= beta) return alpha;
+                break;
         }
 
         #endregion
@@ -147,6 +155,35 @@ public class MoveSearch
         }
         
         #endregion
+        
+        #region Null Move Pruning
+        
+        // Reduction ply and depth for null move pruning.
+        int reductionDepth = depth - NULL_MOVE_REDUCTION;
+        int nextPlyFromRoot = plyFromRoot + 1;
+        
+        // Determine whether we should prune null moves.
+        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        Square kingSq = board.KingLoc(board.ColorToMove);
+        bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
+        
+        if (notRootNode && depth > NULL_MOVE_DEPTH && !inCheck) {
+            // For null move pruning, we give the turn to the opponent and let them make the move.
+            RevertNullMove rv = board.NullMove();
+            // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
+            // The idea is that if there are cutoffs, most will be found using this reduced
+            // search and we can cutoff this branch earlier.
+            // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
+            // QSearch).
+            int evaluation = -AbSearch(board, nextPlyFromRoot, reductionDepth, -beta, -beta + 1);
+            // Undo the null move so we can get back to original state of the board.
+            board.UndoNullMove(rv);
+        
+            // In the case our evaluation was better than our beta, we achieved a cutoff here. 
+            if (evaluation >= beta) return beta;
+        }
+        
+        #endregion
 
         #region Move List Creation
 
@@ -160,9 +197,7 @@ public class MoveSearch
             // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
             // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
             // that's bad for us, so returning 0 is fine here.
-            PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
-            Square kingSq = board.KingLoc(board.ColorToMove);
-            return MoveList.UnderAttack(board, kingSq, oppositeColor) ? -MATE + plyFromRoot : 0;
+            return inCheck ? -MATE + plyFromRoot : 0;
         }
 
         #endregion
@@ -196,7 +231,6 @@ public class MoveSearch
         
         // Calculate next iteration variables before getting into the loop.
         int nextDepth = depth - 1;
-        int nextPlyFromRoot = plyFromRoot + 1;
             
         int i = 0;
         while (i < moveCount) {
