@@ -269,7 +269,7 @@ public class MoveSearch
         #endregion
         
         // If we're at the root node, we should also consider this our best move from the search.
-        if (plyFromRoot == 0) BestMove = bestMove;
+        if (!notRootNode) BestMove = bestMove;
 
         return bestEvaluation;
     }
