@@ -1,8 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
-using Backend.Data.Struct;
 
-namespace Backend.Engine;
+namespace Backend.Data.Struct;
 
 public ref struct RevertNullMove
 {
