@@ -73,6 +73,8 @@ public class MoveSearch
         
         #region QSearch Jump
 
+        // At depth 0, since we may be having a capture train, we should jump into QSearch and evaluate even deeper.
+        // In the case of no captures available, QSearch will throw us out instantly.
         if (depth == 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
         
         #endregion
