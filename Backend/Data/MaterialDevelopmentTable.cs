@@ -180,10 +180,7 @@ public class MaterialDevelopmentTable
 
     static MaterialDevelopmentTable()
     {
-        Parallel.For(0, 12, i =>
-        {
-            for (int j = i * 64; j < (i + 1) * 64; j++) Internal[j] += Material[i];
-        });
+        for (int i = 0; i < 12; i++) for (int j = i * 64; j < (i + 1) * 64; j++) Internal[j] += Material[i];
     }
 
     public int this[Piece piece, Square sq, Phase phase]
