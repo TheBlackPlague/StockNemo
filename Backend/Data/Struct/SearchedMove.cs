@@ -30,7 +30,7 @@ public readonly struct SearchedMove
         Evaluation = evaluation;
     }
 
-    public SearchedMove(Square from, Square to, Promotion promotion, int evaluation)
+    private SearchedMove(Square from, Square to, Promotion promotion, int evaluation)
     {
         From = from;
         To = to;

@@ -10,17 +10,6 @@ public class EngineBoard : Board
 {
 
     private readonly HashHistory History;
-    
-    public new static EngineBoard Default()
-    {
-        return FromFen(DEFAULT_FEN);
-    }
-
-    public new static EngineBoard FromFen(string fen)
-    {
-        string[] parts = fen.Split(" ");
-        return new EngineBoard(parts[0], parts[1], parts[2], parts[3]);
-    }
 
     private EngineBoard(EngineBoard board) : base(board) => History = board.History.Clone();
 
