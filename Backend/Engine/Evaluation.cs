@@ -20,7 +20,18 @@ public static class Evaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int NormalEvaluation(Board board)
     {
-        return board.MaterialDevelopmentEvaluationEarly;
+        int phase = 0;
+        
+        phase += board.All(Piece.Knight, PieceColor.White).Count + board.All(Piece.Knight, PieceColor.Black).Count;
+        phase += board.All(Piece.Bishop, PieceColor.White).Count + board.All(Piece.Bishop, PieceColor.Black).Count;
+        phase += (board.All(Piece.Rook, PieceColor.White).Count + board.All(Piece.Rook, PieceColor.Black).Count) * 2;
+        phase += (board.All(Piece.Queen, PieceColor.White).Count + board.All(Piece.Queen, PieceColor.Black).Count) * 4;
+
+        phase = 24 - phase;
+        phase = (phase * 256 + 24 / 2) / 24;
+
+        return (board.MaterialDevelopmentEvaluationEarly * (256 - phase) + 
+                board.MaterialDevelopmentEvaluationLate * phase) / 256;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
