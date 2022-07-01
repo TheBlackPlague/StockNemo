@@ -29,7 +29,8 @@ public struct BitBoardMap
 
     public ulong ZobristHash;
 
-    public int PieceDevelopmentEvaluation;
+    public int MaterialDevelopmentEvaluationEarly;
+    public int MaterialDevelopmentEvaluationLate;
 
     public BitBoardMap(string boardFen, string turnData, string castlingData, string enPassantTargetData)
     {
@@ -138,12 +139,14 @@ public struct BitBoardMap
                 Bb[(int)PieceColor.Black][(int)Piece.Knight] | Bb[(int)PieceColor.Black][(int)Piece.Bishop] | 
                 Bb[(int)PieceColor.Black][(int)Piece.Queen] | Bb[(int)PieceColor.Black][(int)Piece.King];
 
-        PieceDevelopmentEvaluation = 0;
+        MaterialDevelopmentEvaluationEarly = 0;
+        MaterialDevelopmentEvaluationLate = 0;
         
         // Necessary to do two assignments to acknowledge struct is fully initialized.
         ZobristHash = 0;
         ZobristHash = Zobrist.Hash(ref this);
-        PieceDevelopmentEvaluation = Evaluation.InitialPieceDevelopmentEvaluation(ref this);
+        MaterialDevelopmentEvaluationEarly = Evaluation.InitialMaterialDevelopmentEvaluation(ref this, Phase.Early);
+        MaterialDevelopmentEvaluationLate = Evaluation.InitialMaterialDevelopmentEvaluation(ref this, Phase.Late);
     }
 
     // ReSharper disable once SuggestBaseTypeForParameterInConstructor
@@ -168,7 +171,8 @@ public struct BitBoardMap
         Array.Copy(piecesAndColors, PiecesAndColors, 64);
         
         ZobristHash = map.ZobristHash;
-        PieceDevelopmentEvaluation = map.PieceDevelopmentEvaluation;
+        MaterialDevelopmentEvaluationEarly = map.MaterialDevelopmentEvaluationEarly;
+        MaterialDevelopmentEvaluationLate = map.MaterialDevelopmentEvaluationLate;
     }
 
     public (Piece, PieceColor) this[Square sq]
@@ -220,10 +224,12 @@ public struct BitBoardMap
             // Remove from color bitboards.
             if (cT == PieceColor.White) {
                 White[to] = false;
-                PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[pT, (Square)((int)to ^ 56)];
+                MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pT, (Square)((int)to ^ 56), Phase.Early];
+                MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pT, (Square)((int)to ^ 56), Phase.Late];
             } else {
                 Black[to] = false;
-                PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[pT, to];
+                MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pT, to, Phase.Early];
+                MaterialDevelopmentEvaluationLate += Evaluation.MDT[pT, to, Phase.Late];
             }
             
             // Update Zobrist.
@@ -246,13 +252,21 @@ public struct BitBoardMap
         if (cF == PieceColor.White) {
             White[from] = false;
             White[to] = true;
-            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[pF, (Square)((int)from ^ 56)];
-            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[pF, (Square)((int)to ^ 56)];
+            
+            MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pF, (Square)((int)from ^ 56), Phase.Early];
+            MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pF, (Square)((int)from ^ 56), Phase.Late];
+            
+            MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pF, (Square)((int)to ^ 56), Phase.Early];
+            MaterialDevelopmentEvaluationLate += Evaluation.MDT[pF, (Square)((int)to ^ 56), Phase.Late];
         } else {
             Black[from] = false;
             Black[to] = true;
-            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[pF, from];
-            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[pF, to];
+            
+            MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pF, from, Phase.Early];
+            MaterialDevelopmentEvaluationLate += Evaluation.MDT[pF, from, Phase.Late];
+            
+            MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pF, to, Phase.Early];
+            MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pF, to, Phase.Late];
         }
         
         // Update Zobrist.
@@ -279,10 +293,14 @@ public struct BitBoardMap
         // Remove from color bitboards.
         if (color == PieceColor.White) {
             White[sq] = false;
-            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[piece, (Square)((int)sq ^ 56)];
+            
+            MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Early];
+            MaterialDevelopmentEvaluationLate -= Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Late];
         } else {
             Black[sq] = false;
-            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[piece, sq];
+            
+            MaterialDevelopmentEvaluationEarly += Evaluation.MDT[piece, sq, Phase.Early];
+            MaterialDevelopmentEvaluationLate += Evaluation.MDT[piece, sq, Phase.Late];
         }
         
         // Update Zobrist.
@@ -298,10 +316,14 @@ public struct BitBoardMap
         // Insert into color bitboards.
         if (color == PieceColor.White) {
             White[sq] = true;
-            PieceDevelopmentEvaluation += Evaluation.PieceDevelopmentTable[piece, (Square)((int)sq ^ 56)];
+            
+            MaterialDevelopmentEvaluationEarly += Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Early];
+            MaterialDevelopmentEvaluationLate += Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Late];
         } else {
             Black[sq] = true;
-            PieceDevelopmentEvaluation -= Evaluation.PieceDevelopmentTable[piece, sq];
+            
+            MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[piece, sq, Phase.Early];
+            MaterialDevelopmentEvaluationLate -= Evaluation.MDT[piece, sq, Phase.Late];
         }
             
         // Set piece in pieces and colors.

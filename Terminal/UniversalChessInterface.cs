@@ -18,7 +18,7 @@ public static class UniversalChessInterface
     private static MoveTranspositionTable TranspositionTable;
     private static int TranspositionTableSizeMb = 16;
 
-    private static EngineBoard Board;
+    private static DisplayBoard Board;
     private static bool Busy;
     private static CancellationTokenSource SearchCancellationSource;
     private static int MoveCount;
@@ -30,6 +30,7 @@ public static class UniversalChessInterface
         UciStdInputThread.CommandReceived += (_, input) => HandleIsReady(input);
         UciStdInputThread.CommandReceived += (thread, input) => HandleQuit((Thread)thread, input);
         UciStdInputThread.CommandReceived += (_, input) => HandlePosition(input);
+        UciStdInputThread.CommandReceived += (_, input) => HandleDraw(input);
         UciStdInputThread.CommandReceived += (_, input) => HandleGo(input);
         UciStdInputThread.CommandReceived += (_, input) => HandleStop(input);
     }
@@ -98,7 +99,7 @@ public static class UniversalChessInterface
         int argsParsed = 1;
         switch (args[1].ToLower()) {
             case "startpos":
-                Board = EngineBoard.Default();
+                Board = DisplayBoard.Default();
 
                 argsParsed++;
                 break;
@@ -108,7 +109,7 @@ public static class UniversalChessInterface
                 string c = args[4];
                 string ep = args[5];
 
-                Board = EngineBoard.FromFen(p + " " + s + " " + c + " " + ep);
+                Board = DisplayBoard.FromFen(p + " " + s + " " + c + " " + ep);
                 
                 argsParsed += 7;
                 break;
@@ -144,6 +145,17 @@ public static class UniversalChessInterface
         }
 
         Busy = false;
+    }
+
+    private static void HandleDraw(string input)
+    {
+        switch (input.ToLower()) {
+            case "draw":
+            case "d":
+                if (Board is null) return;
+                Console.WriteLine(Board.ToString());
+                break;
+        }
     }
 
     private static void HandleGo(string input)

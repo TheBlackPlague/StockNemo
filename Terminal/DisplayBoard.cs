@@ -1,4 +1,6 @@
 ﻿using System.Drawing;
+using System.Text.Json.Serialization;
+using Backend;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
 using Backend.Engine;
@@ -39,7 +41,9 @@ internal class DisplayBoard : EngineBoard
     {
         string board = DrawBoardCli(flip).ToString().Trim(' ');
         string fen = "FEN: " + GenerateFen() + "\n";
-        return board + fen + "Hash: " + $"{Map.ZobristHash:X}";
+        string hash = "Hash: " + $"{Map.ZobristHash:X}\n";
+        string eval = "Evaluation: " + Evaluation.NormalEvaluation(this);
+        return board + fen + hash + eval;
     }
     
     private Table DrawBoardCli(bool flip)
