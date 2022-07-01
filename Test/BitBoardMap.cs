@@ -90,14 +90,14 @@ public class BitBoardMap
     {
         Backend.Data.Struct.BitBoardMap useMap = Map;
 
-        int eval = useMap.PieceDevelopmentEvaluation;
+        int eval = useMap.MaterialDevelopmentEvaluationEarly;
         Console.WriteLine("Previous Eval: " + eval);
         useMap.Move(Square.E2, Square.E4);
-        int newEval = useMap.PieceDevelopmentEvaluation;
+        int newEval = useMap.MaterialDevelopmentEvaluationEarly;
         Console.WriteLine("New Eval: " + newEval);
         bool evalChanged = eval != newEval;
         useMap.Move(Square.E4, Square.E2);
-        int prevEval = useMap.PieceDevelopmentEvaluation;
+        int prevEval = useMap.MaterialDevelopmentEvaluationEarly;
         Console.WriteLine("Reverted Eval: " + prevEval);
         bool evalReverted = eval == prevEval;
         

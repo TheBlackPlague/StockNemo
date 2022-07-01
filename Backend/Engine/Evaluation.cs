@@ -8,21 +8,34 @@ namespace Backend.Engine;
 public static class Evaluation
 {
     
-    private const int QUEEN = 900;
-    private const int ROOK = 500;
-    private const int BISHOP_KNIGHT = 300;
-    private const int PAWN = 100;
-
-    public static readonly PieceDevelopmentTable PieceDevelopmentTable = new();
+    // ReSharper disable once InconsistentNaming
+    public static readonly MaterialDevelopmentTable MDT = new();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int RelativeEvaluation(Board board)
     {
-        return (Material(board) + board.PieceDevelopmentEvaluation) * (-2 * (int)board.ColorToMove + 1);
+        return NormalEvaluation(board) * (-2 * (int)board.ColorToMove + 1);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int NormalEvaluation(Board board)
+    {
+        int phase = 0;
+        
+        phase += board.All(Piece.Knight, PieceColor.White).Count + board.All(Piece.Knight, PieceColor.Black).Count;
+        phase += board.All(Piece.Bishop, PieceColor.White).Count + board.All(Piece.Bishop, PieceColor.Black).Count;
+        phase += (board.All(Piece.Rook, PieceColor.White).Count + board.All(Piece.Rook, PieceColor.Black).Count) * 2;
+        phase += (board.All(Piece.Queen, PieceColor.White).Count + board.All(Piece.Queen, PieceColor.Black).Count) * 4;
+
+        phase = 24 - phase;
+        phase = (phase * 256 + 24 / 2) / 24;
+
+        return (board.MaterialDevelopmentEvaluationEarly * (256 - phase) + 
+                board.MaterialDevelopmentEvaluationLate * phase) / 256;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public static int InitialPieceDevelopmentEvaluation(ref BitBoardMap map)
+    public static int InitialMaterialDevelopmentEvaluation(ref BitBoardMap map, Phase phase)
     {
         int whiteScore = 0;
         int blackScore = 0;
@@ -34,7 +47,7 @@ public static class Evaluation
             BitBoardIterator pieceIterator = map[piece, PieceColor.White].GetEnumerator();
             Square pieceSq = pieceIterator.Current;
             while (pieceIterator.MoveNext()) {
-                whiteScore += PieceDevelopmentTable[piece, (Square)((byte)pieceSq ^ 56)];
+                whiteScore += MDT[piece, (Square)((byte)pieceSq ^ 56), phase];
                 pieceSq = pieceIterator.Current;
             }
             piece++;
@@ -49,7 +62,7 @@ public static class Evaluation
             BitBoardIterator pieceIterator = map[piece, PieceColor.Black].GetEnumerator();
             Square pieceSq = pieceIterator.Current;
             while (pieceIterator.MoveNext()) {
-                blackScore += PieceDevelopmentTable[piece, pieceSq];
+                blackScore += MDT[piece, pieceSq, phase];
                 pieceSq = pieceIterator.Current;
             }
             piece++;
@@ -58,21 +71,6 @@ public static class Evaluation
         #endregion
 
         return whiteScore - blackScore;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static int Material(Board board)
-    {
-        // First, we must calculate number of white pieces (with consideration to type of piece) relative to the pieces
-        // of black.
-        int dQ = board.All(Piece.Queen, PieceColor.White).Count - board.All(Piece.Queen, PieceColor.Black).Count;
-        int dB = board.All(Piece.Bishop, PieceColor.White).Count - board.All(Piece.Bishop, PieceColor.Black).Count;
-        int dN = board.All(Piece.Knight, PieceColor.White).Count - board.All(Piece.Knight, PieceColor.Black).Count;
-        int dR = board.All(Piece.Rook, PieceColor.White).Count - board.All(Piece.Rook, PieceColor.Black).Count;
-        int dP = board.All(Piece.Pawn, PieceColor.White).Count - board.All(Piece.Pawn, PieceColor.Black).Count;
-        
-        // Then, we must apply weights and return.
-        return QUEEN * dQ + ROOK * dR + BISHOP_KNIGHT * (dB + dN) + PAWN * dP;
     }
 
 }

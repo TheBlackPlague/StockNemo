@@ -17,7 +17,8 @@ public class Board
     public PieceColor ColorToMove => Map.ColorToMove;
     public Square EnPassantTarget => Map.EnPassantTarget;
     public ulong ZobristHash => Map.ZobristHash;
-    public int PieceDevelopmentEvaluation => Map.PieceDevelopmentEvaluation;
+    public int MaterialDevelopmentEvaluationEarly => Map.MaterialDevelopmentEvaluationEarly;
+    public int MaterialDevelopmentEvaluationLate => Map.MaterialDevelopmentEvaluationLate;
     
     protected BitBoardMap Map;
         
