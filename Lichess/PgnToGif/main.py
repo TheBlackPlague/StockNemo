@@ -1,8 +1,10 @@
 import chess.pgn
 import requests
 import os
+import time
 
 from alive_progress import alive_bar
+from concurrent.futures import ThreadPoolExecutor
 
 URL = "http://localhost:6175/game.gif"
 name = "StockNemo"
@@ -48,6 +50,12 @@ class Frame:
         return frame_data
 
 
+class ThreadedGameData:
+    def __init__(self, game_to_convert, game_file_id):
+        self.game = game_to_convert
+        self.file_id = game_file_id
+
+
 def read_game(parse_id):
     if verbose:
         print("READING GAME [ " + str(parse_id) + " ] ...")
@@ -58,6 +66,66 @@ def read_game(parse_id):
         print("GAME [ " + str(parse_id) + " ] READ SUCCESSFULLY.")
 
     return pgn_game
+
+
+def game_to_gif(game_data: ThreadedGameData):
+    board = game_data.game.board()
+    frames = [Frame(board.board_fen(), default_delay * 3, None, None).get_data()]
+
+    frame_id = 0
+    for move in game_data.game.mainline_moves():
+        board.push(move)
+
+        check_sq = None
+        if board.is_check():
+            check_sq = chess.square_name(board.king(board.turn))
+
+        frames.append(Frame(board.board_fen(), default_delay, move, check_sq).get_data())
+
+        if verbose:
+            print("GENERATED FRAME [ " + str(frame_id) + " ]")
+
+        frame_id += 1
+
+    if verbose:
+        print("Forwarding frames to LILA-GIF...")
+
+    data = {
+        "white": game_data.game.headers["White"],
+        "black": game_data.game.headers["Black"],
+        "comment": "StockNemo PgnToGif",
+        "orientation": "black" if game_data.game.headers["Result"] == "0-1" else "white",
+        "delay": default_delay,
+        "frames": frames
+    }
+
+    response = requests.post(url=URL, json=data)
+    if response.status_code != 200:
+        print("Error [ " + str(response.status_code) + " ]: " + response.text)
+    else:
+        if verbose:
+            print("LILA-GIF returned GIF data.")
+
+    gif_path = gif_output_path + "/" + str(game_data.file_id) + ".gif"
+
+    if verbose:
+        print("Saving GIF to: " + gif_path)
+    if os.path.isfile(gif_path) is False:
+        file = open(gif_path, "x")
+        file.close()
+
+    file = open(gif_path, "wb")
+
+    file.write(response.content)
+
+    file.close()
+    if verbose:
+        print("GIF saved successfully.")
+
+
+def update_bar(progress_bar):
+    time.sleep(0.005)
+    progress_bar()
 
 
 engine = name + " " + version
@@ -80,63 +148,16 @@ while parsed_game is not None:
     parsed_game = read_game(game_id)
 
 print("Finished reading games.")
-print("Generating GIFs: ")
 
-with alive_bar(len(games)) as bar:
-    file_id = 0
-    for game in games:
-        board = game.board()
-        frames = [Frame(board.board_fen(), default_delay * 3, None, None).get_data()]
+worker_count = 64
 
-        frame_id = 0
-        for move in game.mainline_moves():
-            board.push(move)
-
-            check_sq = None
-            if board.is_check():
-                check_sq = chess.square_name(board.king(board.turn))
-
-            frames.append(Frame(board.board_fen(), default_delay, move, check_sq).get_data())
-
-            if verbose:
-                print("GENERATED FRAME [ " + str(frame_id) + " ]")
-
-            frame_id += 1
-
-        if verbose:
-            print("Forwarding frames to LILA-GIF...")
-
-        data = {
-            "white": game.headers["White"],
-            "black": game.headers["Black"],
-            "comment": "StockNemo PgnToGif",
-            "orientation": "black" if game.headers["Result"] == "0-1" else "white",
-            "delay": default_delay,
-            "frames": frames
-        }
-
-        response = requests.post(url=URL, json=data)
-        if response.status_code != 200:
-            print("Error [ " + str(response.status_code) + " ]: " + response.text)
-        else:
-            if verbose:
-                print("LILA-GIF returned GIF data.")
-
-        gif_path = gif_output_path + "/" + str(file_id) + ".gif"
-
-        if verbose:
-            print("Saving GIF to: " + gif_path)
-        if os.path.isfile(gif_path) is False:
-            file = open(gif_path, "x")
-            file.close()
-
-        file = open(gif_path, "wb")
-
-        file.write(response.content)
-
-        file.close()
-        if verbose:
-            print("GIF saved successfully.")
-
-        bar()
-        file_id += 1
+print("Setting up thread pool...")
+with ThreadPoolExecutor(max_workers=worker_count) as thread_pool:
+    print("Thread pool ready.")
+    print("Generating GIFs: ")
+    with alive_bar(len(games)) as bar:
+        file_id = 0
+        for game in games:
+            threaded_game_data = ThreadedGameData(game, file_id)
+            thread_pool.submit(game_to_gif, threaded_game_data).add_done_callback(bar)
+            file_id += 1
