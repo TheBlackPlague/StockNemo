@@ -7,8 +7,8 @@ public class MaterialDevelopmentTable
 {
     
     private static readonly int[] Material = {
-        82, 477, 337, 365, 1025, 0, 
-        94, 512, 281, 297,  936, 0
+        126, 1276, 781, 825, 2538, 0, 
+        208, 1380, 854, 915, 2682, 0
     };
 
     private static readonly int[] Internal = {
