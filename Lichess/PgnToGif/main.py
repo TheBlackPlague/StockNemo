@@ -1,9 +1,8 @@
 import chess.pgn
 import requests
 import os
-import time
 
-from alive_progress import alive_bar
+from rich.progress import Progress
 from concurrent.futures import ThreadPoolExecutor
 
 URL = "http://localhost:6175/game.gif"
@@ -16,7 +15,6 @@ pgn_file_path = input("Please enter PGN file path: ")
 pgn = open(pgn_file_path)
 gif_output_path = input("Please enter directory to output GIF: ")
 verbose = True if input("Enter 0 for Clean, 1 for Verbose: ") == "1" else False
-print(gif_output_path)
 
 if os.path.isdir(gif_output_path) is False:
     print("Path provided is not a directory.")
@@ -51,21 +49,9 @@ class Frame:
 
 
 class ThreadedGameData:
-    def __init__(self, game_to_convert, game_file_id):
+    def __init__(self, game_to_convert, path):
         self.game = game_to_convert
-        self.file_id = game_file_id
-
-
-def read_game(parse_id):
-    if verbose:
-        print("READING GAME [ " + str(parse_id) + " ] ...")
-
-    pgn_game = chess.pgn.read_game(pgn)
-
-    if verbose:
-        print("GAME [ " + str(parse_id) + " ] READ SUCCESSFULLY.")
-
-    return pgn_game
+        self.path = path
 
 
 def game_to_gif(game_data: ThreadedGameData):
@@ -82,13 +68,7 @@ def game_to_gif(game_data: ThreadedGameData):
 
         frames.append(Frame(board.board_fen(), default_delay, move, check_sq).get_data())
 
-        if verbose:
-            print("GENERATED FRAME [ " + str(frame_id) + " ]")
-
         frame_id += 1
-
-    if verbose:
-        print("Forwarding frames to LILA-GIF...")
 
     data = {
         "white": game_data.game.headers["White"],
@@ -100,64 +80,65 @@ def game_to_gif(game_data: ThreadedGameData):
     }
 
     response = requests.post(url=URL, json=data)
-    if response.status_code != 200:
-        print("Error [ " + str(response.status_code) + " ]: " + response.text)
-    else:
-        if verbose:
-            print("LILA-GIF returned GIF data.")
 
-    gif_path = gif_output_path + "/" + str(game_data.file_id) + ".gif"
-
-    if verbose:
-        print("Saving GIF to: " + gif_path)
-    if os.path.isfile(gif_path) is False:
-        file = open(gif_path, "x")
+    if os.path.isfile(game_data.path) is False:
+        file = open(game_data.path, "x")
         file.close()
 
-    file = open(gif_path, "wb")
+    with open(game_data.path, "wb") as file:
+        file.write(response.content)
 
-    file.write(response.content)
-
-    file.close()
-    if verbose:
-        print("GIF saved successfully.")
-
-
-def update_bar(progress_bar):
-    time.sleep(0.005)
-    progress_bar()
+    if multi_threaded:
+        print("Saved Game GIF: " + game_data.path)
+    else:
+        progress.log("Saved Game GIF: " + game_data.path)
+        progress.update(task, advance=1)
 
 
 engine = name + " " + version
-game_id = 0
 games = []
-parsed_game = read_game(game_id)
-while parsed_game is not None:
-    white = parsed_game.headers["White"]
-    black = parsed_game.headers["Black"]
-    if white != engine and black != engine:
-        if verbose:
-            print("Non " + engine + " game found! Skipping...")
+parsed_game = chess.pgn.read_game(pgn)
 
-        game_id += 1
-        parsed_game = read_game(game_id)
-        continue
+with Progress() as read_progress:
+    read_task = read_progress.add_task("[green]Reading games...", total=2000)
+    while parsed_game is not None:
+        white = parsed_game.headers["White"]
+        black = parsed_game.headers["Black"]
+        if white != engine and black != engine:
+            if verbose:
+                read_progress.print("Non " + engine + " game found! Skipping...")
 
-    games.append(parsed_game)
-    game_id += 1
-    parsed_game = read_game(game_id)
+            read_progress.advance(read_task, advance=1)
+            parsed_game = chess.pgn.read_game(pgn)
+            continue
 
-print("Finished reading games.")
+        games.append(parsed_game)
 
+        read_progress.advance(read_task, advance=1)
+
+        parsed_game = chess.pgn.read_game(pgn)
+
+    read_progress.print("Finished reading games.")
+
+
+multi_threaded = True if int(input("Enter 0 to enable multithreading, 1 to disable: ")) == 0 else False
 worker_count = 64
 
 print("Setting up thread pool...")
+
 with ThreadPoolExecutor(max_workers=worker_count) as thread_pool:
     print("Thread pool ready.")
     print("Generating GIFs: ")
-    with alive_bar(len(games)) as bar:
+    with Progress() as progress:
         file_id = 0
+        if not multi_threaded:
+            task = progress.add_task("[red]Processing...", total=len(games))
+
         for game in games:
-            threaded_game_data = ThreadedGameData(game, file_id)
-            thread_pool.submit(game_to_gif, threaded_game_data).add_done_callback(bar)
+            gif_path = gif_output_path + "\\" + str(file_id) + ".gif"
+            threaded_game_data = ThreadedGameData(game, gif_path)
+            if multi_threaded:
+                thread_pool.submit(game_to_gif, threaded_game_data)
+            else:
+                game_to_gif(threaded_game_data)
             file_id += 1
