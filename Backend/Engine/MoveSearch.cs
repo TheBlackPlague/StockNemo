@@ -18,6 +18,10 @@ public class MoveSearch
     private const int NULL_MOVE_REDUCTION = 3;
     private const int NULL_MOVE_DEPTH = NULL_MOVE_REDUCTION - 1;
 
+    private const int ASPIRATION_BOUND = 3500;
+    private const int ASPIRATION_DELTA = 30;
+    private const int ASPIRATION_DEPTH = 4;
+
     public int TableCutoffCount;
     private int TotalNodeSearchCount;
 
@@ -46,17 +50,77 @@ public class MoveSearch
     public SearchedMove IterativeDeepening(int selectedDepth)
     {
         SearchedMove bestMove = BestMove;
+        int aspirationEvaluation = NEG_INFINITY;
         try {
             int depth = 1;
             Stopwatch stopwatch = Stopwatch.StartNew();
             while (!Token.IsCancellationRequested && depth <= selectedDepth) {
-                AbSearch(Board, 0, depth, NEG_INFINITY, POS_INFINITY);
+                aspirationEvaluation = AspirationSearch(Board, depth, aspirationEvaluation);
                 bestMove = BestMove;
                 DepthSearchLog(depth, stopwatch);
                 depth++;
             }
         } catch (OperationCanceledException) {}
         return bestMove;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private int AspirationSearch(EngineBoard board, int depth, int previousEvaluation)
+    {
+        // Set base window size.
+        int alpha = NEG_INFINITY;
+        int beta = POS_INFINITY;
+
+        if (depth > ASPIRATION_DEPTH) {
+            // If we're searching deeper than our aspiration depth, then we should modify the window based on our
+            // previous evaluation. If the window isn't reasonably correct, it'll get reset later anyways.
+            alpha = previousEvaluation - 50;
+            beta = previousEvaluation + 50;
+        }
+
+        int research = 0;
+
+        while (true) {
+            #region Cancellation
+
+            // If we're cancelled, we should abort as soon as possible. Note, this requires a cloned Board to be
+            // provided. If provided without cloning, there's no guarantee the original state will be maintained after
+            // search.
+            if (Token.IsCancellationRequested) throw new OperationCanceledException();
+
+            #endregion
+
+            #region Reset Window
+
+            // In the case our alpha is far below our aspiration bound, we should reset it to negative infinity for
+            // our research.
+            if (alpha < -ASPIRATION_BOUND) alpha = NEG_INFINITY;
+            if (beta > ASPIRATION_BOUND) beta = POS_INFINITY;
+
+            #endregion
+            
+            // Get our best evaluation so far so we can decide whether we need to do a research or not.
+            // Researches are reasonably fast thanks to transposition tables.
+            int bestEvaluation = AbSearch(board, 0, depth, alpha, beta);
+
+            #region Modify Window
+
+            if (bestEvaluation <= alpha) {
+                research++;
+                
+                // If our best evaluation was somehow worse than our alpha, we should resize our window and research.
+                alpha = Math.Max(alpha - research * research * ASPIRATION_DELTA, NEG_INFINITY);
+            } else if (bestEvaluation >= beta) {
+                research++;
+                
+                // If our evaluation was somehow better than our beta, we should resize our window and research.
+                beta = Math.Min(beta + research * research * ASPIRATION_DELTA, POS_INFINITY);
+                
+                // If our evaluation was within our window, we should return the result avoiding any researches.
+            } else return bestEvaluation;
+
+            #endregion
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
