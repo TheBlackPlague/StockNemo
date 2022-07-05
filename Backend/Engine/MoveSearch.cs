@@ -386,7 +386,7 @@ public class MoveSearch
             + " pv " + BestMove.From.ToString().ToLower() + BestMove.To.ToString().ToLower()
         );
         if (BestMove.Promotion != Promotion.None)
-            Console.Write(BestMove.Promotion.ToString().ToLower()[0]);
+            Console.Write(BestMove.Promotion.ToUciNotation());
 
         Console.WriteLine();
     }
