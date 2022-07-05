@@ -13,37 +13,68 @@ RUN mkdir /chess/engines
 COPY ["UHO_XXL_+0.90_+1.19.epd", "/chess/UHO_XXL_+0.90_+1.19.epd"]
 
 # Base image we're testing patch against.
-ARG BASE_COMMIT_OR_TAG=master
+ARG BASE_TAG_0=2.0.0.3
+ARG BASE_TAG_1=2.0.0.2
+ARG BASE_TAG_2=2.0.0.1
+ARG BASE_TAG_3=2.0.0.0
+ARG BASE_TAG_4=1.0.0.6
 
 # Patch image we're testing.
-ARG PATCH_COMMIT_OR_TAG=2.0.0.2
+ARG PATCH_TAG=17b4578
 
 RUN git clone https://github.com/TheBlackPlague/StockNemo.git
 
 WORKDIR /StockNemo/Terminal
 
-# First build base image.
-RUN git checkout $BASE_COMMIT_OR_TAG
+# First build base images.
+RUN git checkout $BASE_TAG_0
 RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /chess/engines  \
     /p:PublishSingleFile=true --self-contained true
-RUN mv /chess/engines/StockNemo /chess/engines/StockNemo-$BASE_COMMIT_OR_TAG
+RUN mv /chess/engines/StockNemo /chess/engines/StockNemo-$BASE_TAG_0
+
+RUN git checkout $BASE_TAG_1
+RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /chess/engines  \
+    /p:PublishSingleFile=true --self-contained true
+RUN mv /chess/engines/StockNemo /chess/engines/StockNemo-$BASE_TAG_1
+
+RUN git checkout $BASE_TAG_2
+RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /chess/engines  \
+    /p:PublishSingleFile=true --self-contained true
+RUN mv /chess/engines/StockNemo /chess/engines/StockNemo-$BASE_TAG_2
+
+RUN git checkout $BASE_TAG_3
+RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /chess/engines  \
+    /p:PublishSingleFile=true --self-contained true
+RUN mv /chess/engines/StockNemo /chess/engines/StockNemo-$BASE_TAG_3
+
+RUN git checkout $BASE_TAG_4
+RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /chess/engines  \
+    /p:PublishSingleFile=true --self-contained true
+RUN mv /chess/engines/StockNemo /chess/engines/StockNemo-$BASE_TAG_4
 
 # Next, we build patch image.
 RUN git checkout $PATCH_COMMIT_OR_TAG
 RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /chess/engines  \
     /p:PublishSingleFile=true --self-contained true
-RUN mv /chess/engines/StockNemo /chess/engines/StockNemo-$PATCH_COMMIT_OR_TAG
+RUN mv /chess/engines/StockNemo /chess/engines/StockNemo-$PATCH_TAG
 
 # Start the test.
 WORKDIR /chess
 
-ENV BASE=$BASE_COMMIT_OR_TAG
-ENV PATCH=$PATCH_COMMIT_OR_TAG
+ENV BASE_0=$BASE_TAG_0
+ENV BASE_1=$BASE_TAG_1
+ENV BASE_2=$BASE_TAG_2
+ENV BASE_3=$BASE_TAG_3
+ENV BASE_4=$BASE_TAG_4
+ENV PATCH=$PATCH_TAG
 
 ENTRYPOINT ./cli \
            -engine name=StockNemo-$PATCH cmd=engines/StockNemo-$PATCH \
-           -engine name=StockNemo-$BASE cmd=engines/StockNemo-$BASE \
+           -engine name=StockNemo-$BASE cmd=engines/StockNemo-$BASE_0 \
+           -engine name=StockNemo-$BASE cmd=engines/StockNemo-$BASE_1 \
+           -engine name=StockNemo-$BASE cmd=engines/StockNemo-$BASE_2 \
+           -engine name=StockNemo-$BASE cmd=engines/StockNemo-$BASE_3 \
+           -engine name=StockNemo-$BASE cmd=engines/StockNemo-$BASE_4 \
            -each arg="--uci=True" proto=uci tc=inf/10+0.1 option.Hash=64 \
            -openings file=UHO_XXL_+0.90_+1.19.epd format=epd order=random plies=6 -repeat \
-           -rounds 10000 -games 2 -concurrency 64 \
-           -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
+           -rounds 200 -games 2 -concurrency 64
