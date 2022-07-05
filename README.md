@@ -1,7 +1,9 @@
 # StockNemo
 A Chess Engine written in C# trying to find good moves like Stockfish.
 
-Play vs StockNemo: [Lichess](https://lichess.org/@/StockNemo)
+Play vs StockNemo on <a href="https://lichess.org/?user=StockNemo#friend" target="_blank">Lichess!</a> 
+
+Checkout the <a href="https://lichess.org/@/StockNemo/win" target="_blank">game archive.</a>
 
 Featured Games: [Watch](FEATUREDGAMES.md)
 
@@ -35,6 +37,8 @@ g2g4: 1007073431028
 Searched 14,621,463,323,674 nodes (86861 ms). TT: 1259040447 hits.
 Speed: 168.3B nps.
 ```
+
+In comparison, Stockfish 15 searches nodes at xyz million nps.
 
 ### Much thanks to:
 - [Cozy Chess](https://github.com/analog-hors/cozy-chess) by Analog Hors for
