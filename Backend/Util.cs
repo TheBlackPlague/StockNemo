@@ -17,6 +17,13 @@ public static class Util
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string ToUciNotation(this Promotion promotion)
+    {
+        string notation = promotion.ToString()[0].ToString().ToLower();
+        return promotion == Promotion.Knight ? "n" : notation;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PieceColor OppositeColor(PieceColor color) => (PieceColor)((int)color ^ 0x1);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

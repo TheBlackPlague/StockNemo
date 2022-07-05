@@ -41,9 +41,9 @@ ENV BASE=$BASE_COMMIT_OR_TAG
 ENV PATCH=$PATCH_COMMIT_OR_TAG
 
 ENTRYPOINT ./cli \
-           -engine name=StockNemo-$BASE cmd=engines/StockNemo-$BASE \
            -engine name=StockNemo-$PATCH cmd=engines/StockNemo-$PATCH \
+           -engine name=StockNemo-$BASE cmd=engines/StockNemo-$BASE \
            -each arg="--uci=True" proto=uci tc=inf/10+0.1 option.Hash=64 \
            -openings file=UHO_XXL_+0.90_+1.19.epd format=epd order=random plies=6 -repeat \
-           -rounds 10000 -games 2 -concurrency 128 \
+           -rounds 10000 -games 2 -concurrency 64 \
            -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05

@@ -207,8 +207,7 @@ public static class UniversalChessInterface
             Busy = false;
             string from = bestMove.From.ToString().ToLower();
             string to = bestMove.To.ToString().ToLower();
-            string promotion = bestMove.Promotion != Promotion.None ? 
-                bestMove.Promotion.ToString()[0].ToString().ToLower() : "";
+            string promotion = bestMove.Promotion != Promotion.None ? bestMove.Promotion.ToUciNotation() : "";
             Console.WriteLine("bestmove " + from + to + promotion);
 #if DEBUG
             Console.WriteLine("TT Count: " + search.TableCutoffCount);
