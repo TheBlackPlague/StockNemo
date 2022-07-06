@@ -5,7 +5,7 @@ Play vs StockNemo on <a href="https://lichess.org/?user=StockNemo#friend">Liches
 
 Checkout the rated <a href="https://lichess.org/@/StockNemo/rated">game archive.</a>
 
-Checkout the <a href="https://github.com/TheBlackPlague/StockNemo-SelfPlay/blob/main/2.0.0.3/GAMES.md">training games.</a> 
+Checkout the <a href="https://github.com/TheBlackPlague/StockNemo-SelfPlay/blob/main/2.0.0.3/GAMES.md"> self-play games.</a> 
  
 Featured Games: [Watch](FEATUREDGAMES.md)
 
