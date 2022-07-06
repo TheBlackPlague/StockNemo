@@ -1,8 +1,12 @@
 # StockNemo
 A Chess Engine written in C# trying to find good moves like Stockfish.
 
-Play vs StockNemo: [Lichess](https://lichess.org/@/StockNemo)
+Play vs StockNemo on <a href="https://lichess.org/?user=StockNemo#friend">Lichess!</a> 
 
+Checkout the rated <a href="https://lichess.org/@/StockNemo/rated">game archive.</a>
+
+Checkout the <a href="https://github.com/TheBlackPlague/StockNemo-SelfPlay/blob/main/2.0.0.3/GAMES.md">training games.</a> 
+ 
 Featured Games: [Watch](FEATUREDGAMES.md)
 
 ## Features:
