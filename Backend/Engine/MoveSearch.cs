@@ -79,7 +79,6 @@ public class MoveSearch
         }
 
         int research = 0;
-
         while (true) {
             #region Cancellation
 
@@ -91,10 +90,15 @@ public class MoveSearch
             #endregion
 
             #region Reset Window
+            
+            // We should reset our window if it's too far gone because the gradual increase isn't working.
 
             // In the case our alpha is far below our aspiration bound, we should reset it to negative infinity for
             // our research.
             if (alpha < -ASPIRATION_BOUND) alpha = NEG_INFINITY;
+            
+            // In the case our beta is far too above our aspiration bound, we should reset it to positive infinity for
+            // our research.
             if (beta > ASPIRATION_BOUND) beta = POS_INFINITY;
 
             #endregion
