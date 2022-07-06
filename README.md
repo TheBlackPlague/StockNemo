@@ -40,8 +40,6 @@ Searched 14,621,463,323,674 nodes (86861 ms). TT: 1259040447 hits.
 Speed: 168.3B nps.
 ```
 
-In comparison, Stockfish 15 searches nodes at xyz million nps.
-
 ### Much thanks to:
 - [Cozy Chess](https://github.com/analog-hors/cozy-chess) by Analog Hors for
 providing necessary information and data regarding Fixed-Shift Black Magic
