@@ -5,7 +5,7 @@ namespace Backend;
 public static class Version
 {
 
-    private const string VERSION = "2.0.0.5";
+    private const string VERSION = "2.0.0.6";
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string Get()

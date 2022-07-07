@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
@@ -22,8 +21,15 @@ public class MoveSearch
     private const int ASPIRATION_DELTA = 30;
     private const int ASPIRATION_DEPTH = 4;
 
+    private const int NODE_COUNTING_DEPTH = 8;
+    private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
+
+    private const float TIME_TO_DEPTH_THRESHOLD = 0.2f;
+
     public int TableCutoffCount;
     private int TotalNodeSearchCount;
+
+    private readonly MoveSearchEffortTable SearchEffort = new();
 
     private readonly EngineBoard Board;
     private readonly TimeControl TimeControl;
@@ -63,6 +69,11 @@ public class MoveSearch
                 timePreviouslyUpdated = NodeCounting(depth, timePreviouslyUpdated);
                 
                 DepthSearchLog(depth, stopwatch);
+                
+                // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
+                // finish the next depth in time. To save time, we should just exit the search early.
+                if (depth > 5 && TimeControl.TimeLeft() <= TimeControl.Time * TIME_TO_DEPTH_THRESHOLD) break;
+                
                 depth++;
             }
         } catch (OperationCanceledException) {}
@@ -87,10 +98,10 @@ public class MoveSearch
         while (true) {
             #region Out of Time
 
-            // If we're cancelled, we should abort as soon as possible. Note, this requires a cloned Board to be
-            // provided. If provided without cloning, there's no guarantee the original state will be maintained after
-            // search.
-            if (Token.IsCancellationRequested) throw new OperationCanceledException();
+            // If we're out of time, we should exit the search as fast as possible.
+            // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
+            // is not reverted. Thus, a cloned board must be provided.
+            if (TimeControl.Finished()) throw new OperationCanceledException();
 
             #endregion
 
@@ -153,8 +164,9 @@ public class MoveSearch
         #endregion
 
         int originalAlpha = alpha;
-        bool notRootNode = plyFromRoot != 0;
-        
+        bool rootNode = plyFromRoot == 0;
+        bool notRootNode = !rootNode;
+
         #region Mate Pruning & Piece-Count Draw-Checks
 
         switch (notRootNode) {
@@ -312,7 +324,9 @@ public class MoveSearch
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
             moveList.SortNext(i, moveCount);
-                
+
+            int previousNodeCount = TotalNodeSearchCount;
+            
             // Make the move.
             OrderedMoveEntry move = moveList[i];
             RevertMove rv = board.Move(ref move);
@@ -324,8 +338,10 @@ public class MoveSearch
                 
             // Undo the move.
             board.UndoMove(ref rv);
-                
+
             if (!HandleEvaluation(evaluation, i)) break;
+
+            if (rootNode) SearchEffort[move.From, move.To] = TotalNodeSearchCount - previousNodeCount;
             
             i++;
         }
@@ -344,7 +360,7 @@ public class MoveSearch
         #endregion
         
         // If we're at the root node, we should also consider this our best move from the search.
-        if (!notRootNode) BestMove = bestMove;
+        if (rootNode) BestMove = bestMove;
 
         return bestEvaluation;
     }
@@ -462,6 +478,31 @@ public class MoveSearch
             Console.Write(BestMove.Promotion.ToUciNotation());
 
         Console.WriteLine();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool NodeCounting(int depth, bool timePreviouslyUpdated)
+    {
+        // This idea is from the Koivisto Engine:
+        // The branch being searched the most is likely the best branch as we're having to evaluate it very deeply
+        // across depths. Thus it's reasonable to end the search earlier and make the move instantly.
+
+        // Check whether we're past the depth to start reducing our search time with node counting and make sure that
+        // we're past the required effort threshold to do this move quickly.
+        if (depth >= NODE_COUNTING_DEPTH && TimeControl.TimeLeft() != 0 && !timePreviouslyUpdated
+            && SearchEffort[BestMove.From, BestMove.To] * 100 / TotalNodeSearchCount >= NODE_COUNTING_REQUIRED_EFFORT) {
+            timePreviouslyUpdated = true;
+            TimeControl.ChangeTime(TimeControl.Time / 3);
+            ReducedTimeMove = BestMove;
+        }
+
+        if (timePreviouslyUpdated && BestMove != ReducedTimeMove) {
+            // In the rare case that our previous node count guess was incorrect, give us a little bit more time
+            // to see if we can find a better move.
+            TimeControl.ChangeTime(TimeControl.Time * 3);
+        }
+
+        return timePreviouslyUpdated;
     }
 
 }
