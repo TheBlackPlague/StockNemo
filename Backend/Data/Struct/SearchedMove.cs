@@ -22,6 +22,13 @@ public readonly struct SearchedMove
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(OrderedMoveEntry entry, SearchedMove searchedMove) => !(entry == searchedMove);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator ==(SearchedMove first, SearchedMove second) =>
+        first.From == second.From && first.To == second.To && first.Promotion == second.Promotion;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator !=(SearchedMove first, SearchedMove second) => !(first == second);
+
     public SearchedMove(ref OrderedMoveEntry move, int evaluation)
     {
         From = move.From;
