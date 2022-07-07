@@ -26,17 +26,17 @@ public class MoveSearch
     private int TotalNodeSearchCount;
 
     private readonly EngineBoard Board;
-    private readonly CancellationToken Token;
+    private readonly TimeControl TimeControl;
     private readonly MoveTranspositionTable Table;
 
-    private SearchedMove BestMove;
+    private SearchedMove BestMove = SearchedMove.Default;
+    private SearchedMove ReducedTimeMove = SearchedMove.Default;
 
-    public MoveSearch(EngineBoard board, MoveTranspositionTable table, CancellationToken token = default)
+    public MoveSearch(EngineBoard board, MoveTranspositionTable table, TimeControl timeControl)
     {
         Board = board;
         Table = table;
-        BestMove = SearchedMove.Default;
-        Token = token;
+        TimeControl = timeControl;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,9 +54,14 @@ public class MoveSearch
         try {
             int depth = 1;
             Stopwatch stopwatch = Stopwatch.StartNew();
-            while (!Token.IsCancellationRequested && depth <= selectedDepth) {
+            bool timePreviouslyUpdated = false;
+            while (!TimeControl.Finished() && depth <= selectedDepth) {
                 aspirationEvaluation = AspirationSearch(Board, depth, aspirationEvaluation);
                 bestMove = BestMove;
+
+                // Try counting nodes to see if we can exit the search early.
+                timePreviouslyUpdated = NodeCounting(depth, timePreviouslyUpdated);
+                
                 DepthSearchLog(depth, stopwatch);
                 depth++;
             }
@@ -80,7 +85,7 @@ public class MoveSearch
 
         int research = 0;
         while (true) {
-            #region Cancellation
+            #region Out of Time
 
             // If we're cancelled, we should abort as soon as possible. Note, this requires a cloned Board to be
             // provided. If provided without cloning, there's no guarantee the original state will be maintained after
@@ -130,12 +135,12 @@ public class MoveSearch
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int AbSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
     {
-        #region Cancellation
+        #region Out of Time
 
-        // If we're cancelled, we should abort as soon as possible. Note, this requires a cloned Board to be
-        // provided. If provided without cloning, there's no guarantee the original state will be maintained after
-        // search.
-        if (Token.IsCancellationRequested) throw new OperationCanceledException();
+        // If we're out of time, we should exit the search as fast as possible.
+        // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
+        // is not reverted. Thus, a cloned board must be provided.
+        if (TimeControl.Finished()) throw new OperationCanceledException();
 
         #endregion
         
@@ -347,12 +352,12 @@ public class MoveSearch
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int QSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
     {
-        #region Cancellation
+        #region Out of Time
 
-        // If we're cancelled, we should abort as soon as possible. Note, this requires a cloned Board to be
-        // provided. If provided without cloning, there's no guarantee the original state will be maintained after
-        // search.
-        if (Token.IsCancellationRequested) throw new OperationCanceledException();
+        // If we're out of time, we should exit the search as fast as possible.
+        // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
+        // is not reverted. Thus, a cloned board must be provided.
+        if (TimeControl.Finished()) throw new OperationCanceledException();
 
         #endregion
         

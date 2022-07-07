@@ -89,7 +89,7 @@ internal static class Program
             int depth = 8;
             if (args.Length > 1) depth = int.Parse(args[1]);
 
-            MoveSearch moveSearch = new(Board, MoveTranspositionTable.GenerateTable(1));
+            MoveSearch moveSearch = new(Board, MoveTranspositionTable.GenerateTable(1), new TimeControl(999999));
             for (int i = 1; i < depth + 1; i++) {
                 Stopwatch sw = new();
                 sw.Start();

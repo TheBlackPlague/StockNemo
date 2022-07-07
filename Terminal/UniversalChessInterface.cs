@@ -20,7 +20,7 @@ public static class UniversalChessInterface
 
     private static DisplayBoard Board;
     private static bool Busy;
-    private static CancellationTokenSource SearchCancellationSource;
+    private static TimeControl ActiveTimeControl;
     private static int MoveCount;
 
     public static void Setup()
@@ -166,8 +166,8 @@ public static class UniversalChessInterface
 
         TaskFactory factory = new();
         SearchedMove bestMove;
-
-        int time = 3500;
+        
+        ActiveTimeControl = new TimeControl(3500);
         int maxDepth = 999;
         
         Span<int> timeForColor = stackalloc int[2];
@@ -178,30 +178,18 @@ public static class UniversalChessInterface
             timeIncForColor[0] = int.Parse(args[6]);
             timeIncForColor[1] = int.Parse(args[8]);
 
-            time = timeForColor[(int)Board.ColorToMove] / 20;
-
-            if (MoveCount > 10) {
-                time += timeIncForColor[(int)Board.ColorToMove] / 2;
-            }
-
-            if (MoveCount > 20) {
-                int dTime = 
-                    timeForColor[(int)Board.ColorToMove] - timeForColor[(int)Util.OppositeColor(Board.ColorToMove)];
-                if (dTime > 3000) time += dTime / 3;
-            }
+            ActiveTimeControl = new TimeControl(timeForColor, timeIncForColor, Board.ColorToMove, MoveCount);
         } else if (input.ToLower().Contains("movetime")) {
-            time = int.Parse(args[2]);
+            ActiveTimeControl = new TimeControl(int.Parse(args[2]));
         } else if (input.ToLower().Contains("depth")) {
             maxDepth = int.Parse(args[2]);
-            time = 999999;
+            ActiveTimeControl = new TimeControl(999999);
         }
-
-        SearchCancellationSource = new CancellationTokenSource();
-        SearchCancellationSource.CancelAfter(time);
+        
         factory.StartNew(() =>
         {
             // ReSharper disable once AccessToModifiedClosure
-            MoveSearch search = new(Board.Clone(), TranspositionTable, SearchCancellationSource.Token);
+            MoveSearch search = new(Board.Clone(), TranspositionTable, ActiveTimeControl);
             Busy = true;
             bestMove = search.IterativeDeepening(maxDepth);
             Busy = false;
@@ -213,14 +201,14 @@ public static class UniversalChessInterface
             Console.WriteLine("TT Count: " + search.TableCutoffCount);
 #endif
             MoveCount++;
-        }, SearchCancellationSource.Token);
+        }, ActiveTimeControl.Token);
     }
 
     private static void HandleStop(string input)
     {
         if (!input.ToLower().Equals("stop")) return;
         if (!Busy) return;
-        SearchCancellationSource.Cancel();
+        ActiveTimeControl.ChangeTime(0);
     }
 
 }
