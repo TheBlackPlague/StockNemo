@@ -1,4 +1,4 @@
-﻿FROM ghcr.io/theblackplague/stocknemo:2.0.0.3 as LAUNCH
+﻿FROM ghcr.io/theblackplague/stocknemo:2.0.0.7 as LAUNCH
 
 LABEL org.opencontainers.image.source=https://github.com/TheBlackPlague/StockNemo
 
