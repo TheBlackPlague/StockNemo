@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
@@ -30,13 +31,13 @@ public class MoveSearch
     private int TotalNodeSearchCount;
 
     private readonly MoveSearchEffortTable SearchEffort = new();
+    private readonly PrincipleVariationTable PvTable = new();
 
     private readonly EngineBoard Board;
     private readonly TimeControl TimeControl;
     private readonly MoveTranspositionTable Table;
 
-    private SearchedMove BestMove = SearchedMove.Default;
-    private SearchedMove ReducedTimeMove = SearchedMove.Default;
+    private OrderedMoveEntry ReducedTimeMove = OrderedMoveEntry.Default;
 
     public MoveSearch(EngineBoard board, MoveTranspositionTable table, TimeControl timeControl)
     {
@@ -46,29 +47,29 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public SearchedMove SearchAndReturn(int depth)
+    public OrderedMoveEntry SearchAndReturn(int depth)
     {
         AbSearch(Board, 0, depth, NEG_INFINITY, POS_INFINITY);
-        return BestMove;
+        return PvTable.Get(0);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public SearchedMove IterativeDeepening(int selectedDepth)
+    public OrderedMoveEntry IterativeDeepening(int selectedDepth)
     {
-        SearchedMove bestMove = BestMove;
-        int aspirationEvaluation = NEG_INFINITY;
+        OrderedMoveEntry bestMove = OrderedMoveEntry.Default;
+        int evaluation = NEG_INFINITY;
         try {
             int depth = 1;
             Stopwatch stopwatch = Stopwatch.StartNew();
             bool timePreviouslyUpdated = false;
             while (!TimeControl.Finished() && depth <= selectedDepth) {
-                aspirationEvaluation = AspirationSearch(Board, depth, aspirationEvaluation);
-                bestMove = BestMove;
+                evaluation = AspirationSearch(Board, depth, evaluation);
+                bestMove = PvTable.Get(0);
 
                 // Try counting nodes to see if we can exit the search early.
-                timePreviouslyUpdated = NodeCounting(depth, timePreviouslyUpdated);
+                timePreviouslyUpdated = NodeCounting(depth, bestMove, timePreviouslyUpdated);
                 
-                DepthSearchLog(depth, stopwatch);
+                DepthSearchLog(depth, evaluation, stopwatch);
                 
                 // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                 // finish the next depth in time. To save time, we should just exit the search early.
@@ -152,6 +153,12 @@ public class MoveSearch
         // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         // is not reverted. Thus, a cloned board must be provided.
         if (TimeControl.Finished()) throw new OperationCanceledException();
+
+        #endregion
+
+        #region Pv Table Length Initialization
+
+        PvTable.InitializeLength(plyFromRoot);
 
         #endregion
         
@@ -291,18 +298,31 @@ public class MoveSearch
         #region Fail-soft Alpha Beta Negamax
         
         int bestEvaluation = NEG_INFINITY;
-        int bestMoveIndex = -1;
+        OrderedMoveEntry bestMoveSoFar = new(Square.Na, Square.Na, Promotion.None);
         MoveTranspositionTableEntryType transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool HandleEvaluation(int evaluation, int moveIndex)
+        bool HandleEvaluation(int evaluation, ref OrderedMoveEntry move)
         {
             if (evaluation <= bestEvaluation) return true;
             
             // If our evaluation was better than our current best evaluation, we should update our evaluation
             // with the new evaluation. We should also take into account that it was our best move so far.
             bestEvaluation = evaluation;
-            bestMoveIndex = moveIndex;
+            bestMoveSoFar = move;
+            
+            // Insert move into PV Table.
+            PvTable.Insert(plyFromRoot, ref move);
+            
+            // Copy moves from lesser ply to current ply PV Line.
+            int nextPly = plyFromRoot + 1;
+            while (PvTable.PlyInitialized(plyFromRoot, nextPly)) {
+                PvTable.Copy(plyFromRoot, nextPly);
+                nextPly++;
+            }
+            
+            // Update our PV Length.
+            PvTable.UpdateLength(plyFromRoot);
 
             if (evaluation <= alpha) return true;
 
@@ -342,7 +362,7 @@ public class MoveSearch
             // Undo the move.
             board.UndoMove(ref rv);
 
-            if (!HandleEvaluation(evaluation, i)) {
+            if (!HandleEvaluation(evaluation, ref move)) {
                 // We had a beta cutoff, hence it's a beta cutoff entry.
                 transpositionTableEntryType = MoveTranspositionTableEntryType.BetaCutoff;
                 break;
@@ -357,14 +377,11 @@ public class MoveSearch
 
         #region Transposition Table Insertion
         
-        SearchedMove bestMove = new(ref moveList[bestMoveIndex], bestEvaluation);
+        SearchedMove bestMove = new(ref bestMoveSoFar, bestEvaluation);
         MoveTranspositionTableEntry entry = new(board.ZobristHash, transpositionTableEntryType, bestMove, depth);
         Table.InsertEntry(board.ZobristHash, ref entry);
 
         #endregion
-        
-        // If we're at the root node, we should also consider this our best move from the search.
-        if (rootNode) BestMove = bestMove;
 
         return bestEvaluation;
     }
@@ -471,21 +488,17 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DepthSearchLog(int depth, Stopwatch stopwatch)
+    private void DepthSearchLog(int depth, int evaluation, Stopwatch stopwatch)
     {
         Console.Write(
-            "info depth " + depth + " score cp " + BestMove.Evaluation + " nodes " + 
+            "info depth " + depth + " score cp " + evaluation + " nodes " + 
             TotalNodeSearchCount + " nps " + (int)(TotalNodeSearchCount / ((float)stopwatch.ElapsedMilliseconds / 1000)) 
-            + " pv " + BestMove.From.ToString().ToLower() + BestMove.To.ToString().ToLower()
+            + " pv " + PvLine() + '\n'
         );
-        if (BestMove.Promotion != Promotion.None)
-            Console.Write(BestMove.Promotion.ToUciNotation());
-
-        Console.WriteLine();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool NodeCounting(int depth, bool timePreviouslyUpdated)
+    private bool NodeCounting(int depth, OrderedMoveEntry bestMove, bool timePreviouslyUpdated)
     {
         // This idea is from the Koivisto Engine:
         // The branch being searched the most is likely the best branch as we're having to evaluate it very deeply
@@ -494,19 +507,36 @@ public class MoveSearch
         // Check whether we're past the depth to start reducing our search time with node counting and make sure that
         // we're past the required effort threshold to do this move quickly.
         if (depth >= NODE_COUNTING_DEPTH && TimeControl.TimeLeft() != 0 && !timePreviouslyUpdated
-            && SearchEffort[BestMove.From, BestMove.To] * 100 / TotalNodeSearchCount >= NODE_COUNTING_REQUIRED_EFFORT) {
+            && SearchEffort[bestMove.From, bestMove.To] * 100 / TotalNodeSearchCount >= NODE_COUNTING_REQUIRED_EFFORT) {
             timePreviouslyUpdated = true;
             TimeControl.ChangeTime(TimeControl.Time / 3);
-            ReducedTimeMove = BestMove;
+            ReducedTimeMove = bestMove;
         }
 
-        if (timePreviouslyUpdated && BestMove != ReducedTimeMove) {
+        if (timePreviouslyUpdated && bestMove != ReducedTimeMove) {
             // In the rare case that our previous node count guess was incorrect, give us a little bit more time
             // to see if we can find a better move.
             TimeControl.ChangeTime(TimeControl.Time * 3);
         }
 
         return timePreviouslyUpdated;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private string PvLine()
+    {
+        StringBuilder pv = new();
+        int count = PvTable.Count();
+        
+        for (int i = 0; i < count; i++) {
+            ref OrderedMoveEntry move = ref PvTable.Get(i);
+            
+            pv.Append(move.From).Append(move.To);
+            if (move.Promotion != Promotion.None) pv.Append(move.Promotion.ToUciNotation());
+            pv.Append(' ');
+        }
+        
+        return pv.ToString().ToLower();
     }
 
 }

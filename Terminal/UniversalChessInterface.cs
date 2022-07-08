@@ -165,7 +165,7 @@ public static class UniversalChessInterface
         if (args.Length == 1) return;
 
         TaskFactory factory = new();
-        SearchedMove bestMove;
+        OrderedMoveEntry bestMove;
         
         ActiveTimeControl = new TimeControl(3500);
         int maxDepth = 999;
