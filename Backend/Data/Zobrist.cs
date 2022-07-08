@@ -8,7 +8,7 @@ namespace Backend.Data;
 public static class Zobrist
 {
 
-    private static readonly Random Random = new();
+    private static readonly Random Random = new(197281);
     private static readonly ZobristPieceKeyTable PieceKeys = new(Random);
     private static readonly ulong[] CastlingKeys = new ulong[16];
     private static readonly ulong[] EnPassantKeys = new ulong[64];

@@ -19,13 +19,13 @@ public static class UniversalChessInterface
     private static int TranspositionTableSizeMb = 16;
 
     private static DisplayBoard Board;
-    private static bool Busy;
+    private static bool Searching;
     private static TimeControl ActiveTimeControl;
     private static int MoveCount;
 
     public static void Setup()
     {
-        Busy = false;
+        Searching = false;
         UciStdInputThread.CommandReceived += (_, input) => HandleSetOption(input);
         UciStdInputThread.CommandReceived += (_, input) => HandleIsReady(input);
         UciStdInputThread.CommandReceived += (thread, input) => HandleQuit((Thread)thread, input);
@@ -61,11 +61,9 @@ public static class UniversalChessInterface
         switch (args[2]) {
             case "Hash":
                 TranspositionTableSizeMb = int.Parse(args[4]);
-                Busy = true;
                 TranspositionTable.FreeMemory();
                 TranspositionTable = null;
                 TranspositionTable = MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb);
-                Busy = false;
                 break;
         }
     }
@@ -73,11 +71,7 @@ public static class UniversalChessInterface
     private static void HandleIsReady(string input)
     {
         if (!input.ToLower().Equals("isready")) return;
-        Task.Run(() =>
-        {
-            while (Busy) {}
-            Console.WriteLine("readyok");
-        });
+        Console.WriteLine("readyok");
     }
 
     private static void HandleQuit(Thread thread, string input)
@@ -95,7 +89,7 @@ public static class UniversalChessInterface
         string[] args = input.Split(" ");
         if (!args[0].ToLower().Equals("position")) return;
         if (args.Length == 1) return;
-        Busy = true;
+        Searching = true;
         int argsParsed = 1;
         switch (args[1].ToLower()) {
             case "startpos":
@@ -118,7 +112,7 @@ public static class UniversalChessInterface
         }
 
         if (args.Length < argsParsed + 1) {
-            Busy = false;
+            Searching = false;
             return;
         }
         
@@ -144,7 +138,7 @@ public static class UniversalChessInterface
             }
         }
 
-        Busy = false;
+        Searching = false;
     }
 
     private static void HandleDraw(string input)
@@ -190,9 +184,9 @@ public static class UniversalChessInterface
         {
             // ReSharper disable once AccessToModifiedClosure
             MoveSearch search = new(Board.Clone(), TranspositionTable, ActiveTimeControl);
-            Busy = true;
+            Searching = true;
             bestMove = search.IterativeDeepening(maxDepth);
-            Busy = false;
+            Searching = false;
             string from = bestMove.From.ToString().ToLower();
             string to = bestMove.To.ToString().ToLower();
             string promotion = bestMove.Promotion != Promotion.None ? bestMove.Promotion.ToUciNotation() : "";
@@ -207,7 +201,7 @@ public static class UniversalChessInterface
     private static void HandleStop(string input)
     {
         if (!input.ToLower().Equals("stop")) return;
-        if (!Busy) return;
+        if (!Searching) return;
         ActiveTimeControl.ChangeTime(0);
     }
 

@@ -71,7 +71,7 @@ public class MoveSearch
                 timePreviouslyUpdated = NodeCounting(depth, timePreviouslyUpdated);
 
                 // Generate the PV line and update the PV Stack.
-                string pv = PvLineAndUpdate(Board);
+                string pv = PvLineAndUpdate(Board, depth);
                 
                 DepthSearchLog(depth, pv, stopwatch);
                 
@@ -511,14 +511,18 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private string PvLineAndUpdate(EngineBoard board)
+    private string PvLineAndUpdate(EngineBoard board, int depth)
     {
-        StringBuilder sb = new();
+        StringBuilder pv = new();
         PvStack.Reset();
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        int pvDepth = 1;
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         void PvLineSearch()
         {
+            if (pvDepth > depth) return;
+            
             ref MoveTranspositionTableEntry entry = ref Table[board.ZobristHash];
             
             // If the entry isn't an exact move, we must skip it as it isn't a PV Move.
@@ -527,15 +531,16 @@ public class MoveSearch
             SearchedMove move = entry.BestMove;
             
             // Develop our PV Line.
-            sb.Append(move.From).Append(move.To);
-            if (move.Promotion != Promotion.None) sb.Append(move.Promotion.ToUciNotation());
-            sb.Append(' ');
+            pv.Append(move.From).Append(move.To);
+            if (move.Promotion != Promotion.None) pv.Append(move.Promotion.ToUciNotation());
+            pv.Append(' ');
             
             // Update the PV Stack.
             PvStack.Push(move);
 
             // Make the move so we can develop our PV line further.
             RevertMove rv = board.Move(move.From, move.To, move.Promotion);
+            pvDepth++;
             
             // Continue until we no longer have a PV Line.
             PvLineSearch();
@@ -546,7 +551,7 @@ public class MoveSearch
         
         PvLineSearch();
 
-        return sb.ToString().ToLower();
+        return pv.ToString().ToLower();
     }
 
 }

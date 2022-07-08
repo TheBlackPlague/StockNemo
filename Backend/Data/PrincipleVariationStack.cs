@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using Backend.Data.Struct;
 
 namespace Backend.Data;
@@ -6,10 +7,11 @@ namespace Backend.Data;
 public class PrincipleVariationStack
 {
 
-    private const int SIZE = 64;
+    private const int SIZE = 1024;
+    
+    public int Count { get; private set; }
 
-    private readonly SearchedMove[] Internal = new SearchedMove[SIZE];
-    private int Count;
+    private readonly SearchedMove[] Internal = GC.AllocateUninitializedArray<SearchedMove>(SIZE);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public SearchedMove Head() => Internal.AA(0);
