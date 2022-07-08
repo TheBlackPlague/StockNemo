@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Backend.Data;
 
-public class RepetitionHistory
+public class HashHistory
 {
 
     private const int SIZE = 1024;
@@ -26,9 +26,9 @@ public class RepetitionHistory
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public RepetitionHistory Clone()
+    public HashHistory Clone()
     {
-        RepetitionHistory history = new();
+        HashHistory history = new();
         Array.Copy(Internal, history.Internal, Index + 1);
         history.Index = Index;
         return history;

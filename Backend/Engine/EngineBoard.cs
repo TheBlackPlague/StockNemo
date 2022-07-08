@@ -9,12 +9,12 @@ namespace Backend.Engine;
 public class EngineBoard : Board
 {
 
-    private readonly RepetitionHistory History;
+    private readonly HashHistory History;
 
     private EngineBoard(EngineBoard board) : base(board) => History = board.History.Clone();
 
     protected EngineBoard(string boardData, string turnData, string castlingData, string enPassantTargetData) :
-        base(boardData, turnData, castlingData, enPassantTargetData) => History = new RepetitionHistory();
+        base(boardData, turnData, castlingData, enPassantTargetData) => History = new HashHistory();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsRepetition() => History.Count(ZobristHash) > 1;

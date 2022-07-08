@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
@@ -31,7 +30,6 @@ public class MoveSearch
     private int TotalNodeSearchCount;
 
     private readonly MoveSearchEffortTable SearchEffort = new();
-    private readonly PrincipleVariationStack PvStack = new();
 
     private readonly EngineBoard Board;
     private readonly TimeControl TimeControl;
@@ -69,11 +67,8 @@ public class MoveSearch
 
                 // Try counting nodes to see if we can exit the search early.
                 timePreviouslyUpdated = NodeCounting(depth, timePreviouslyUpdated);
-
-                // Generate the PV line and update the PV Stack.
-                string pv = PvLineAndUpdate(Board);
                 
-                DepthSearchLog(depth, pv, stopwatch);
+                DepthSearchLog(depth, stopwatch);
                 
                 // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                 // finish the next depth in time. To save time, we should just exit the search early.
@@ -476,12 +471,12 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DepthSearchLog(int depth, string pv, Stopwatch stopwatch)
+    private void DepthSearchLog(int depth, Stopwatch stopwatch)
     {
         Console.Write(
             "info depth " + depth + " score cp " + BestMove.Evaluation + " nodes " + 
             TotalNodeSearchCount + " nps " + (int)(TotalNodeSearchCount / ((float)stopwatch.ElapsedMilliseconds / 1000)) 
-            + " pv " + pv
+            + " pv " + BestMove.From.ToString().ToLower() + BestMove.To.ToString().ToLower()
         );
         if (BestMove.Promotion != Promotion.None)
             Console.Write(BestMove.Promotion.ToUciNotation());
@@ -512,45 +507,6 @@ public class MoveSearch
         }
 
         return timePreviouslyUpdated;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private string PvLineAndUpdate(EngineBoard board)
-    {
-        StringBuilder sb = new();
-        PvStack.Reset();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PvLineSearch()
-        {
-            ref MoveTranspositionTableEntry entry = ref Table[board.ZobristHash];
-            
-            // If the entry isn't an exact move, we must skip it as it isn't a PV Move.
-            if (entry.Type != MoveTranspositionTableEntryType.Exact || board.ZobristHash != entry.ZobristHash) return;
-            
-            SearchedMove move = entry.BestMove;
-            
-            // Develop our PV Line.
-            sb.Append(move.From).Append(move.To);
-            if (move.Promotion != Promotion.None) sb.Append(move.Promotion.ToUciNotation());
-            sb.Append(' ');
-            
-            // Update the PV Stack.
-            PvStack.Push(move);
-
-            // Make the move so we can develop our PV line further.
-            RevertMove rv = board.Move(move.From, move.To, move.Promotion);
-            
-            // Continue until we no longer have a PV Line.
-            PvLineSearch();
-            
-            // Undo the moves to get to the previous state.
-            board.UndoMove(ref rv);
-        }
-        
-        PvLineSearch();
-
-        return sb.ToString().ToLower();
     }
 
 }
