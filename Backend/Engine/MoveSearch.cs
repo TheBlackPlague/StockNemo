@@ -167,8 +167,7 @@ public class MoveSearch
         if (depth == 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
         
         #endregion
-
-        int originalAlpha = alpha;
+        
         bool rootNode = plyFromRoot == 0;
         bool notRootNode = !rootNode;
 
@@ -298,6 +297,7 @@ public class MoveSearch
         
         int bestEvaluation = NEG_INFINITY;
         int bestMoveIndex = -1;
+        MoveTranspositionTableEntryType transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool HandleEvaluation(int evaluation, int moveIndex)
@@ -314,6 +314,9 @@ public class MoveSearch
             // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
             // replace our alpha with our evaluation.
             alpha = evaluation;
+            
+            // Our alpha changed, so it is no longer an unchanged alpha entry.
+            transpositionTableEntryType = MoveTranspositionTableEntryType.Exact;
             
             // If the evaluation was better than beta, it means the position was too good. Thus, there
             // is a good chance that the opponent will avoid this path. Hence, there is currently no
@@ -344,7 +347,11 @@ public class MoveSearch
             // Undo the move.
             board.UndoMove(ref rv);
 
-            if (!HandleEvaluation(evaluation, i)) break;
+            if (!HandleEvaluation(evaluation, i)) {
+                // We had a beta cutoff, hence it's a beta cutoff entry.
+                transpositionTableEntryType = MoveTranspositionTableEntryType.BetaCutoff;
+                break;
+            }
 
             if (rootNode) SearchEffort[move.From, move.To] = TotalNodeSearchCount - previousNodeCount;
             
@@ -354,12 +361,9 @@ public class MoveSearch
         #endregion
 
         #region Transposition Table Insertion
-
-        MoveTranspositionTableEntryType type = MoveTranspositionTableEntryType.Exact;
-        if (bestEvaluation <= originalAlpha) type = MoveTranspositionTableEntryType.AlphaUnchanged;
-        else if (bestEvaluation >= beta) type = MoveTranspositionTableEntryType.BetaCutoff;
+        
         SearchedMove bestMove = new(ref moveList[bestMoveIndex], bestEvaluation);
-        MoveTranspositionTableEntry entry = new(board.ZobristHash, type, bestMove, depth);
+        MoveTranspositionTableEntry entry = new(board.ZobristHash, transpositionTableEntryType, bestMove, depth);
         Table.InsertEntry(board.ZobristHash, ref entry);
 
         #endregion
