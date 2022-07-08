@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
@@ -31,7 +30,6 @@ public class MoveSearch
     private int TotalNodeSearchCount;
 
     private readonly MoveSearchEffortTable SearchEffort = new();
-    private readonly PrincipleVariationStack PvStack = new();
 
     private readonly EngineBoard Board;
     private readonly TimeControl TimeControl;
@@ -69,11 +67,8 @@ public class MoveSearch
 
                 // Try counting nodes to see if we can exit the search early.
                 timePreviouslyUpdated = NodeCounting(depth, timePreviouslyUpdated);
-
-                // Generate the PV line and update the PV Stack.
-                string pv = PvLineAndUpdate(Board);
                 
-                DepthSearchLog(depth, pv, stopwatch);
+                DepthSearchLog(depth, stopwatch);
                 
                 // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                 // finish the next depth in time. To save time, we should just exit the search early.
@@ -476,7 +471,7 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DepthSearchLog(int depth, string pv, Stopwatch stopwatch)
+    private void DepthSearchLog(int depth, Stopwatch stopwatch)
     {
         Console.Write(
             "info depth " + depth + " score cp " + BestMove.Evaluation + " nodes " + 
