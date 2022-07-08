@@ -93,7 +93,7 @@ internal static class Program
             for (int i = 1; i < depth + 1; i++) {
                 Stopwatch sw = new();
                 sw.Start();
-                SearchedMove bestMove = moveSearch.SearchAndReturn(i);
+                OrderedMoveEntry bestMove = moveSearch.SearchAndReturn(i);
                 sw.Stop();
                 
                 Console.Write(i + ": " + (bestMove.From.ToString() + bestMove.To).ToLower());
@@ -101,7 +101,6 @@ internal static class Program
                     Console.Write("=" + bestMove.Promotion.ToString()[0]);
                 }
                 
-                Console.Write(" [" + bestMove.Evaluation + "]");
                 Console.WriteLine(" (" + sw.ElapsedMilliseconds + " ms)");
             }
             

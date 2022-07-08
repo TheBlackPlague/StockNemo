@@ -1,5 +1,4 @@
 ﻿using System;
-using Backend;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
@@ -31,7 +30,7 @@ internal static class OperationCycle
             if (againstSn && Enum.Parse<PieceColor>(colorToMove, true) == snColor) {
                 MoveSearch moveSearch = new(board, Table, new TimeControl(999999));
                 Console.WriteLine("Searching best move...");
-                SearchedMove bestMove = moveSearch.SearchAndReturn(8);
+                OrderedMoveEntry bestMove = moveSearch.SearchAndReturn(8);
                 from = bestMove.From;
                 to = bestMove.To;
                 promotion = bestMove.Promotion;
