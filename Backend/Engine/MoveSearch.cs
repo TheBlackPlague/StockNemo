@@ -481,12 +481,8 @@ public class MoveSearch
         Console.Write(
             "info depth " + depth + " score cp " + BestMove.Evaluation + " nodes " + 
             TotalNodeSearchCount + " nps " + (int)(TotalNodeSearchCount / ((float)stopwatch.ElapsedMilliseconds / 1000)) 
-            + " pv " + pv
+            + " pv " + pv + "\n"
         );
-        if (BestMove.Promotion != Promotion.None)
-            Console.Write(BestMove.Promotion.ToUciNotation());
-
-        Console.WriteLine();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
