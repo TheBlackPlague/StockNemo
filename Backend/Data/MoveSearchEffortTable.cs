@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 
-namespace Backend.Engine;
+namespace Backend.Data;
 
 public class MoveSearchEffortTable
 {
