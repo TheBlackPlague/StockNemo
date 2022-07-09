@@ -22,7 +22,7 @@ public class MoveSearch
     private const int ASPIRATION_DELTA = 30;
     private const int ASPIRATION_DEPTH = 4;
 
-    private const int RAZORING_EVALUATION_THRESHOLD = 150;
+    private const int RAZORING_EVALUATION_THRESHOLD = 640;
 
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
@@ -261,7 +261,7 @@ public class MoveSearch
         Square kingSq = board.KingLoc(board.ColorToMove);
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
         
-        if (!inCheck && notRootNode) {
+        if (!inCheck) {
             // We should use the evaluation from our transposition table if we had a hit.
             // As that evaluation isn't truly static and may have been from a previous deep search.
             int positionalEvaluation = transpositionHit ? 
@@ -283,7 +283,7 @@ public class MoveSearch
             // Reduction depth for null move pruning.
             int reductionDepth = depth - NULL_MOVE_REDUCTION;
         
-            if (depth > NULL_MOVE_DEPTH) {
+            if (notRootNode && depth > NULL_MOVE_DEPTH) {
                 // For null move pruning, we give the turn to the opponent and let them make the move.
                 RevertNullMove rv = board.NullMove();
                 // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
