@@ -22,6 +22,8 @@ public class MoveSearch
     private const int ASPIRATION_DELTA = 30;
     private const int ASPIRATION_DEPTH = 4;
 
+    private const int RAZORING_EVALUATION_THRESHOLD = 150;
+
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
 
@@ -210,6 +212,7 @@ public class MoveSearch
         ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
         bool valid = storedEntry.Type != MoveTranspositionTableEntryType.Invalid;
         SearchedMove transpositionMove = SearchedMove.Default;
+        bool transpositionHit = false;
         if (valid && storedEntry.ZobristHash == board.ZobristHash && storedEntry.Depth >= depth && plyFromRoot != 0) {
             // Check what type of evaluation we have stored.
             switch (storedEntry.Type) {
@@ -245,38 +248,59 @@ public class MoveSearch
             }
 
             transpositionMove = storedEntry.BestMove;
+            transpositionHit = true;
         }
         
         #endregion
         
-        #region Null Move Pruning
-        
-        // Reduction ply and depth for null move pruning.
-        int reductionDepth = depth - NULL_MOVE_REDUCTION;
+        // Calculate deeper ply.
         int nextPlyFromRoot = plyFromRoot + 1;
-        
-        // Determine whether we should prune null moves.
+
+        // Determine whether we should prune moves.
         PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
         Square kingSq = board.KingLoc(board.ColorToMove);
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
         
-        if (notRootNode && depth > NULL_MOVE_DEPTH && !inCheck) {
-            // For null move pruning, we give the turn to the opponent and let them make the move.
-            RevertNullMove rv = board.NullMove();
-            // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
-            // The idea is that if there are cutoffs, most will be found using this reduced search and we can cutoff
-            // this branch earlier.
-            // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
-            // QSearch).
-            int evaluation = -AbSearch(board, nextPlyFromRoot, reductionDepth, -beta, -beta + 1);
-            // Undo the null move so we can get back to original state of the board.
-            board.UndoNullMove(rv);
+        if (!inCheck && notRootNode) {
+            // We should use the evaluation from our transposition table if we had a hit.
+            // As that evaluation isn't truly static and may have been from a previous deep search.
+            int positionalEvaluation = transpositionHit ? 
+                transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
+            
+            #region Razoring
+            
+            if (depth == 1 && positionalEvaluation + RAZORING_EVALUATION_THRESHOLD < alpha)
+                // If after any move, the positional evaluation of the resulting position with some added threshold is
+                // less than alpha, then the opponent will be able to find at least one move that improves their
+                // position.
+                // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
+                return QSearch(board, plyFromRoot, 15, alpha, beta);
+            
+            #endregion
+            
+            #region Null Move Pruning
+
+            // Reduction depth for null move pruning.
+            int reductionDepth = depth - NULL_MOVE_REDUCTION;
         
-            // In the case our evaluation was better than our beta, we achieved a cutoff here. 
-            if (evaluation >= beta) return beta;
+            if (depth > NULL_MOVE_DEPTH) {
+                // For null move pruning, we give the turn to the opponent and let them make the move.
+                RevertNullMove rv = board.NullMove();
+                // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
+                // The idea is that if there are cutoffs, most will be found using this reduced search and we can cutoff
+                // this branch earlier.
+                // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
+                // QSearch).
+                int evaluation = -AbSearch(board, nextPlyFromRoot, reductionDepth, -beta, -beta + 1);
+                // Undo the null move so we can get back to original state of the board.
+                board.UndoNullMove(rv);
+        
+                // In the case our evaluation was better than our beta, we achieved a cutoff here. 
+                if (evaluation >= beta) return beta;
+            }
+
+            #endregion
         }
-        
-        #endregion
 
         #region Move List Creation
 
