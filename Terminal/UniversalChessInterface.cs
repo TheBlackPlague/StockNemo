@@ -73,11 +73,7 @@ public static class UniversalChessInterface
     private static void HandleIsReady(string input)
     {
         if (!input.ToLower().Equals("isready")) return;
-        Task.Run(() =>
-        {
-            while (Busy) {}
-            Console.WriteLine("readyok");
-        });
+        Console.WriteLine("readyok");
     }
 
     private static void HandleQuit(Thread thread, string input)
