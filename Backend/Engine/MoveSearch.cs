@@ -22,7 +22,7 @@ public class MoveSearch
     private const int ASPIRATION_DELTA = 30;
     private const int ASPIRATION_DEPTH = 4;
 
-    private const int RAZORING_EVALUATION_THRESHOLD = 640;
+    private const int RAZORING_EVALUATION_THRESHOLD = 200;
 
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
