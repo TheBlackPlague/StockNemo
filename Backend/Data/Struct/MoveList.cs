@@ -571,6 +571,10 @@ public ref struct MoveList
 
         BitBoard kingMoves = AttackTable.KingMoves.AA((int)From);
         kingMoves &= ~Board.All(color);
+        
+        // If we have no king moves, we can return earlier and avoiding having to check if the moves are legal
+        // or not by removing the king.
+        if (!kingMoves) return;
 
         PieceColor oppositeColor = Util.OppositeColor(color);
         BitBoardIterator kingMovesIterator = kingMoves.GetEnumerator();
@@ -597,8 +601,7 @@ public ref struct MoveList
         (byte q, byte k) = Board.CastlingRight(color);
             
         // Make sure castling close-path isn't under attack.
-        if (q != 0x0 && 
-            !UnderAttack(Board, From - 1, oppositeColor) && !UnderAttack(Board, From - 2, oppositeColor)) {
+        if (q != 0x0 && kingMoves[From - 1] && !UnderAttack(Board, From - 2, oppositeColor)) {
             // Generate path of castle queen-side.
             BitBoard path = color == PieceColor.White ? WHITE_QUEEN_CASTLE : BLACK_QUEEN_CASTLE;
                 
@@ -611,8 +614,7 @@ public ref struct MoveList
 
         // ReSharper disable once InvertIf
         // Make sure castling close-path isn't under attack.
-        if (k != 0x0 && 
-            !UnderAttack(Board, From + 1, oppositeColor) && !UnderAttack(Board, From + 2, oppositeColor)) {
+        if (k != 0x0 && kingMoves[From + 1] && !UnderAttack(Board, From + 2, oppositeColor)) {
             // Generate path of castle king-side.
             BitBoard path = color == PieceColor.White ? WHITE_KING_CASTLE : BLACK_KING_CASTLE;
                 
