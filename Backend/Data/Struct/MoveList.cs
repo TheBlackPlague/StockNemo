@@ -571,6 +571,10 @@ public ref struct MoveList
 
         BitBoard kingMoves = AttackTable.KingMoves.AA((int)From);
         kingMoves &= ~Board.All(color);
+        
+        // If we have no king moves, we can return earlier and avoiding having to check if the moves are legal
+        // or not by removing the king.
+        if (!kingMoves) return;
 
         PieceColor oppositeColor = Util.OppositeColor(color);
         BitBoardIterator kingMovesIterator = kingMoves.GetEnumerator();
