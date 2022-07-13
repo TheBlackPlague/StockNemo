@@ -26,6 +26,8 @@ public readonly ref struct OrderedMoveList
 
     private readonly OrderedMoveEntry KillerMoveOne;
     private readonly OrderedMoveEntry KillerMoveTwo;
+    private readonly OrderedMoveEntry KillerMoveOneDeep;
+    private readonly OrderedMoveEntry KillerMoveTwoDeep;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int ScoreMove(
@@ -42,8 +44,10 @@ public readonly ref struct OrderedMoveList
         if (to != Piece.Empty) return MvvLva(board.At(move.From).Item1, to) * 1000;
 
         if (move == KillerMoveOne) return 9000;
+        if (move == KillerMoveOneDeep) return 8750;
+        if (move == KillerMoveTwo) return 8250;
         // ReSharper disable once ConvertIfStatementToReturnStatement
-        if (move == KillerMoveTwo) return 8000;
+        if (move == KillerMoveTwoDeep) return 8000;
 
         return 0;
     }
@@ -57,6 +61,8 @@ public readonly ref struct OrderedMoveList
         Internal = memory;
         KillerMoveOne = killerMoveTable[0, ply];
         KillerMoveTwo = killerMoveTable[1, ply];
+        KillerMoveOneDeep = ply > 3 ? killerMoveTable[0, ply - 2] : OrderedMoveEntry.Default;
+        KillerMoveTwoDeep = ply > 3 ? killerMoveTable[1, ply - 2] : OrderedMoveEntry.Default;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
