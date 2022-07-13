@@ -23,26 +23,27 @@ public readonly ref struct OrderedMoveList
     };
     
     private readonly Span<OrderedMoveEntry> Internal;
+
+    private readonly OrderedMoveEntry KillerMoveOne;
+    private readonly OrderedMoveEntry KillerMoveTwo;
     
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static int ScoreMove(
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int ScoreMove(
         Board board, 
         ref OrderedMoveEntry move,
         SearchedMove tableMove
         )
     {
-        if (move == tableMove) {
-            return PRIORITY - 1;
-        }
+        if (move == tableMove) return PRIORITY - 1;
         
-        if (move.Promotion != Promotion.None) {
-            return PRIORITY - 8 + (int)move.Promotion;
-        }
+        if (move.Promotion != Promotion.None) return PRIORITY - 8 + (int)move.Promotion;
 
         Piece to = board.At(move.To).Item1;
-        if (to != Piece.Empty) {
-            return MvvLva(board.At(move.From).Item1, to) * 1000;
-        }
+        if (to != Piece.Empty) return MvvLva(board.At(move.From).Item1, to) * 1000;
+
+        if (move == KillerMoveOne) return 9000;
+        // ReSharper disable once ConvertIfStatementToReturnStatement
+        if (move == KillerMoveTwo) return 8000;
 
         return 0;
     }
@@ -51,9 +52,11 @@ public readonly ref struct OrderedMoveList
     private static int MvvLva(Piece attacker, Piece victim) => MvvLvaTable.DJAA((int)victim, (int)attacker);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public OrderedMoveList(ref Span<OrderedMoveEntry> memory)
+    public OrderedMoveList(ref Span<OrderedMoveEntry> memory, int ply, KillerMoveTable killerMoveTable)
     {
         Internal = memory;
+        KillerMoveOne = killerMoveTable[0, ply];
+        KillerMoveTwo = killerMoveTable[1, ply];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]

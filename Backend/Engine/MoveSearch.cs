@@ -32,6 +32,7 @@ public class MoveSearch
     public int TableCutoffCount;
     private int TotalNodeSearchCount;
 
+    private readonly KillerMoveTable KillerMoveTable = new();
     private readonly MoveSearchEffortTable SearchEffort = new();
     private readonly PrincipleVariationTable PvTable = new();
 
@@ -316,7 +317,7 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(ref moveSpan);
+        OrderedMoveList moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable);
         int moveCount = moveList.NormalMoveGeneration(board, transpositionMove);
         
         if (moveCount == 0) {
@@ -397,6 +398,14 @@ public class MoveSearch
             board.UndoMove(ref rv);
 
             if (!HandleEvaluation(evaluation, ref move)) {
+                if (!board.All(oppositeColor)[move.To] && KillerMoveTable[0, plyFromRoot] != move) {
+                    // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move) to
+                    // better sort quiet moves like these in the future, allowing us to achieve a cutoff faster. Also
+                    // make sure we are not saving same move in both of our caches.
+                    KillerMoveTable.ReOrder(plyFromRoot);
+                    KillerMoveTable[0, plyFromRoot] = move;
+                }
+
                 // We had a beta cutoff, hence it's a beta cutoff entry.
                 transpositionTableEntryType = MoveTranspositionTableEntryType.BetaCutoff;
                 break;
@@ -450,7 +459,7 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(ref moveSpan);
+        OrderedMoveList moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable);
         int moveCount = moveList.QSearchMoveGeneration(board, SearchedMove.Default);
         
         // if (moveCount == 0) {
