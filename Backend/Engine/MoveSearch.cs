@@ -29,8 +29,8 @@ public class MoveSearch
 
     private const float TIME_TO_DEPTH_THRESHOLD = 0.2f;
 
-    public int TableCutoffCount;
-    private int TotalNodeSearchCount;
+    public int TableCutoffCount { get; private set; }
+    public int TotalNodeSearchCount { get; private set; }
 
     private readonly MoveSearchEffortTable SearchEffort = new();
     private readonly PrincipleVariationTable PvTable = new();

@@ -39,6 +39,11 @@ internal static class Program
         if (command.ToLower().Contains("--perft-tt=true")) {
             Table = new PerftTranspositionTable();
         }
+
+        if (command.ToLower().Contains("bench")) {
+            OpenBenchBenchmark.Bench();
+            return;
+        }
         
         Console.Clear();
         DrawCycle.OutputTitle();
