@@ -32,6 +32,7 @@ public class MoveSearch
     public int TableCutoffCount;
     private int TotalNodeSearchCount;
 
+    private readonly HistoryTable HistoryTable = new();
     private readonly KillerMoveTable KillerMoveTable = new();
     private readonly MoveSearchEffortTable SearchEffort = new();
     private readonly PrincipleVariationTable PvTable = new();
@@ -317,7 +318,7 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable);
+        OrderedMoveList moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable, HistoryTable);
         int moveCount = moveList.NormalMoveGeneration(board, transpositionMove);
         
         if (moveCount == 0) {
@@ -364,6 +365,9 @@ public class MoveSearch
             // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
             // replace our alpha with our evaluation.
             alpha = evaluation;
+            
+            // Update our history table with our alpha-changing move in hopes we can find similar best moves faster.
+            HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth;
             
             // Our alpha changed, so it is no longer an unchanged alpha entry.
             transpositionTableEntryType = MoveTranspositionTableEntryType.Exact;
@@ -459,7 +463,7 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable);
+        OrderedMoveList moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable, HistoryTable);
         int moveCount = moveList.QSearchMoveGeneration(board, SearchedMove.Default);
         
         // if (moveCount == 0) {

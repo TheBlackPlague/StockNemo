@@ -207,6 +207,12 @@ public struct BitBoardMap
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Piece PieceOnly(Square sq) => (Piece)(PiecesAndColors.AA((int)sq) & 0xF);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public PieceColor ColorOnly(Square sq) => (PieceColor)(PiecesAndColors.AA((int)sq) >> 4);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Move(Square from, Square to)
     {
         (Piece pF, PieceColor cF) = this[from];

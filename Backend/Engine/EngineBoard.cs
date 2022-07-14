@@ -17,6 +17,9 @@ public class EngineBoard : Board
         base(boardData, turnData, castlingData, enPassantTargetData) => History = new RepetitionHistory();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Piece PieceOnly(Square sq) => Map.PieceOnly(sq);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsRepetition() => History.Count(ZobristHash) > 1;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
