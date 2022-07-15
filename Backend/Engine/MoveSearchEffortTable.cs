@@ -1,13 +1,12 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 
-namespace Backend.Data;
+namespace Backend.Engine;
 
 public class MoveSearchEffortTable
 {
 
-    private readonly int[] Internal = GC.AllocateUninitializedArray<int>(4096); // 64 x 64
+    private readonly int[] Internal = new int[4096]; // 64 x 64
 
     public int this[Square from, Square to]
     {

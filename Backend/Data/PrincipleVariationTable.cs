@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Backend.Data.Struct;
 
 namespace Backend.Data;
@@ -10,7 +9,7 @@ public class PrincipleVariationTable
     private const int SIZE = 64;
 
     private readonly int[] Length = new int[SIZE];
-    private readonly OrderedMoveEntry[] Internal = GC.AllocateUninitializedArray<OrderedMoveEntry>(SIZE * SIZE);
+    private readonly OrderedMoveEntry[] Internal = new OrderedMoveEntry[SIZE * SIZE];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void InitializeLength(int ply) => Length.AA(ply) = ply;
