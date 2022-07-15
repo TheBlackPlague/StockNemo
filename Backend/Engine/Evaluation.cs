@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
@@ -10,6 +11,7 @@ public static class Evaluation
     
     // ReSharper disable once InconsistentNaming
     public static readonly MaterialDevelopmentTable MDT = new();
+    public static readonly EvaluationStack ES = new();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int RelativeEvaluation(Board board)
@@ -30,8 +32,19 @@ public static class Evaluation
         phase = 24 - phase;
         phase = (phase * 256 + 24 / 2) / 24;
 
-        return (board.MaterialDevelopmentEvaluationEarly * (256 - phase) + 
-                board.MaterialDevelopmentEvaluationLate * phase) / 256;
+        return (EarlyGameEvaluation(board) * (256 - phase) + LateGameEvaluation(board) * phase) / 256;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int EarlyGameEvaluation(Board board)
+    {
+        return board.MaterialDevelopmentEvaluationEarly + (ES.WhiteBishops/2) * 40 - (ES.BlackBishops/2) * 40; 
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int LateGameEvaluation(Board board)
+    {
+        return board.MaterialDevelopmentEvaluationLate + (ES.WhiteBishops/2) * 60 - (ES.BlackBishops/2) * 60; 
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]

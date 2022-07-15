@@ -1,5 +1,7 @@
 # StockNemo
-A Chess Engine written in C# trying to find good moves like Stockfish.
+A Chess Engine written in C# by TheBlackPlague trying to find good moves like Stockfish.
+
+Currently trying to fiddle with the evaluation for rating gain.
 
 Play vs StockNemo on <a href="https://lichess.org/?user=StockNemo#friend">Lichess!</a> 
 
