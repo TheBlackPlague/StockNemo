@@ -15,8 +15,23 @@
 	<strong>
 		<a href="https://github.com/TheBlackPlague/StockNemo/releases">Releases</a>
         •
-		<a href="https://github.com/TheBlackPlague/StockNemo/pkgs/container/stocknemo">Docker Image</a>
+		<a href="https://lichess.org/@/StockNemo">Lichess</a>
 	</strong>
+</p>
+
+<p align="center">
+<a href="https://dotnet.microsoft.com/en-us/download">
+<img
+        alt=".NET"
+        src="https://img.shields.io/badge/.NET-5C2D91?style=for-the-badge&logo=.net&logoColor=white"
+>
+</a>
+<a href="https://github.com/TheBlackPlague/StockNemo/pkgs/container/stocknemo">
+<img
+        alt="Docker Image"
+        src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white"
+>
+</a>
 </p>
 
 <p align="center">
@@ -29,19 +44,77 @@
 
 <a href="https://github.com/TheBlackPlague/StockNemo/actions">
 <img
-		alt="Build Status"
+		alt="Test Status"
 		src="https://github.com/TheBlackPlague/StockNemo/workflows/.NET Core Unit Test/badge.svg"
 >
 </a>
 </p>
 
-Play vs StockNemo on <a href="https://lichess.org/?user=StockNemo#friend">Lichess!</a> 
+## Overview
+* **Strong and Powerful Analysis**
+* **Optimized and High Performant**
+* **Compatible with Multiple Platforms & Operating Systems**
+* **Free of charge with no hidden fees**
+* **Documented Source Code**
 
-Checkout the rated <a href="https://lichess.org/@/StockNemo/rated">game archive.</a>
-
-Checkout the <a href="https://github.com/TheBlackPlague/StockNemo-SelfPlay/blob/main/2.0.0.3/GAMES.md"> self-play games.</a> 
- 
-Featured Games: [Watch](FEATUREDGAMES.md)
+## Features
+* **Engine:**
+  * **Evaluation:**
+    * Material Development Evaluation
+      * Material Evaluation
+      * Piece Development Evaluation
+    * Tapered Evaluation
+      * Early Game
+      * Late Game
+  * **Move Policy (Move Ordering)**:
+    * Transposition Table Move (Normal Move Generation)
+    * Promotion Move
+      * Promotion Type
+    * Capture Move
+      * Most Valuable Victim with Least Valuable Attacker (MVVLVA)
+  * **Search:**
+    * Cancellation Support
+    * Iterative Deepening
+      * Depth Data Output
+      * Principle Variation Output
+    * Aspiration Search
+      * Narrow Windows
+      * Bound-specific Widening
+      * Fallback Threshold
+    * Alpha-Beta Negamax
+      * Three-fold Repetition Pruning
+      * Mate Distance Pruning
+      * Material Draw Pruning
+        * KvK
+        * NKvK and KvNK
+        * BKvK and KvBK
+      * Transposition Table
+        * Exact Cutoff
+        * Alpha Unchanged Update
+        * Beta Cutoff Update
+        * Alpha Beta Delta Cutoff
+      * Razoring
+        * QSearch Evaluation
+        * Shallow Threshold
+      * Null Move Pruning
+        * Three-ply Depth Reduction
+        * Non-Razoring Depth
+      * Fail-soft Alpha Beta Pruning
+    * Quiescence Search (QSearch)
+      * Static Evaluation
+        * Beta Cutoff
+        * Alpha Update
+      * Deep Capture Only Search
+      * Fail-soft Alpha Beta Pruning
+* **Utility:**
+  * PERFT (Speeds upto: **168.3B NPS**)
+    * PERFT-Divide Output
+    * Smart Multi-threaded Algorithm
+      * Single-threaded (Depth < 5)
+      * Multi-threaded (Depth >= 5)
+        * Depth-First (Depth > 5)
+        * Breath-First (Depth = 5)
+    * Large In-Memory Transposition Table (50 GB) [SUPPORTED HARDWARE ONLY]
 
 ### Much thanks to:
 - [Cozy Chess](https://github.com/analog-hors/cozy-chess) by Analog Hors for
