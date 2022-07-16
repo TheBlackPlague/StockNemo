@@ -7,6 +7,30 @@
 		src=".readme/Logo/Banner.png">
 </h1>
 
+<p align="center">
+	<strong>
+		<a href="https://github.com/TheBlackPlague/StockNemo/releases">Releases</a>
+        •
+		<a href="https://github.com/TheBlackPlague/StockNemo/pkgs/container/stocknemo">Docker Image</a>
+	</strong>
+</p>
+
+<p align="center">
+<a href="https://github.com/TheBlackPlague/StockNemo/actions">
+<img
+		alt="Build Status"
+		src="https://github.com/TheBlackPlague/StockNemo/workflows/.NET Core Build/badge.svg"
+>
+</a>
+
+<a href="https://github.com/TheBlackPlague/StockNemo/actions">
+<img
+		alt="Build Status"
+		src="https://github.com/TheBlackPlague/StockNemo/workflows/.NET Core Unit Test/badge.svg"
+>
+</a>
+</p>
+
 A Chess Engine written in C# trying to find good moves like Stockfish.
 
 Play vs StockNemo on <a href="https://lichess.org/?user=StockNemo#friend">Lichess!</a> 
