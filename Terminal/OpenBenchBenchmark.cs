@@ -11,7 +11,7 @@ namespace Terminal;
 public static class OpenBenchBenchmark
 {
 
-    private const int DEPTH = 8;
+    private const int DEPTH = 9;
 
     private static readonly string[] BenchmarkFen = {
         "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14",
