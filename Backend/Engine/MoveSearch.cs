@@ -409,7 +409,7 @@ public class MoveSearch
             if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
                 // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                 // our opponent will obviously be bad for us.
-                evaluation = -AbSearch(board, nextPlyFromRoot, depth - 2, -(alpha + 1), -alpha);
+                evaluation = -AbSearch(board, nextPlyFromRoot, depth - 2, -alpha - 1, -alpha);
                 
                 // In the case we couldn't apply LMR, we just set our evaluation to a value greater than alpha to force
                 // a full depth search.
