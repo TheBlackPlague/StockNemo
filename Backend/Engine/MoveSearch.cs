@@ -406,8 +406,7 @@ public class MoveSearch
             int evaluation;
 
             // We should search fully here, as applying Late Move Reduction may be dangerous.
-            if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD &&
-                !inCheck && quietMove && move.Promotion == Promotion.None) {
+            if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
                 // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                 // our opponent will obviously be bad for us.
                 evaluation = -AbSearch(board, nextPlyFromRoot, depth - 2, -(alpha + 1), -alpha);
