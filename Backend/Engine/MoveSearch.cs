@@ -24,6 +24,9 @@ public class MoveSearch
 
     private const int RAZORING_EVALUATION_THRESHOLD = 150;
 
+    private const int LMR_FULL_SEARCH_THRESHOLD = 4;
+    private const int LMR_DEPTH_THRESHOLD = 3;
+
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
 
@@ -338,7 +341,7 @@ public class MoveSearch
         MoveTranspositionTableEntryType transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool HandleEvaluation(int evaluation, ref OrderedMoveEntry move)
+        bool HandleEvaluation(int evaluation, ref OrderedMoveEntry move, bool quietMove)
         {
             if (evaluation <= bestEvaluation) return true;
             
@@ -368,8 +371,7 @@ public class MoveSearch
             
             // Update our history table with our alpha-changing quiet move in hopes we can find similar best
             // moves faster.
-            if (!board.All(oppositeColor)[move.To]) 
-                HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth;
+            if (quietMove) HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth;
             
             // Our alpha changed, so it is no longer an unchanged alpha entry.
             transpositionTableEntryType = MoveTranspositionTableEntryType.Exact;
@@ -391,20 +393,43 @@ public class MoveSearch
 
             int previousNodeCount = TotalNodeSearchCount;
             
-            // Make the move.
             OrderedMoveEntry move = moveList[i];
+
+            bool quietMove = !board.All(oppositeColor)[move.To];
+
+            // Make the move.
             RevertMove rv = board.Move(ref move);
             TotalNodeSearchCount++;
-        
-            // Evaluate position by searching deeper and negating the result. An evaluation that's good for
-            // our opponent will obviously be bad for us.
-            int evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+
+            #region Late Move Reduction
+            
+            int evaluation;
+
+            // We should search fully here, as applying Late Move Reduction may be dangerous.
+            if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD &&
+                !inCheck && quietMove && move.Promotion == Promotion.None) {
+                // Evaluate position by searching deeper and negating the result. An evaluation that's good for
+                // our opponent will obviously be bad for us.
+                evaluation = -AbSearch(board, nextPlyFromRoot, depth - 2, -(alpha + 1), -alpha);
+                
+                // In the case we couldn't apply LMR, we just set our evaluation to a value greater than alpha to force
+                // a full depth search.
+            } else evaluation = alpha + 1;
+
+            // In the case that we cannot do LMR or LMR fails, we should do a full depth search. Thanks to transposition
+            // tables, the full depth search is reasonably fast.
+            if (evaluation > alpha) 
+                // Evaluate position by searching deeper and negating the result. An evaluation that's good for
+                // our opponent will obviously be bad for us.
+                evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+
+            #endregion
                 
             // Undo the move.
             board.UndoMove(ref rv);
 
-            if (!HandleEvaluation(evaluation, ref move)) {
-                if (!board.All(oppositeColor)[move.To] && KillerMoveTable[0, plyFromRoot] != move) {
+            if (!HandleEvaluation(evaluation, ref move, quietMove)) {
+                if (quietMove && KillerMoveTable[0, plyFromRoot] != move) {
                     // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move) to
                     // better sort quiet moves like these in the future, allowing us to achieve a cutoff faster. Also
                     // make sure we are not saving same move in both of our caches.
