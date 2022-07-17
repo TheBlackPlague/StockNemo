@@ -366,8 +366,10 @@ public class MoveSearch
             // replace our alpha with our evaluation.
             alpha = evaluation;
             
-            // Update our history table with our alpha-changing move in hopes we can find similar best moves faster.
-            HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth;
+            // Update our history table with our alpha-changing quiet move in hopes we can find similar best
+            // moves faster.
+            if (!board.All(oppositeColor)[move.To]) 
+                HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth;
             
             // Our alpha changed, so it is no longer an unchanged alpha entry.
             transpositionTableEntryType = MoveTranspositionTableEntryType.Exact;
