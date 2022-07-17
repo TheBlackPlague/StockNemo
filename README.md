@@ -1,44 +1,158 @@
 # StockNemo
-A Chess Engine written in C# trying to find good moves like Stockfish.
 
-Play vs StockNemo on <a href="https://lichess.org/?user=StockNemo#friend">Lichess!</a> 
+<h1 align="center">
+	<img
+		width="625"
+		alt="StockNemo Banner"
+		src=".readme/Logo/Banner.png">
+</h1>
 
-Checkout the rated <a href="https://lichess.org/@/StockNemo/rated">game archive.</a>
+<h3 align="center">
+	C# Chess Engine - Finding Good Moves like Stockfish
+</h3>
 
-Checkout the <a href="https://github.com/TheBlackPlague/StockNemo-SelfPlay/blob/main/2.0.0.3/GAMES.md"> self-play games.</a> 
- 
-Featured Games: [Watch](FEATUREDGAMES.md)
+<p align="center">
+	<strong>
+		<a href="https://github.com/TheBlackPlague/StockNemo/releases">Releases</a>
+        •
+		<a href="https://lichess.org/@/StockNemo">Lichess</a>
+	</strong>
+</p>
 
-## Features:
-- UCI Compatible
-- Beautiful CLI:
+<p align="center">
+<a href="https://dotnet.microsoft.com/en-us/download">
+<img
+        alt=".NET"
+        src="https://img.shields.io/badge/.NET-5C2D91?style=for-the-badge&logo=.net&logoColor=white"
+>
+</a>
+<a href="https://github.com/TheBlackPlague/StockNemo/pkgs/container/stocknemo">
+<img
+        alt="Docker Image"
+        src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white"
+>
+</a>
+</p>
 
-| <img src=".readme/b1.png" alt="Start" width="300" height="185"/> | <img src=".readme/b2.png" alt="Start" width="300" height="185"/> |
-|------------------------------------------------------------------|------------------------------------------------------------------|
-<img src=".readme/b3.png" alt="Checkmate" width="600" height="370"/>
+<p align="center">
+<a href="https://github.com/TheBlackPlague/StockNemo/actions">
+<img
+		alt="Build Status"
+		src="https://github.com/TheBlackPlague/StockNemo/workflows/.NET Core Build/badge.svg"
+>
+</a>
 
-- One of the fastest engine PERFT:
-```csharp
-position fen 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -
-perft 11
-Running PERFT @ depth 11:
-a5a4: 1201827680136
-a5a6: 1355148667403
-b4a4: 1008655489960
-b4b1: 1716821664250
-b4b2: 1049413031768
-b4b3: 1228179918985
-b4c4: 1463151281937
-b4d4: 1324944943461
-b4e4: 1126470725027
-b4f4: 258287648492
-e2e3: 872169979347
-e2e4: 646956903053
-g2g3: 362361958827
-g2g4: 1007073431028
-Searched 14,621,463,323,674 nodes (86861 ms). TT: 1259040447 hits.
-Speed: 168.3B nps.
+<a href="https://github.com/TheBlackPlague/StockNemo/actions">
+<img
+		alt="Test Status"
+		src="https://github.com/TheBlackPlague/StockNemo/workflows/.NET Core Unit Test/badge.svg"
+>
+</a>
+</p>
+
+## Overview
+* **Strong and Powerful Analysis**
+* **Optimized and High Performant**
+* **Compatible with Multiple Platforms & Operating Systems**
+* **Free of charge with no hidden fees**
+* **Documented Source Code**
+
+## Features
+* **Engine:**
+  * **Evaluation:**
+    * Material Development Evaluation
+      * Material Evaluation
+      * Piece Development Evaluation
+    * Tapered Evaluation
+      * Early Game
+      * Late Game
+  * **Move Policy (Move Ordering)**:
+    * Transposition Table Move (Normal Move Generation)
+    * Promotion Move
+      * Promotion Type
+    * Capture Move
+      * Most Valuable Victim with Least Valuable Attacker (MVVLVA)
+  * **Search:**
+    * Cancellation Support
+    * Iterative Deepening
+      * Depth Data Output
+      * Principle Variation Output
+    * Aspiration Search
+      * Narrow Windows
+      * Bound-specific Widening
+      * Fallback Threshold
+    * Alpha-Beta Negamax
+      * Three-fold Repetition Pruning
+      * Mate Distance Pruning
+      * Material Draw Pruning
+        * KvK
+        * NKvK and KvNK
+        * BKvK and KvBK
+      * Transposition Table
+        * Exact Cutoff
+        * Alpha Unchanged Update
+        * Beta Cutoff Update
+        * Alpha Beta Delta Cutoff
+      * Razoring
+        * QSearch Evaluation
+        * Shallow Threshold
+      * Null Move Pruning
+        * Three-ply Depth Reduction
+        * Non-Razoring Depth
+      * Fail-soft Alpha Beta Pruning
+    * Quiescence Search (QSearch)
+      * Static Evaluation
+        * Beta Cutoff
+        * Alpha Update
+      * Deep Capture Only Search
+      * Fail-soft Alpha Beta Pruning
+* **Utility:**
+  * PERFT (Speeds upto: **168.3B NPS**)
+    * PERFT-Divide Output
+    * Smart Multi-threaded Algorithm
+      * Single-threaded (Depth < 5)
+      * Multi-threaded (Depth >= 5)
+        * Depth-First (Depth > 5)
+        * Breath-First (Depth = 5)
+    * Large In-Memory Transposition Table (50 GB) [SUPPORTED HARDWARE ONLY]
+
+### Building from Source
+It is recommended that you do not build from source and instead download a 
+release binary. The `master` branch, as well as other branches are in no shape,
+or form, guaranteed to be production-ready or stable. 
+
+Given the risks, if you still wish to continue, please note that you require the
+following:
+- [.NET 6 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+- Hardware Compatible with .NET 6 SDK (While .NET 6 is compatible with most hardware, 
+the project does not guarantee compatibility)
+- System RID (Runtime Identifier) from the .NET Docs
+  - [Windows](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog#windows-rids)
+  - [Linux](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog#linux-rids)
+  - [macOS](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog#macos-rids)
+  - [iOS](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog#ios-rids)
+  - [Android](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog#android-rids)
+
+In the repository directory, go into the Terminal directory and run:
+
 ```
+dotnet publish "Terminal.csproj" -c Release -r <RID> /p:PublishSingleFile=true --self-contained true
+```
+
+You may then find the compiled binary in `Terminal/bin/Release/net6.0/<RID>/publish`.
+
+### Contributing Code and Hardware
+Glad you're considering helping the development of StockNemo. Being an
+opensource-freeware project, it is currently not sponsored by any company,
+person, or otherwise. StockNemo welcomes all good code contributions 
+(given they follow all necessary code and documentation standards).
+
+To assist development of StockNemo, StockNemo appreciates donate of any
+compute power. Contributors may donate idle hardware by installing and
+running a StockNemo Testing Framework worker, which will be assigned 
+distributed tasks to run. The hardware is required to be connected to the
+internet, and available to run tests (CPU is mostly idle). **The Framework
+currently only utilizes the CPU.**
 
 ### Much thanks to:
 - [Cozy Chess](https://github.com/analog-hors/cozy-chess) by Analog Hors for
