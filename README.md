@@ -165,3 +165,5 @@ progress made by StockNemo.
 - [Stockfish](https://github.com/official-stockfish/Stockfish) by the
 Stockfish Team for providing numerous insights and making a brilliant engine,
 used numerous times to debug StockNemo.
+- [OpenBench](https://github.com/AndyGrant/OpenBench) by Andrew Grant for making
+an amazing framework that allows distributed testing of StockNemo.
