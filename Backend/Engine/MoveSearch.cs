@@ -35,6 +35,8 @@ public class MoveSearch
     public int TableCutoffCount { get; private set; }
     public int TotalNodeSearchCount { get; private set; }
 
+    private static readonly LogarithmicReductionDepthTable ReductionDepthTable = new();
+
     private readonly HistoryTable HistoryTable = new();
     private readonly KillerMoveTable KillerMoveTable = new();
     private readonly MoveSearchEffortTable SearchEffort = new();
@@ -409,7 +411,7 @@ public class MoveSearch
             if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
                 // Evaluate an initial reduced depth depending on the number of moves played and the depth currently
                 // being searched.
-                int reducedDepth = (int)(Math.Log(i) * Math.Log(depth));
+                int reducedDepth = ReductionDepthTable[depth, i];
                 
                 // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                 // our opponent will obviously be bad for us.
