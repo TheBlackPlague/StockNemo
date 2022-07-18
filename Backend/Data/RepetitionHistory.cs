@@ -29,7 +29,7 @@ public class RepetitionHistory
     public RepetitionHistory Clone()
     {
         RepetitionHistory history = new();
-        Array.Copy(Internal, history.Internal, Index + 1);
+        for (int i = Index; i > -1; i--) history.Internal.AA(i) = Internal.AA(i);
         history.Index = Index;
         return history;
     }
