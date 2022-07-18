@@ -406,19 +406,27 @@ public class MoveSearch
             #region Late Move Reduction
             
             int evaluation;
-
-            // We should search fully here, as applying Late Move Reduction may be dangerous.
+            
             if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
+                // If we're past the threshold where should search each move fully, not in any immediate danger by
+                // opponent, and above the depth threshold (as to avoid inaccurate evaluations), we should reduce how
+                // deep we're searching.
+
                 // Evaluate an initial reduced depth depending on the number of moves played and the depth currently
                 // being searched.
-                int reducedDepth = ReductionDepthTable[depth, i];
+                int r = ReductionDepthTable[depth, i];
+
+                // In the case our move is a killer move, we should avoid at least initial reductions as we may get a
+                // cutoff at this depth.
+                r -= (move == moveList.Heuristic.KillerMoveOne || move == moveList.Heuristic.KillerMoveTwo).ToByte();
                 
                 // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                 // our opponent will obviously be bad for us.
-                evaluation = -AbSearch(board, nextPlyFromRoot, depth - reducedDepth, -alpha - 1, -alpha);
+                if (r > 0) evaluation = -AbSearch(board, nextPlyFromRoot, depth - r, -alpha - 1, -alpha);
                 
-                // In the case we couldn't apply LMR, we just set our evaluation to a value greater than alpha to force
-                // a full depth search.
+                // In the case we couldn't apply LMR (possibly due to it being unsafe), we just set our evaluation to a
+                // value greater than alpha to force a full depth search.
+                else evaluation = alpha + 1;
             } else evaluation = alpha + 1;
 
             // In the case that we cannot do LMR or LMR fails, we should do a full depth search. Thanks to transposition

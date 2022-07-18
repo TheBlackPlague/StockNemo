@@ -22,10 +22,9 @@ public readonly ref struct OrderedMoveList
         new[] { 7005, 7002, 7004, 7003, 7001, 7000 }
     };
     
+    public readonly OrderedMoveListHeuristic Heuristic;
+    
     private readonly Span<OrderedMoveEntry> Internal;
-
-    private readonly OrderedMoveEntry KillerMoveOne;
-    private readonly OrderedMoveEntry KillerMoveTwo;
 
     private readonly HistoryTable HistoryTable;
 
@@ -44,9 +43,9 @@ public readonly ref struct OrderedMoveList
         Piece to = board.At(move.To).Item1;
         if (to != Piece.Empty) return MvvLva(board.At(move.From).Item1, to) * 10000;
 
-        if (move == KillerMoveOne) return 900000;
+        if (move == Heuristic.KillerMoveOne) return 900000;
         // ReSharper disable once ConvertIfStatementToReturnStatement
-        if (move == KillerMoveTwo) return 800000;
+        if (move == Heuristic.KillerMoveTwo) return 800000;
 
         return HistoryTable[pieceToMove, board.ColorToMove, move.To];
     }
@@ -59,8 +58,9 @@ public readonly ref struct OrderedMoveList
         HistoryTable historyTable)
     {
         Internal = memory;
-        KillerMoveOne = killerMoveTable[0, ply];
-        KillerMoveTwo = killerMoveTable[1, ply];
+
+        Heuristic = new OrderedMoveListHeuristic(killerMoveTable, ply);
+        
         HistoryTable = historyTable;
     }
 
