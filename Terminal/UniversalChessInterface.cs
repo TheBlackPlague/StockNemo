@@ -126,7 +126,7 @@ public static class UniversalChessInterface
                 Square to = Enum.Parse<Square>(args[i][2..4], true);
                 Promotion promotion = Promotion.None;
                 if (args[i].Length > 4) {
-                    promotion = args[i][4] switch
+                    promotion = args[i].ToLower()[4] switch
                     {
                         'r' => Promotion.Rook,
                         'n' => Promotion.Knight,
