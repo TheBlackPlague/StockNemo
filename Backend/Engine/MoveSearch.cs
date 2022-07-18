@@ -24,6 +24,7 @@ public class MoveSearch
 
     private const int RAZORING_EVALUATION_THRESHOLD = 150;
 
+    private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
 
     private const int NODE_COUNTING_DEPTH = 8;
@@ -407,7 +408,7 @@ public class MoveSearch
             int evaluation;
 
             // We should search fully here, as applying Late Move Reduction may be dangerous.
-            if (depth >= LMR_DEPTH_THRESHOLD && i >= 2 + 2 * rootNode.ReinterpretCastAsByte() && !inCheck) {
+            if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
                 // Evaluate an initial reduced depth depending on the number of moves played and the depth currently
                 // being searched.
                 int reducedDepth = ReductionDepthTable[depth, i];
