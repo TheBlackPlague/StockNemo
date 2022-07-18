@@ -20,7 +20,7 @@ public class RepetitionHistory
     public int Count(ulong zobristHash)
     {
         int count = 0;
-        for (int i = Index; i > -1; i--) if (Internal.AA(i) == zobristHash) count++;
+        for (int i = Index - 1; i > -1; i--) if (Internal.AA(i) == zobristHash) count++;
         return count;
     }
 
