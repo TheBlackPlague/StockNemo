@@ -8,7 +8,7 @@ public class RepetitionHistory
 
     private const int SIZE = 1024;
     
-    private readonly ulong[] Internal = GC.AllocateUninitializedArray<ulong>(SIZE);
+    private readonly ulong[] Internal = new ulong[SIZE];
     private int Index;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
