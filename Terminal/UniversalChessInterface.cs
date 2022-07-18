@@ -164,7 +164,7 @@ public static class UniversalChessInterface
         OrderedMoveEntry bestMove;
         
         ActiveTimeControl = new TimeControl(3500);
-        int maxDepth = 999;
+        int maxDepth = 63;
         
         Span<int> timeForColor = stackalloc int[2];
         Span<int> timeIncForColor = stackalloc int[2];
@@ -178,7 +178,7 @@ public static class UniversalChessInterface
         } else if (input.ToLower().Contains("movetime")) {
             ActiveTimeControl = new TimeControl(int.Parse(args[2]));
         } else if (input.ToLower().Contains("depth")) {
-            maxDepth = int.Parse(args[2]);
+            maxDepth = Math.Min(maxDepth, int.Parse(args[2]));
             ActiveTimeControl = new TimeControl(999999);
         }
         
