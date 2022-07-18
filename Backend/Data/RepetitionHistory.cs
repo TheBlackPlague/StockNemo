@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace Backend.Data;
 
@@ -8,7 +7,7 @@ public class RepetitionHistory
 
     private const int SIZE = 1024;
     
-    private readonly ulong[] Internal = GC.AllocateUninitializedArray<ulong>(SIZE);
+    private readonly ulong[] Internal = new ulong[SIZE];
     private int Index;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -21,7 +20,7 @@ public class RepetitionHistory
     public int Count(ulong zobristHash)
     {
         int count = 0;
-        for (int i = Index; i > -1; i--) if (Internal.AA(i) == zobristHash) count++;
+        for (int i = Index - 1; i > -1; i--) if (Internal.AA(i) == zobristHash) count++;
         return count;
     }
 
@@ -29,7 +28,7 @@ public class RepetitionHistory
     public RepetitionHistory Clone()
     {
         RepetitionHistory history = new();
-        Array.Copy(Internal, history.Internal, Index + 1);
+        for (int i = Index; i > -1; i--) history.Internal.AA(i) = Internal.AA(i);
         history.Index = Index;
         return history;
     }

@@ -177,32 +177,31 @@ public class MoveSearch
 
         #region Mate Pruning & Piece-Count Draw-Checks
 
-        switch (notRootNode) {
-            case true when board.IsRepetition():
-                // We ran into a three-fold repetition, so we can draw earlier here.
-                return 0;
-            case true:
-                int allPiecesCount = board.All().Count;
-                // If only the kings are left, it's a draw.
-                if (allPiecesCount == 2) return 0;
+        if (notRootNode) {
+            // We had a three-fold repetition, so return earlier.
+            if (board.IsRepetition()) return 0;
             
-                bool knightLeft =
-                    (bool)board.All(Piece.Knight, PieceColor.White) || board.All(Piece.Knight, PieceColor.Black);
-                // If only the kings and one knight is left, it's a draw.
-                if (allPiecesCount == 3 && knightLeft) return 0;
+            int allPiecesCount = board.All().Count;
             
-                bool bishopLeft = 
-                    (bool)board.All(Piece.Bishop, PieceColor.White) || board.All(Piece.Bishop, PieceColor.Black);
-                // If only the kings and one bishop is left, it's a draw.
-                if (allPiecesCount == 3 && bishopLeft) return 0;
+            // If only the kings are left, it's a draw.
+            if (allPiecesCount == 2) return 0;
+            
+            bool knightLeft =
+                (bool)board.All(Piece.Knight, PieceColor.White) || board.All(Piece.Knight, PieceColor.Black);
+            // If only the kings and one knight is left, it's a draw.
+            if (allPiecesCount == 3 && knightLeft) return 0;
+            
+            bool bishopLeft = 
+                (bool)board.All(Piece.Bishop, PieceColor.White) || board.All(Piece.Bishop, PieceColor.Black);
+            // If only the kings and one bishop is left, it's a draw.
+            if (allPiecesCount == 3 && bishopLeft) return 0;
 
-                // If we are not at the root, we should check and see if there is a ready mate.
-                // If there is, we shouldn't really care about other moves or slower mates, but instead
-                // we should prune as fast as possible. It's crucial to ensuring we hit high depths.
-                alpha = Math.Max(alpha, -MATE + plyFromRoot);
-                beta = Math.Min(beta, MATE - plyFromRoot - 1);
-                if (alpha >= beta) return alpha;
-                break;
+            // If we are not at the root, we should check and see if there is a ready mate.
+            // If there is, we shouldn't really care about other moves or slower mates, but instead
+            // we should prune as fast as possible. It's crucial to ensuring we hit high depths.
+            alpha = Math.Max(alpha, -MATE + plyFromRoot);
+            beta = Math.Min(beta, MATE - plyFromRoot - 1);
+            if (alpha >= beta) return alpha;
         }
 
         #endregion
