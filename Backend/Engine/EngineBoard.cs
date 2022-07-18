@@ -17,7 +17,7 @@ public class EngineBoard : Board
         base(boardData, turnData, castlingData, enPassantTargetData) => History = new RepetitionHistory();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsRepetition() => History.Count(ZobristHash) > 1;
+    public bool IsRepetition() => History.Found(ZobristHash);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void GuiMove(Square from, Square to, Promotion promotion)
