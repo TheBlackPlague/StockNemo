@@ -17,6 +17,9 @@ public static class Util
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe static byte ReinterpretCastAsByte(this bool value) => *(byte*)&value;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string ToUciNotation(this Promotion promotion)
     {
         string notation = promotion.ToString()[0].ToString().ToLower();
