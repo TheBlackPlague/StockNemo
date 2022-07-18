@@ -18,10 +18,11 @@ public class RepetitionHistory
     public void RemoveLast() => Index--;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Found(ulong zobristHash)
+    public int Count(ulong zobristHash)
     {
-        for (int i = Index; i > -1; i--) if (Internal.AA(i) == zobristHash) return true;
-        return false;
+        int count = 0;
+        for (int i = Index; i > -1; i--) if (Internal.AA(i) == zobristHash) count++;
+        return count;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
