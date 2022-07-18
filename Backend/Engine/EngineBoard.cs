@@ -60,8 +60,9 @@ public class EngineBoard : Board
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RevertMove Move(ref OrderedMoveEntry move)
     {
+        RevertMove rv = Move(move.From, move.To, move.Promotion);
         History.Append(ZobristHash);
-        return Move(move.From, move.To, move.Promotion);
+        return rv;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
