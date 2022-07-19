@@ -150,15 +150,15 @@ jobs:
       - name: Build for Android (ALL VERSION COMPLIANT). (ARM-64)
         run: |
           cd Terminal
-          dotnet publish -r android-arm64 -c Release /p:PublishSingleFile=true --self-contained true
+          dotnet publish -r android-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
       - name: Build for Android 32. (ARM-64)
         run: |
           cd Terminal
-          dotnet publish -r android.32-arm64 -c Release /p:PublishSingleFile=true --self-contained true
+          dotnet publish -r android.32-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
       - name: Build for Android 31. (ARM-64)
         run: |
           cd Terminal
-          dotnet publish -r android.31-arm64 -c Release /p:PublishSingleFile=true --self-contained true
+          dotnet publish -r android.31-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
       - name: Upload Android (ALL VERSION COMPLIANT). (ARM-64)
         uses: actions/upload-artifact@v3
         with:
@@ -188,15 +188,15 @@ jobs:
       - name: Build for iOS (ALL VERSION COMPLIANT). (ARM-64)
         run: |
           cd Terminal
-          dotnet publish -r ios-arm64 -c Release /p:PublishSingleFile=true --self-contained true
+          dotnet publish -r ios-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
       - name: Build for iOS 15. (ARM-64)
         run: |
           cd Terminal
-          dotnet publish -r ios.15-arm64 -c Release /p:PublishSingleFile=true --self-contained true
+          dotnet publish -r ios.15-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
       - name: Build for iOS 14. (ARM-64)
         run: |
           cd Terminal
-          dotnet publish -r ios.14-arm64 -c Release /p:PublishSingleFile=true --self-contained true
+          dotnet publish -r ios.14-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
       - name: Upload iOS (ALL VERSION COMPLIANT). (ARM-64)
         uses: actions/upload-artifact@v3
         with:
