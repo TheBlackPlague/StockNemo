@@ -23,37 +23,45 @@ public readonly ref struct OrderedMoveList
     };
     
     private readonly Span<OrderedMoveEntry> Internal;
-    
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static int ScoreMove(
+
+    private readonly OrderedMoveEntry KillerMoveOne;
+    private readonly OrderedMoveEntry KillerMoveTwo;
+
+    private readonly HistoryTable HistoryTable;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int ScoreMove(
+        Piece pieceToMove,
         Board board, 
         ref OrderedMoveEntry move,
         SearchedMove tableMove
         )
     {
-        if (move == tableMove) {
-            return PRIORITY - 1;
-        }
+        if (move == tableMove) return PRIORITY - 1;
         
-        if (move.Promotion != Promotion.None) {
-            return PRIORITY - 8 + (int)move.Promotion;
-        }
+        if (move.Promotion != Promotion.None) return PRIORITY - 8 + (int)move.Promotion;
 
         Piece to = board.At(move.To).Item1;
-        if (to != Piece.Empty) {
-            return MvvLva(board.At(move.From).Item1, to) * 1000;
-        }
+        if (to != Piece.Empty) return MvvLva(board.At(move.From).Item1, to) * 10000;
 
-        return 0;
+        if (move == KillerMoveOne) return 900000;
+        // ReSharper disable once ConvertIfStatementToReturnStatement
+        if (move == KillerMoveTwo) return 800000;
+
+        return HistoryTable[pieceToMove, board.ColorToMove, move.To];
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int MvvLva(Piece attacker, Piece victim) => MvvLvaTable.DJAA((int)victim, (int)attacker);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public OrderedMoveList(ref Span<OrderedMoveEntry> memory)
+    public OrderedMoveList(ref Span<OrderedMoveEntry> memory, int ply, KillerMoveTable killerMoveTable, 
+        HistoryTable historyTable)
     {
         Internal = memory;
+        KillerMoveOne = killerMoveTable[0, ply];
+        KillerMoveTwo = killerMoveTable[1, ply];
+        HistoryTable = historyTable;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -90,13 +98,13 @@ public readonly ref struct OrderedMoveList
                         int p = 1;
                         while (p < 5) {
                             Internal[i] = new OrderedMoveEntry(from, move, (Promotion)p);
-                            Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                            Internal[i].Score = ScoreMove(Piece.Pawn, board, ref Internal[i], transpositionMove);
                             i++;
                             p++;
                         }
                     } else {
                         Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                        Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                        Internal[i].Score = ScoreMove(Piece.Pawn, board, ref Internal[i], transpositionMove);
                         i++;
                     }
                     
@@ -121,7 +129,7 @@ public readonly ref struct OrderedMoveList
 
                     while (moves.MoveNext()) {
                         Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                        Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                        Internal[i].Score = ScoreMove((Piece)piece, board, ref Internal[i], transpositionMove);
                         i++;
                     
                         move = moves.Current;
@@ -147,7 +155,7 @@ public readonly ref struct OrderedMoveList
 
             while (moves.MoveNext()) {
                 Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                Internal[i].Score = ScoreMove(Piece.King, board, ref Internal[i], transpositionMove);
                 i++;
                     
                 move = moves.Current;
@@ -198,13 +206,13 @@ public readonly ref struct OrderedMoveList
                         int p = 1;
                         while (p < 5) {
                             Internal[i] = new OrderedMoveEntry(from, move, (Promotion)p);
-                            Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                            Internal[i].Score = ScoreMove(Piece.Pawn, board, ref Internal[i], transpositionMove);
                             i++;
                             p++;
                         }
                     } else {
                         Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                        Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                        Internal[i].Score = ScoreMove(Piece.Pawn, board, ref Internal[i], transpositionMove);
                         i++;
                     }
                     
@@ -229,7 +237,7 @@ public readonly ref struct OrderedMoveList
 
                     while (moves.MoveNext()) {
                         Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                        Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                        Internal[i].Score = ScoreMove((Piece)piece, board, ref Internal[i], transpositionMove);
                         i++;
                     
                         move = moves.Current;
@@ -255,7 +263,7 @@ public readonly ref struct OrderedMoveList
 
             while (moves.MoveNext()) {
                 Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                Internal[i].Score = ScoreMove(board, ref Internal[i], transpositionMove);
+                Internal[i].Score = ScoreMove(Piece.King, board, ref Internal[i], transpositionMove);
                 i++;
                     
                 move = moves.Current;

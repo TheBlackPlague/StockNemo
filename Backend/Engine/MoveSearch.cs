@@ -24,6 +24,9 @@ public class MoveSearch
 
     private const int RAZORING_EVALUATION_THRESHOLD = 150;
 
+    private const int LMR_FULL_SEARCH_THRESHOLD = 4;
+    private const int LMR_DEPTH_THRESHOLD = 3;
+
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
 
@@ -32,6 +35,10 @@ public class MoveSearch
     public int TableCutoffCount { get; private set; }
     public int TotalNodeSearchCount { get; private set; }
 
+    private static readonly LogarithmicReductionDepthTable ReductionDepthTable = new();
+
+    private readonly HistoryTable HistoryTable = new();
+    private readonly KillerMoveTable KillerMoveTable = new();
     private readonly MoveSearchEffortTable SearchEffort = new();
     private readonly PrincipleVariationTable PvTable = new();
 
@@ -166,9 +173,10 @@ public class MoveSearch
         
         #region QSearch Jump
 
-        // At depth 0, since we may be having a capture train, we should jump into QSearch and evaluate even deeper.
-        // In the case of no captures available, QSearch will throw us out instantly.
-        if (depth == 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
+        // At depth 0 (or less in the case of reductions etc.), since we may be having a capture train, we should jump
+        // into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us out
+        // instantly.
+        if (depth <= 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
         
         #endregion
         
@@ -315,7 +323,7 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(ref moveSpan);
+        OrderedMoveList moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable, HistoryTable);
         int moveCount = moveList.NormalMoveGeneration(board, transpositionMove);
         
         if (moveCount == 0) {
@@ -335,7 +343,7 @@ public class MoveSearch
         MoveTranspositionTableEntryType transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool HandleEvaluation(int evaluation, ref OrderedMoveEntry move)
+        bool HandleEvaluation(int evaluation, ref OrderedMoveEntry move, bool quietMove)
         {
             if (evaluation <= bestEvaluation) return true;
             
@@ -363,6 +371,10 @@ public class MoveSearch
             // replace our alpha with our evaluation.
             alpha = evaluation;
             
+            // Update our history table with our alpha-changing quiet move in hopes we can find similar best
+            // moves faster.
+            if (quietMove) HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth;
+            
             // Our alpha changed, so it is no longer an unchanged alpha entry.
             transpositionTableEntryType = MoveTranspositionTableEntryType.Exact;
             
@@ -383,19 +395,56 @@ public class MoveSearch
 
             int previousNodeCount = TotalNodeSearchCount;
             
-            // Make the move.
             OrderedMoveEntry move = moveList[i];
+
+            bool quietMove = !board.All(oppositeColor)[move.To];
+
+            // Make the move.
             RevertMove rv = board.Move(ref move);
             TotalNodeSearchCount++;
-        
-            // Evaluate position by searching deeper and negating the result. An evaluation that's good for
-            // our opponent will obviously be bad for us.
-            int evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+
+            #region Late Move Reduction
+            
+            int evaluation;
+            
+            if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
+                // If we're past the threshold where should search each move fully, not in any immediate danger by
+                // opponent, and above the depth threshold (as to avoid inaccurate evaluations), we should reduce how
+                // deep we're searching.
+                
+                // Evaluate an initial reduced depth depending on the number of moves played and the depth currently
+                // being searched.
+                int reducedDepth = ReductionDepthTable[depth, i];
+                
+                // Evaluate position by searching deeper and negating the result. An evaluation that's good for
+                // our opponent will obviously be bad for us.
+                evaluation = -AbSearch(board, nextPlyFromRoot, depth - reducedDepth, -alpha - 1, -alpha);
+                
+                // In the case we couldn't apply LMR, we just set our evaluation to a value greater than alpha to force
+                // a full depth search.
+            } else evaluation = alpha + 1;
+
+            // In the case that we cannot do LMR (being unsafe at this depth or for this move) or LMR fails, we should
+            // do a full depth search. Thanks to transposition tables, the full depth search is reasonably fast.
+            if (evaluation > alpha) 
+                // Evaluate position by searching deeper and negating the result. An evaluation that's good for
+                // our opponent will obviously be bad for us.
+                evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+
+            #endregion
                 
             // Undo the move.
             board.UndoMove(ref rv);
 
-            if (!HandleEvaluation(evaluation, ref move)) {
+            if (!HandleEvaluation(evaluation, ref move, quietMove)) {
+                if (quietMove && KillerMoveTable[0, plyFromRoot] != move) {
+                    // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move) to
+                    // better sort quiet moves like these in the future, allowing us to achieve a cutoff faster. Also
+                    // make sure we are not saving same move in both of our caches.
+                    KillerMoveTable.ReOrder(plyFromRoot);
+                    KillerMoveTable[0, plyFromRoot] = move;
+                }
+
                 // We had a beta cutoff, hence it's a beta cutoff entry.
                 transpositionTableEntryType = MoveTranspositionTableEntryType.BetaCutoff;
                 break;
@@ -449,7 +498,7 @@ public class MoveSearch
 
         // Allocate memory on the stack to be used for our move-list.
         Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(ref moveSpan);
+        OrderedMoveList moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable, HistoryTable);
         int moveCount = moveList.QSearchMoveGeneration(board, SearchedMove.Default);
         
         // if (moveCount == 0) {
