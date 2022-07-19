@@ -151,64 +151,64 @@ jobs:
         run: |
           cd Terminal
           dotnet publish -r android-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
-      - name: Build for Android 32. (ARM-64)
-        run: |
-          cd Terminal
-          dotnet publish -r android.32-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
-      - name: Build for Android 31. (ARM-64)
-        run: |
-          cd Terminal
-          dotnet publish -r android.31-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
+#      - name: Build for Android 32. (ARM-64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r android.32-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
+#      - name: Build for Android 31. (ARM-64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r android.31-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
       - name: Upload Android (ALL VERSION COMPLIANT). (ARM-64)
         uses: actions/upload-artifact@v3
         with:
           name: stocknemo-android-all-arm64
           path: Terminal/bin/Release/net6.0/android-arm64/publish/StockNemo
-      - name: Upload Android 32. (ARM-64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-android-32-arm64
-          path: Terminal/bin/Release/net6.0/android.32-arm64/publish/StockNemo
-      - name: Upload Android 31. (ARM-64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-android-31-arm64
-          path: Terminal/bin/Release/net6.0/android.31-arm64/publish/StockNemo
+#      - name: Upload Android 32. (ARM-64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-android-32-arm64
+#          path: Terminal/bin/Release/net6.0/android.32-arm64/publish/StockNemo
+#      - name: Upload Android 31. (ARM-64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-android-31-arm64
+#          path: Terminal/bin/Release/net6.0/android.31-arm64/publish/StockNemo
     
-  iOS:
-    
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: 6.0.300
-      - name: Build for iOS (ALL VERSION COMPLIANT). (ARM-64)
-        run: |
-          cd Terminal
-          dotnet publish -r ios-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
-      - name: Build for iOS 15. (ARM-64)
-        run: |
-          cd Terminal
-          dotnet publish -r ios.15-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
-      - name: Build for iOS 14. (ARM-64)
-        run: |
-          cd Terminal
-          dotnet publish -r ios.14-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
-      - name: Upload iOS (ALL VERSION COMPLIANT). (ARM-64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-ios-all-arm64
-          path: Terminal/bin/Release/net6.0/ios-arm64/publish/StockNemo
-      - name: Upload iOS 15. (ARM-64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-ios-15-arm64
-          path: Terminal/bin/Release/net6.0/ios.15-arm64/publish/StockNemo
-      - name: Upload iOS 14. (ARM-64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-ios-14-arm64
-          path: Terminal/bin/Release/net6.0/ios.14-arm64/publish/StockNemo
+#  iOS:
+#    
+#    runs-on: ubuntu-latest
+#    
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Setup .NET Core
+#        uses: actions/setup-dotnet@v2
+#        with:
+#          dotnet-version: 6.0.300
+#      - name: Build for iOS (ALL VERSION COMPLIANT). (ARM-64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r ios-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
+#      - name: Build for iOS 15. (ARM-64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r ios.15-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
+#      - name: Build for iOS 14. (ARM-64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r ios.14-arm64 -c Release /p:PublishSingleFile=true --self-contained true /p:UseAppHost=true
+#      - name: Upload iOS (ALL VERSION COMPLIANT). (ARM-64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-ios-all-arm64
+#          path: Terminal/bin/Release/net6.0/ios-arm64/publish/StockNemo
+#      - name: Upload iOS 15. (ARM-64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-ios-15-arm64
+#          path: Terminal/bin/Release/net6.0/ios.15-arm64/publish/StockNemo
+#      - name: Upload iOS 14. (ARM-64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-ios-14-arm64
+#          path: Terminal/bin/Release/net6.0/ios.14-arm64/publish/StockNemo
