@@ -1,4 +1,4 @@
-﻿FROM ghcr.io/theblackplague/stocknemo:3.0.0.0 as LAUNCH
+﻿FROM ghcr.io/theblackplague/stocknemo:3.0.0.1 as LAUNCH
 
 LABEL org.opencontainers.image.source=https://github.com/TheBlackPlague/StockNemo
 
@@ -7,9 +7,7 @@ RUN apt-get update &&\
 
 RUN git clone https://github.com/ShailChoksi/lichess-bot.git /lcbot
 
-WORKDIR "/src/Terminal"
-RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /lcbot/engines  \
-    /p:PublishSingleFile=true --self-contained true
+RUN mv /App/StockNemo /lcbot/engines/StockNemo
 
 WORKDIR "/lcbot"
 COPY ["config.yml", "config.yml"]
