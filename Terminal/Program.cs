@@ -53,12 +53,14 @@ internal static class Program
 
         switch (args[0].ToLower()) {
             case "uci":
+            {
                 StreamWriter standardOutput = new(Console.OpenStandardOutput());
                 standardOutput.AutoFlush = true;
                 Console.SetOut(standardOutput);
                 UniversalChessInterface.Setup();
                 UniversalChessInterface.LaunchUci();
                 return;
+            }
             case "interactive":
                 hardwareInitializationTask.Wait();
                 InteractiveInterface.Start();
