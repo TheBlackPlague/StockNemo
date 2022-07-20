@@ -140,7 +140,10 @@ internal static class InteractiveInterface
 
             // If opponent has no moves to make after our move, it's checkmate.
             MoveList opposingMoveList = new(Board, Board.ColorToMove);
-            if (opposingMoveList.Count == 0) CheckMate = true;
+            if (opposingMoveList.Count == 0) {
+                CheckMate = true;
+                continue;
+            }
 
             // If we're attacking opponent's king, then the opponent is under check.
             PieceColor attackingColor = Util.OppositeColor(Board.ColorToMove);
