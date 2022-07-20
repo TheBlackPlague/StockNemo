@@ -18,7 +18,7 @@ public static class UniversalChessInterface
     private static MoveTranspositionTable TranspositionTable;
     private static int TranspositionTableSizeMb = 16;
 
-    private static DisplayBoard Board;
+    private static DisplayBoard Board = DisplayBoard.Default();
     private static bool Busy;
     private static TimeControl ActiveTimeControl;
     private static int MoveCount;
@@ -158,42 +158,69 @@ public static class UniversalChessInterface
     {
         string[] args = input.Split(" ");
         if (!args[0].ToLower().Equals("go")) return;
-        if (args.Length == 1) return;
         if (Board == null) return;
-
+        
         if (input.ToLower().Contains("perft")) {
+            // Just run PERFT.
             Program.RunPerft(Board, int.Parse(args[2]));
             return;
         }
 
-        TaskFactory factory = new();
-        OrderedMoveEntry bestMove;
-        
-        ActiveTimeControl = new TimeControl(3500);
-        int maxDepth = 63;
-        
+        const int maxTime = 999_999_999;
+        const int maxDepth = 63;
+        int time = maxTime;
+        int depth = maxDepth;
+
+        if (args.Length == 1) {
+            ActiveTimeControl = new TimeControl(time);
+            goto SkipParameter;
+        }
+
+        bool timeSpecified = false;
         Span<int> timeForColor = stackalloc int[2];
         Span<int> timeIncForColor = stackalloc int[2];
-        if (input.ToLower().Contains("wtime") || input.ToLower().Contains("btime")) {
-            timeForColor[0] = int.Parse(args[2]);
-            timeForColor[1] = int.Parse(args[4]);
-            timeIncForColor[0] = int.Parse(args[6]);
-            timeIncForColor[1] = int.Parse(args[8]);
-
-            ActiveTimeControl = new TimeControl(timeForColor, timeIncForColor, Board.ColorToMove, MoveCount);
-        } else if (input.ToLower().Contains("movetime")) {
-            ActiveTimeControl = new TimeControl(int.Parse(args[2]));
-        } else if (input.ToLower().Contains("depth")) {
-            maxDepth = Math.Min(maxDepth, int.Parse(args[2]));
-            ActiveTimeControl = new TimeControl(999999);
-        }
         
+        int argPosition = 1;
+        
+        while (argPosition < args.Length) {
+            switch (args[argPosition].ToLower()) {
+                case "wtime":
+                    timeForColor[0] = int.Parse(args[++argPosition]);
+                    break;
+                case "btime":
+                    timeForColor[1] = int.Parse(args[++argPosition]);
+                    break;
+                case "winc":
+                    timeIncForColor[0] = int.Parse(args[++argPosition]);
+                    break;
+                case "binc":
+                    timeIncForColor[1] = int.Parse(args[++argPosition]);
+                    break;
+                case "depth":
+                    depth = Math.Min(maxDepth, int.Parse(args[++argPosition]));
+                    break;
+                case "movetime":
+                    time = int.Parse(args[++argPosition]);
+                    timeSpecified = true;
+                    break;
+            }
+
+            argPosition++;
+        }
+
+        if (time == maxTime || timeSpecified) ActiveTimeControl = new TimeControl(time);
+        else ActiveTimeControl = new TimeControl(timeForColor, timeIncForColor, Board.ColorToMove, MoveCount);
+
+        SkipParameter:
+        TaskFactory factory = new();
+        OrderedMoveEntry bestMove;
+
         factory.StartNew(() =>
         {
             // ReSharper disable once AccessToModifiedClosure
             MoveSearch search = new(Board.Clone(), TranspositionTable, ActiveTimeControl);
             Busy = true;
-            bestMove = search.IterativeDeepening(maxDepth);
+            bestMove = search.IterativeDeepening(depth);
             Busy = false;
             string from = bestMove.From.ToString().ToLower();
             string to = bestMove.To.ToString().ToLower();
