@@ -49,7 +49,7 @@ internal static class Program
         MainInput:
         string[] args = Console.ReadLine()?.Split(" ");
         
-        if (args == null) return;
+        if (args == null) goto MainInput;
 
         switch (args[0].ToLower()) {
             case "uci":
