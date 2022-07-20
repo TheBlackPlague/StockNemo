@@ -186,15 +186,19 @@ public static class UniversalChessInterface
             switch (args[argPosition].ToLower()) {
                 case "wtime":
                     timeForColor[0] = int.Parse(args[++argPosition]);
+                    time = 0;
                     break;
                 case "btime":
                     timeForColor[1] = int.Parse(args[++argPosition]);
+                    time = 0;
                     break;
                 case "winc":
                     timeIncForColor[0] = int.Parse(args[++argPosition]);
+                    time = 0;
                     break;
                 case "binc":
                     timeIncForColor[1] = int.Parse(args[++argPosition]);
+                    time = 0;
                     break;
                 case "depth":
                     depth = Math.Min(maxDepth, int.Parse(args[++argPosition]));
