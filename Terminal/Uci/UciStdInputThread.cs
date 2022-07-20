@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace Terminal;
+namespace Terminal.Uci;
 
 public static class UciStdInputThread
 {
