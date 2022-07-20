@@ -7,7 +7,7 @@ using Backend.Data.Enum;
 using Backend.Data.Struct;
 using Backend.Engine;
 
-namespace Terminal;
+namespace Terminal.Uci;
 
 public static class UniversalChessInterface
 {
@@ -159,6 +159,12 @@ public static class UniversalChessInterface
         string[] args = input.Split(" ");
         if (!args[0].ToLower().Equals("go")) return;
         if (args.Length == 1) return;
+        if (Board == null) return;
+
+        if (input.ToLower().Contains("perft")) {
+            Program.RunPerft(Board, int.Parse(args[2]));
+            return;
+        }
 
         TaskFactory factory = new();
         OrderedMoveEntry bestMove;
