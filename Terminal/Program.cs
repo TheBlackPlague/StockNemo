@@ -41,6 +41,8 @@ internal static class Program
             OpenBenchBenchmark.Bench();
             return;
         }
+        
+        DrawCycle.OutputTitle();
 
         MainInput:
         string requiredInterface = Console.ReadLine();
