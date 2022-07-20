@@ -63,6 +63,8 @@ internal static class Program
                 hardwareInitializationTask.Wait();
                 InteractiveInterface.Start();
                 return;
+            default:
+                goto MainInput;
         }
     }
 
