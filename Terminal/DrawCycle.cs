@@ -8,8 +8,7 @@ internal static class DrawCycle
 
     public static void OutputTitle()
     {
-        Console.WriteLine("StockNemo v" + Version.Get());
-        Console.WriteLine("Copyright (c) Shaheryar Sohail. All rights reserved.");
+        Console.WriteLine("StockNemo v" + Version.Get() + "\nCopyright (c) Shaheryar Sohail. All rights reserved.");
     }
 
     public static void Draw(DisplayBoard board)
