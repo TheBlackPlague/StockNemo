@@ -4,9 +4,9 @@ public enum Promotion : byte
 {
 
     None,
-    Knight,
-    Bishop,
-    Rook,
-    Queen
+    Knight = 2,
+    Bishop = 3,
+    Rook = 1,
+    Queen = 4
 
 }
