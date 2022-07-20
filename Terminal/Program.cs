@@ -31,7 +31,7 @@ internal static class Program
 
         string command = Environment.CommandLine;
 
-        if (command.ToLower().Contains("--uci=True")) {
+        if (command.ToLower().Contains("--uci=true")) {
             goto MainInput;
         }
         
@@ -47,27 +47,26 @@ internal static class Program
         DrawCycle.OutputTitle();
 
         MainInput:
-        string[] args = Console.ReadLine()?.Split(" ");
+        string requiredInterface = Console.ReadLine();
         
-        if (args == null) goto MainInput;
-
-        switch (args[0].ToLower()) {
-            case "uci":
-            {
-                StreamWriter standardOutput = new(Console.OpenStandardOutput());
-                standardOutput.AutoFlush = true;
-                Console.SetOut(standardOutput);
-                UniversalChessInterface.Setup();
-                UniversalChessInterface.LaunchUci();
-                return;
-            }
-            case "interactive":
-                hardwareInitializationTask.Wait();
-                InteractiveInterface.Start();
-                return;
-            default:
-                goto MainInput;
+        // ReSharper disable once ConvertIfStatementToSwitchStatement
+        if (requiredInterface == null) goto MainInput;
+        
+        if (requiredInterface.Equals("uci")) {
+            StreamWriter standardOutput = new(Console.OpenStandardOutput());
+            standardOutput.AutoFlush = true;
+            Console.SetOut(standardOutput);
+            UniversalChessInterface.Setup();
+            UniversalChessInterface.LaunchUci();
+            return;
         }
+        if (requiredInterface.Equals("interactive")) {
+            hardwareInitializationTask.Wait();
+            InteractiveInterface.Start();
+            return;
+        }
+        
+        goto MainInput;
     }
 
     [SuppressMessage("ReSharper", "UseStringInterpolation")]
