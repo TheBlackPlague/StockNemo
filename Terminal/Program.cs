@@ -28,11 +28,13 @@ internal static class Program
         
         // Run JIT.
         Perft.MoveGeneration(Board.Default(), 5, false);
-        
-        DrawCycle.OutputTitle();
 
         string command = Environment.CommandLine;
 
+        if (command.ToLower().Contains("--uci=true")) {
+            goto MainInput;
+        }
+        
         if (command.ToLower().Contains("--perft-tt=true")) {
             Table = new PerftTranspositionTable();
         }
