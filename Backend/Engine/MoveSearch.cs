@@ -227,7 +227,7 @@ public class MoveSearch
             transpositionMove = storedEntry.BestMove;
             transpositionHit = true;
 
-            if (storedEntry.Depth >= depth && plyFromRoot != 0) {
+            if (storedEntry.Depth >= depth && notRootNode) {
                 // If it came from a higher depth search than our current depth, it means the results are definitely
                 // more trustworthy than the ones we could achieve at this depth.
                 switch (storedEntry.Type) {
