@@ -4,7 +4,7 @@ using Backend.Data.Enum;
 
 namespace Backend.Data.Struct;
 
-[StructLayout(LayoutKind.Sequential, Pack = 2)]
+[StructLayout(LayoutKind.Sequential)]
 public struct MoveTranspositionTableEntry
 {
     
