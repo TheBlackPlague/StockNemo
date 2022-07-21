@@ -8,8 +8,8 @@ namespace Backend.Engine;
 public static class Evaluation
 {
 
-    private const int BISHOP_PAIR_EARLY = 50;
-    private const int BISHOP_PAIR_LATE = 80;
+    private const int BISHOP_PAIR_EARLY = 35;
+    private const int BISHOP_PAIR_LATE = 70;
     
     // ReSharper disable once InconsistentNaming
     public static readonly MaterialDevelopmentTable MDT = new();
