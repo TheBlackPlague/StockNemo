@@ -56,8 +56,9 @@ public static class OpenBenchBenchmark
             total += (ulong)search.TotalNodeSearchCount;
         }
         stopwatch.Stop();
-        
-        Console.WriteLine(total + " nodes " + total / (ulong)(stopwatch.ElapsedMilliseconds / 1000) + " nps");
+
+        int speed = (int)((int)total / ((float)stopwatch.ElapsedMilliseconds / 1000));
+        Console.WriteLine(total + " nodes " + speed + " nps");
     }
 
 }
