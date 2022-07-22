@@ -36,15 +36,8 @@ public static class Evaluation
         phase += (board.All(Piece.Rook, PieceColor.White).Count + board.All(Piece.Rook, PieceColor.Black).Count) * 2;
         phase += (board.All(Piece.Queen, PieceColor.White).Count + board.All(Piece.Queen, PieceColor.Black).Count) * 4;
 
-        if (whiteBishopCount > 1) {
-            earlyGameEvaluation += BISHOP_PAIR_EARLY;
-            lateGameEvaluation += BISHOP_PAIR_LATE;
-        }
-
-        if (blackBishopCount > 1) {
-            earlyGameEvaluation -= BISHOP_PAIR_EARLY;
-            lateGameEvaluation -= BISHOP_PAIR_LATE;
-        }
+        earlyGameEvaluation += ((whiteBishopCount >> 1) - (blackBishopCount >> 1)) * BISHOP_PAIR_EARLY;
+        lateGameEvaluation += ((whiteBishopCount >> 1) - (blackBishopCount >> 1)) * BISHOP_PAIR_LATE;
 
         phase = 24 - phase;
         phase = (phase * 256 + 24 / 2) / 24;
