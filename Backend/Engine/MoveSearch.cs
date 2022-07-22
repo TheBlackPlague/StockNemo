@@ -55,13 +55,6 @@ public class MoveSearch
         TimeControl = timeControl;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public OrderedMoveEntry SearchAndReturn(int depth)
-    {
-        AbSearch(Board, 0, depth, NEG_INFINITY, POS_INFINITY);
-        return PvTable.Get(0);
-    }
-    
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public OrderedMoveEntry IterativeDeepening(int selectedDepth)
     {
