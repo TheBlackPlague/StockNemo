@@ -7,6 +7,9 @@ namespace Backend.Engine;
 
 public static class Evaluation
 {
+
+    private const int BISHOP_PAIR_EARLY = 25;
+    private const int BISHOP_PAIR_LATE = 50;
     
     // ReSharper disable once InconsistentNaming
     public static readonly MaterialDevelopmentTable MDT = new();
@@ -20,18 +23,26 @@ public static class Evaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int NormalEvaluation(Board board)
     {
+        int earlyGameEvaluation = board.MaterialDevelopmentEvaluationEarly;
+        int lateGameEvaluation = board.MaterialDevelopmentEvaluationLate;
+        
         int phase = 0;
+
+        int whiteBishopCount = board.All(Piece.Bishop, PieceColor.White).Count;
+        int blackBishopCount = board.All(Piece.Bishop, PieceColor.Black).Count;
         
         phase += board.All(Piece.Knight, PieceColor.White).Count + board.All(Piece.Knight, PieceColor.Black).Count;
-        phase += board.All(Piece.Bishop, PieceColor.White).Count + board.All(Piece.Bishop, PieceColor.Black).Count;
+        phase += whiteBishopCount + blackBishopCount;
         phase += (board.All(Piece.Rook, PieceColor.White).Count + board.All(Piece.Rook, PieceColor.Black).Count) * 2;
         phase += (board.All(Piece.Queen, PieceColor.White).Count + board.All(Piece.Queen, PieceColor.Black).Count) * 4;
+
+        earlyGameEvaluation += ((whiteBishopCount >> 1) - (blackBishopCount >> 1)) * BISHOP_PAIR_EARLY;
+        lateGameEvaluation += ((whiteBishopCount >> 1) - (blackBishopCount >> 1)) * BISHOP_PAIR_LATE;
 
         phase = 24 - phase;
         phase = (phase * 256 + 24 / 2) / 24;
 
-        return (board.MaterialDevelopmentEvaluationEarly * (256 - phase) + 
-                board.MaterialDevelopmentEvaluationLate * phase) / 256;
+        return (earlyGameEvaluation * (256 - phase) + lateGameEvaluation * phase) / 256;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
