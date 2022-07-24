@@ -42,6 +42,8 @@ public class MoveSearch
     private readonly MoveSearchEffortTable SearchEffort = new();
     private readonly PrincipleVariationTable PvTable = new();
 
+    private readonly int[] PositionalEvaluationStore = new int[128];
+
     private readonly EngineBoard Board;
     private readonly TimeControl TimeControl;
     private readonly MoveTranspositionTable Table;
@@ -270,12 +272,26 @@ public class MoveSearch
         PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
         Square kingSq = board.KingLoc(board.ColorToMove);
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
+        bool improving = false;
         
         if (!inCheck) {
             // We should use the evaluation from our transposition table if we had a hit.
             // As that evaluation isn't truly static and may have been from a previous deep search.
             int positionalEvaluation = transpositionHit ? 
                 transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
+            
+            // Also store the evaluation to later check if it improved.
+            PositionalEvaluationStore.AA(plyFromRoot) = positionalEvaluation;
+            
+            // Roughly estimate whether the deeper search improves the position or not.
+            improving = plyFromRoot >= 2 && positionalEvaluation >= PositionalEvaluationStore.AA(plyFromRoot - 2);
+
+            #region Reverse Futility Pruning
+
+            if (depth < 7 && Math.Abs(beta) < MATE &&
+                positionalEvaluation - 67 * depth + 76 * improving.ToByte() >= beta) return beta;
+
+            #endregion
             
             #region Razoring
             
