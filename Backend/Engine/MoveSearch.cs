@@ -30,6 +30,9 @@ public class MoveSearch
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
 
+    private const int REVERSE_FUTILITY_D = 67;
+    private const int REVERSE_FUTILITY_I = 76;
+
     private const float TIME_TO_DEPTH_THRESHOLD = 0.2f;
 
     public int TableCutoffCount { get; private set; }
@@ -289,7 +292,8 @@ public class MoveSearch
             #region Reverse Futility Pruning
 
             if (depth < 7 && Math.Abs(beta) < MATE &&
-                positionalEvaluation - 67 * depth + 76 * improving.ToByte() >= beta) return beta;
+                positionalEvaluation - REVERSE_FUTILITY_D * depth + REVERSE_FUTILITY_I * improving.ToByte() >= beta) 
+                return beta;
 
             #endregion
             
