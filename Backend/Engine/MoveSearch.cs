@@ -27,6 +27,8 @@ public class MoveSearch
     private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
 
+    private const int LMP_DEPTH_THRESHOLD = 4;
+
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
 
@@ -381,6 +383,7 @@ public class MoveSearch
         int nextDepth = depth - 1;
             
         int i = 0;
+        int quietMoveCounter = 0;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -391,6 +394,17 @@ public class MoveSearch
             OrderedMoveEntry move = moveList[i];
 
             bool quietMove = !board.All(oppositeColor)[move.To];
+            quietMoveCounter += quietMove.ToByte();
+
+            #region Late Move Pruning
+
+            if (notRootNode && bestEvaluation > NEG_INFINITY && quietMove && !inCheck &&
+                depth <= LMP_DEPTH_THRESHOLD && quietMoveCounter > 3 + (depth << 2)) {
+                i++;
+                continue;
+            }
+            
+            #endregion
 
             // Make the move.
             RevertMove rv = board.Move(ref move);
