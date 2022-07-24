@@ -384,6 +384,8 @@ public class MoveSearch
             
         int i = 0;
         int quietMoveCounter = 0;
+        int lmpQuietThreshold = 3 + depth * depth;
+        bool pvNode = beta - alpha > 1;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -398,12 +400,12 @@ public class MoveSearch
 
             #region Late Move Pruning
 
-            if (notRootNode && bestEvaluation > NEG_INFINITY && quietMove && !inCheck &&
-                depth <= LMP_DEPTH_THRESHOLD && quietMoveCounter > 3 + (depth << 2)) {
+            if (notRootNode && quietMove && !inCheck && !pvNode && bestEvaluation > NEG_INFINITY &&
+                depth <= LMP_DEPTH_THRESHOLD && quietMoveCounter > lmpQuietThreshold) {
                 i++;
                 continue;
             }
-            
+
             #endregion
 
             // Make the move.
