@@ -38,7 +38,6 @@ public class MoveSearch
     public int TotalNodeSearchCount { get; private set; }
 
     private static readonly LogarithmicReductionDepthTable ReductionDepthTable = new();
-    private static readonly LateMovePruningTable LateMovePruningTable = new();
 
     private readonly HistoryTable HistoryTable = new();
     private readonly KillerMoveTable KillerMoveTable = new();
@@ -101,7 +100,6 @@ public class MoveSearch
         }
 
         int research = 0;
-        SearchData data = new();
         while (true) {
             #region Out of Time
 
@@ -128,7 +126,7 @@ public class MoveSearch
             
             // Get our best evaluation so far so we can decide whether we need to do a research or not.
             // Researches are reasonably fast thanks to transposition tables.
-            int bestEvaluation = AbSearch(board, 0, depth, alpha, beta, data);
+            int bestEvaluation = AbSearch(board, 0, depth, alpha, beta);
 
             #region Modify Window
 
@@ -151,7 +149,7 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private int AbSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta, SearchData shallowData)
+    private int AbSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
     {
         #region Out of Time
 
@@ -269,23 +267,18 @@ public class MoveSearch
         
         // Calculate deeper ply.
         int nextPlyFromRoot = plyFromRoot + 1;
-        
-        // Initialize Search Data.
-        SearchData data = new();
-        data.SetPrevious(shallowData);
 
         // Determine whether we should prune moves.
         PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
         Square kingSq = board.KingLoc(board.ColorToMove);
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
-        bool improving = false;
         
         if (!inCheck) {
             // We should use the evaluation from our transposition table if we had a hit.
             // As that evaluation isn't truly static and may have been from a previous deep search.
-            int positionalEvaluation = data.PositionalEvaluation = transpositionHit ? 
+            int positionalEvaluation = transpositionHit ? 
                 transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
-
+            
             #region Razoring
             
             if (depth == 1 && positionalEvaluation + RAZORING_EVALUATION_THRESHOLD < alpha)
@@ -310,7 +303,7 @@ public class MoveSearch
                 // this branch earlier.
                 // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
                 // QSearch).
-                int evaluation = -AbSearch(board, nextPlyFromRoot, reductionDepth, -beta, -beta + 1, data);
+                int evaluation = -AbSearch(board, nextPlyFromRoot, reductionDepth, -beta, -beta + 1);
                 // Undo the null move so we can get back to original state of the board.
                 board.UndoNullMove(rv);
         
@@ -319,8 +312,6 @@ public class MoveSearch
             }
 
             #endregion
-
-            improving = plyFromRoot >= 2 && positionalEvaluation >= shallowData.GetPrevious(2).PositionalEvaluation;
         }
 
         #region Move List Creation
@@ -390,9 +381,9 @@ public class MoveSearch
         
         // Calculate next iteration variables before getting into the loop.
         int nextDepth = depth - 1;
-
-        int lateMovePruningI = LateMovePruningTable[improving.ToByte(), depth];
+            
         int i = 0;
+        int quietMoveCounter = 0;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -403,10 +394,12 @@ public class MoveSearch
             OrderedMoveEntry move = moveList[i];
 
             bool quietMove = !board.All(oppositeColor)[move.To];
+            quietMoveCounter += quietMove.ToByte();
 
             #region Late Move Pruning
 
-            if (notRootNode && bestEvaluation > -MATE && depth <= 6 && i > lateMovePruningI) {
+            if (notRootNode && bestEvaluation > NEG_INFINITY && quietMove && !inCheck &&
+                depth <= LMP_DEPTH_THRESHOLD && quietMoveCounter > 3 + (depth << 2)) {
                 i++;
                 continue;
             }
@@ -432,8 +425,7 @@ public class MoveSearch
                 
                 // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                 // our opponent will obviously be bad for us.
-                evaluation = 
-                    -AbSearch(board, nextPlyFromRoot, depth - reducedDepth, -alpha - 1, -alpha, data);
+                evaluation = -AbSearch(board, nextPlyFromRoot, depth - reducedDepth, -alpha - 1, -alpha);
                 
                 // In the case we couldn't apply LMR, we just set our evaluation to a value greater than alpha to force
                 // a full depth search.
@@ -444,7 +436,7 @@ public class MoveSearch
             if (evaluation > alpha) 
                 // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                 // our opponent will obviously be bad for us.
-                evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha, data);
+                evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
 
             #endregion
                 
