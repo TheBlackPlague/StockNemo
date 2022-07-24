@@ -27,7 +27,7 @@ public class MoveSearch
     private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
 
-    private const int LMP_DEPTH_THRESHOLD = 4;
+    private const int LMP_DEPTH_THRESHOLD = 3;
 
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
