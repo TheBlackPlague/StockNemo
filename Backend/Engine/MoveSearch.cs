@@ -320,7 +320,7 @@ public class MoveSearch
 
             #endregion
 
-            improving = plyFromRoot >= 2 && positionalEvaluation >= shallowData.GetPrevious(1).PositionalEvaluation;
+            improving = plyFromRoot >= 2 && positionalEvaluation >= shallowData.GetPrevious(2).PositionalEvaluation;
         }
 
         #region Move List Creation
