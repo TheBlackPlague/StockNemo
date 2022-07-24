@@ -32,6 +32,7 @@ public class MoveSearch
 
     private const int REVERSE_FUTILITY_D = 67;
     private const int REVERSE_FUTILITY_I = 76;
+    private const int REVERSE_FUTILITY_DEPTH_THRESHOLD = 7;
 
     private const float TIME_TO_DEPTH_THRESHOLD = 0.2f;
 
@@ -291,7 +292,7 @@ public class MoveSearch
 
             #region Reverse Futility Pruning
 
-            if (depth < 7 && Math.Abs(beta) < MATE &&
+            if (depth < REVERSE_FUTILITY_DEPTH_THRESHOLD && Math.Abs(beta) < MATE &&
                 positionalEvaluation - REVERSE_FUTILITY_D * depth + REVERSE_FUTILITY_I * improving.ToByte() >= beta) 
                 return beta;
 
