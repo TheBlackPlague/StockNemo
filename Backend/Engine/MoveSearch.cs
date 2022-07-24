@@ -27,6 +27,8 @@ public class MoveSearch
     private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
 
+    private const int LMP_DEPTH_THRESHOLD = 3;
+
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
 
@@ -83,7 +85,7 @@ public class MoveSearch
         return bestMove;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int AspirationSearch(EngineBoard board, int depth, int previousEvaluation)
     {
         // Set base window size.
@@ -381,6 +383,11 @@ public class MoveSearch
         int nextDepth = depth - 1;
             
         int i = 0;
+        int quietMoveCounter = 0;
+        int lmpQuietThreshold = 3 + depth * depth;
+        bool pvNode = beta - alpha > 1;
+        bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
+        bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -391,6 +398,14 @@ public class MoveSearch
             OrderedMoveEntry move = moveList[i];
 
             bool quietMove = !board.All(oppositeColor)[move.To];
+            quietMoveCounter += quietMove.ToByte();
+
+            #region Late Move Pruning
+
+            if (quietMove && move.Promotion == Promotion.None && lmp && bestEvaluation > NEG_INFINITY && 
+                quietMoveCounter > lmpQuietThreshold) break;
+
+            #endregion
 
             // Make the move.
             RevertMove rv = board.Move(ref move);
@@ -400,7 +415,7 @@ public class MoveSearch
             
             int evaluation;
             
-            if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
+            if (i >= LMR_FULL_SEARCH_THRESHOLD && lmr) {
                 // If we're past the threshold where should search each move fully, not in any immediate danger by
                 // opponent, and above the depth threshold (as to avoid inaccurate evaluations), we should reduce how
                 // deep we're searching.
@@ -461,7 +476,7 @@ public class MoveSearch
         return bestEvaluation;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int QSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
     {
         #region Out of Time
