@@ -63,6 +63,7 @@
     * Material Development Evaluation
       * Material Evaluation
       * Piece Development Evaluation
+    * Bishop Pair Evaluation
     * Tapered Evaluation
       * Early Game
       * Late Game
@@ -100,6 +101,7 @@
         * Three-ply Depth Reduction
         * Non-Razoring Depth
       * Fail-soft Alpha Beta Pruning
+        * Late Move Reduction
     * Quiescence Search (QSearch)
       * Static Evaluation
         * Beta Cutoff
