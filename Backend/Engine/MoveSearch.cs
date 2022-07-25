@@ -207,6 +207,8 @@ public class MoveSearch
 
         #endregion
 
+        bool pvNode = alpha - beta > 1;
+
         #region Transposition Table Lookup
 
         ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
@@ -220,7 +222,7 @@ public class MoveSearch
             transpositionMove = storedEntry.BestMove;
             transpositionHit = true;
 
-            if (storedEntry.Depth >= depth && plyFromRoot != 0) {
+            if (storedEntry.Depth >= depth && notRootNode && !pvNode) {
                 // If it came from a higher depth search than our current depth, it means the results are definitely
                 // more trustworthy than the ones we could achieve at this depth.
                 switch (storedEntry.Type) {
@@ -271,7 +273,7 @@ public class MoveSearch
         Square kingSq = board.KingLoc(board.ColorToMove);
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
         
-        if (!inCheck) {
+        if (!inCheck && !pvNode) {
             // We should use the evaluation from our transposition table if we had a hit.
             // As that evaluation isn't truly static and may have been from a previous deep search.
             int positionalEvaluation = transpositionHit ? 
@@ -416,14 +418,27 @@ public class MoveSearch
                 // In the case we couldn't apply LMR, we just set our evaluation to a value greater than alpha to force
                 // a full depth search.
             } else evaluation = alpha + 1;
+            
+            #endregion
+            
+            #region Principle Variation Search
+            
+            if (evaluation > alpha) {
+                // In the case that we cannot do LMR (being unsafe at this depth or for this move) or LMR fails, we
+                // should do a normal principle variation search. Thanks to transposition tables, this research is
+                // reasonably fast.
+                evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha);
 
-            // In the case that we cannot do LMR (being unsafe at this depth or for this move) or LMR fails, we should
-            // do a full depth search. Thanks to transposition tables, the full depth search is reasonably fast.
-            if (evaluation > alpha) 
-                // Evaluate position by searching deeper and negating the result. An evaluation that's good for
-                // our opponent will obviously be bad for us.
-                evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
-
+                if (evaluation > alpha && evaluation < beta)
+                    // In the case that the evaluation is good enough to change our alpha, but not good enough to cause
+                    // a beta cutoff, it's likely we're on a principle variation node. In such a case, we should do a
+                    // full proper research. Thanks to transposition tables, this research is reasonably fast.
+                    
+                    // Evaluate position by searching deeper and negating the result. An evaluation that's good for
+                    // our opponent will obviously be bad for us.
+                    evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+            }
+            
             #endregion
                 
             // Undo the move.
