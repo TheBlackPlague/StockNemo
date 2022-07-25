@@ -292,18 +292,17 @@ public class MoveSearch
 
             #region Reverse Futility Pruning
 
-            if (depth < REVERSE_FUTILITY_DEPTH_THRESHOLD && Math.Abs(beta) < MATE) {
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (depth < REVERSE_FUTILITY_DEPTH_THRESHOLD && Math.Abs(beta) < MATE &&
                 // If our depth is less than our threshold and our beta is less than mate on each end of the number
                 // line, then attempting reverse futility pruning is safe.
                 
-                // We calculate a positional evaluation with respect to our margin: D * depth + I * improving.
-                int marginedPositionalEvaluation = 
-                    positionalEvaluation - REVERSE_FUTILITY_D * depth + REVERSE_FUTILITY_I * improving.ToByte();
-                
-                // If our margined positional evaluation happens to be greater than beta, then we fail soft and return
-                // the margined positional evaluation.
-                if (marginedPositionalEvaluation >= beta) return marginedPositionalEvaluation;
-            }
+                // We calculate margined positional evaluation as the difference between the current positional
+                // evaluation and a margin: D * depth + I * improving.
+                // If it is greater or equal than beta, then in most cases than not, it is futile to further evaluate
+                // this tree and hence better to just return early.
+                positionalEvaluation - REVERSE_FUTILITY_D * depth + REVERSE_FUTILITY_I * improving.ToByte() >= beta)
+                return beta;
 
             #endregion
             
