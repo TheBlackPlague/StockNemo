@@ -42,7 +42,6 @@ public class MoveSearch
     public int TotalNodeSearchCount { get; private set; }
 
     private static readonly LogarithmicReductionDepthTable ReductionDepthTable = new();
-    private static readonly LateMovePruningTable LateMovePruningTable = new();
 
     private readonly HistoryTable HistoryTable = new();
     private readonly KillerMoveTable KillerMoveTable = new();
@@ -413,7 +412,10 @@ public class MoveSearch
         int nextDepth = depth - 1;
             
         int i = 0;
-        int lmrBound = LateMovePruningTable[improving, depth];
+        int quietMoveCounter = 0;
+        int lmpQuietThreshold = 3 + depth * depth;
+        bool pvNode = beta - alpha > 1;
+        bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
         bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
@@ -425,10 +427,12 @@ public class MoveSearch
             OrderedMoveEntry move = moveList[i];
 
             bool quietMove = !board.All(oppositeColor)[move.To];
+            quietMoveCounter += quietMove.ToByte();
 
             #region Late Move Pruning
 
-            if (notRootNode && bestEvaluation > -MATE && !inCheck && depth <= 6 && i > lmrBound) break;
+            if (quietMove && move.Promotion == Promotion.None && lmp && bestEvaluation > NEG_INFINITY && 
+                quietMoveCounter > lmpQuietThreshold) break;
 
             #endregion
 
