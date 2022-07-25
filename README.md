@@ -1,4 +1,3 @@
-# StockNemo
 
 <h1 align="center">
 	<img
@@ -14,8 +13,6 @@
 <p align="center">
 	<strong>
 		<a href="https://github.com/TheBlackPlague/StockNemo/releases">Releases</a>
-        •
-		<a href="https://lichess.org/@/StockNemo">Lichess</a>
 	</strong>
 </p>
 
@@ -30,6 +27,12 @@
 <img
         alt="Docker Image"
         src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white"
+>
+</a>
+<a href="https://lichess.org/@/StockNemo">
+<img
+        alt="Lichess"
+        src="https://img.shields.io/badge/Play%20on%20LICHESS-v3.0.0.1-green?logo=lichess&style=for-the-badge"
 >
 </a>
 </p>
