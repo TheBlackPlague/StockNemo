@@ -30,9 +30,9 @@ public class MoveSearch
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
 
-    private const int REVERSE_FUTILITY_D = 67;
-    private const int REVERSE_FUTILITY_I = 76;
-    private const int REVERSE_FUTILITY_DEPTH_THRESHOLD = 7;
+    private const int REVERSE_FUTILITY_D = 70;
+    private const int REVERSE_FUTILITY_I = 80;
+    private const int REVERSE_FUTILITY_DEPTH_THRESHOLD = 8;
 
     private const float TIME_TO_DEPTH_THRESHOLD = 0.2f;
 
