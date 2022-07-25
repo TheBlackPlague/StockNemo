@@ -30,6 +30,10 @@ public class MoveSearch
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
 
+    private const int REVERSE_FUTILITY_D = 67;
+    private const int REVERSE_FUTILITY_I = 76;
+    private const int REVERSE_FUTILITY_DEPTH_THRESHOLD = 7;
+
     private const float TIME_TO_DEPTH_THRESHOLD = 0.2f;
 
     public int TableCutoffCount { get; private set; }
@@ -41,6 +45,8 @@ public class MoveSearch
     private readonly KillerMoveTable KillerMoveTable = new();
     private readonly MoveSearchEffortTable SearchEffort = new();
     private readonly PrincipleVariationTable PvTable = new();
+
+    private readonly int[] PositionalEvaluationStore = new int[128];
 
     private readonly EngineBoard Board;
     private readonly TimeControl TimeControl;
@@ -272,12 +278,35 @@ public class MoveSearch
         PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
         Square kingSq = board.KingLoc(board.ColorToMove);
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
+        bool improving = false;
         
         if (!inCheck && !pvNode) {
             // We should use the evaluation from our transposition table if we had a hit.
             // As that evaluation isn't truly static and may have been from a previous deep search.
             int positionalEvaluation = transpositionHit ? 
                 transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
+            
+            // Also store the evaluation to later check if it improved.
+            PositionalEvaluationStore.AA(plyFromRoot) = positionalEvaluation;
+            
+            // Roughly estimate whether the deeper search improves the position or not.
+            improving = plyFromRoot >= 2 && positionalEvaluation >= PositionalEvaluationStore.AA(plyFromRoot - 2);
+
+            #region Reverse Futility Pruning
+
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (depth < REVERSE_FUTILITY_DEPTH_THRESHOLD && Math.Abs(beta) < MATE &&
+                // If our depth is less than our threshold and our beta is less than mate on each end of the number
+                // line, then attempting reverse futility pruning is safe.
+                
+                // We calculate margined positional evaluation as the difference between the current positional
+                // evaluation and a margin: D * depth + I * improving.
+                // If it is greater or equal than beta, then in most cases than not, it is futile to further evaluate
+                // this tree and hence better to just return early.
+                positionalEvaluation - REVERSE_FUTILITY_D * depth + REVERSE_FUTILITY_I * improving.ToByte() >= beta)
+                return beta;
+
+            #endregion
             
             #region Razoring
             
