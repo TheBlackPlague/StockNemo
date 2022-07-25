@@ -290,9 +290,20 @@ public class MoveSearch
             // Roughly estimate whether the deeper search improves the position or not.
             improving = plyFromRoot >= 2 && positionalEvaluation >= PositionalEvaluationStore.AA(plyFromRoot - 2);
 
+            #region Razoring
+            
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (depth == 1 && positionalEvaluation + RAZORING_EVALUATION_THRESHOLD < alpha)
+                // If after any move, the positional evaluation of the resulting position with some added threshold is
+                // less than alpha, then the opponent will be able to find at least one move that improves their
+                // position.
+                // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
+                return QSearch(board, plyFromRoot, 15, alpha, beta);
+            
+            #endregion
+            
             #region Reverse Futility Pruning
 
-            // ReSharper disable once ConvertIfStatementToSwitchStatement
             if (depth < REVERSE_FUTILITY_DEPTH_THRESHOLD && Math.Abs(beta) < MATE &&
                 // If our depth is less than our threshold and our beta is less than mate on each end of the number
                 // line, then attempting reverse futility pruning is safe.
@@ -304,17 +315,6 @@ public class MoveSearch
                 positionalEvaluation - REVERSE_FUTILITY_D * depth + REVERSE_FUTILITY_I * improving.ToByte() >= beta)
                 return beta;
 
-            #endregion
-            
-            #region Razoring
-            
-            if (depth == 1 && positionalEvaluation + RAZORING_EVALUATION_THRESHOLD < alpha)
-                // If after any move, the positional evaluation of the resulting position with some added threshold is
-                // less than alpha, then the opponent will be able to find at least one move that improves their
-                // position.
-                // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
-                return QSearch(board, plyFromRoot, 15, alpha, beta);
-            
             #endregion
             
             #region Null Move Pruning
