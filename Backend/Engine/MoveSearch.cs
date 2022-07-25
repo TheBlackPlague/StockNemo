@@ -292,9 +292,11 @@ public class MoveSearch
 
             #region Reverse Futility Pruning
 
-            if (depth < REVERSE_FUTILITY_DEPTH_THRESHOLD && Math.Abs(beta) < MATE &&
-                positionalEvaluation - REVERSE_FUTILITY_D * depth + REVERSE_FUTILITY_I * improving.ToByte() >= beta) 
-                return beta;
+            if (depth < REVERSE_FUTILITY_DEPTH_THRESHOLD && Math.Abs(beta) < MATE) {
+                int marginedPositionalEvaluation = 
+                    positionalEvaluation - REVERSE_FUTILITY_D * depth + REVERSE_FUTILITY_I * improving.ToByte();
+                if (marginedPositionalEvaluation >= beta) return marginedPositionalEvaluation;
+            }
 
             #endregion
             
