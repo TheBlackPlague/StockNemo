@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/runtime:6.0 AS dotnet
+﻿FROM mcr.microsoft.com/dotnet/runtime:6.0 AS dotnetsdk
 
 RUN apt-get update -y && apt-get install -y wget git libqt5core5a python3 python3-pip
 
@@ -32,8 +32,8 @@ FROM nvidia/cuda:11.0-runtime-ubuntu20.04 AS cuda
 
 RUN mkdir Tune && mkdir cutechess-cli
 
-COPY --from=dotnet ["Tune/..", "Tune/.."]
-COPY --from=dotnet ["cutechess-cli/..", "cutechess-cli/.."]
+COPY --from=dotnetsdk ["Tune", "Tune"]
+COPY --from=dotnetsdk ["cutechess-cli", "cutechess-cli"]
 
 RUN export PATH=$PATH:/cutechess-cli
 
