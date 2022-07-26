@@ -2,13 +2,13 @@
     
     "engines": [
         {
-            "command": "StockNemoTUNE --uci=True",
+            "command": "StockNemoTUNE",
             "fixed_parameters": {
                 "Hash": 16
             }
         },
         {
-            "command": "StockNemoNOTUNE --uci=True",
+            "command": "StockNemoNOTUNE",
             "fixed_parameters": {
                 "Hash": 16
             }
