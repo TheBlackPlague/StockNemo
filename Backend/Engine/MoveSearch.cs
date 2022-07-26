@@ -458,7 +458,7 @@ public class MoveSearch
                 // reasonably fast.
                 evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha);
 
-                if (pvNode && evaluation > alpha && evaluation < beta)
+                if (evaluation > alpha && evaluation < beta)
                     // In the case that the evaluation is good enough to change our alpha, but not good enough to cause
                     // a beta cutoff, it's likely we're on a principle variation node. In such a case, we should do a
                     // full proper research. Thanks to transposition tables, this research is reasonably fast.
