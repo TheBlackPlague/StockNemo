@@ -426,58 +426,62 @@ public class MoveSearch
             // Make the move.
             RevertMove rv = board.Move(ref move);
             TotalNodeSearchCount++;
-
-            #region Late Move Reduction
             
             int evaluation;
             
-            if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
-                // If we're past the threshold where should search each move fully, not in any immediate danger by
-                // opponent, and above the depth threshold (as to avoid inaccurate evaluations), we should reduce how
-                // deep we're searching.
+            if (i == 0)
+                // If we haven't searched any moves, we should do a full depth search without any reductions.
+                // Without a full depth search beforehand, there's no way to guarantee principle variation search being
+                // safe.
+                evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+            else {
+                // Otherwise, to speed up search, we should try applying certain reductions to see if we can speed up
+                // the search. Moreover, even if those reductions are still unsafe, we can still save time by trying
+                // search inside our principle variation window. In most cases, this will allow us to get a beta cutoff
+                // earlier.
                 
-                // Evaluate an initial reduced depth depending on the number of moves played and the depth currently
-                // being searched.
-                int reducedDepth = ReductionDepthTable[depth, i];
+                #region Late Move Reduction
                 
-                // Evaluate position by searching deeper and negating the result. An evaluation that's good for
-                // our opponent will obviously be bad for us.
-                evaluation = -AbSearch(board, nextPlyFromRoot, depth - reducedDepth, -alpha - 1, -alpha);
+                if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
+                    // If we're past the move count and depth threshold where we can usually safely apply LMR and we
+                    // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
+
+                    // Determine what the reduced depth will be depending on the current depth and number of moves
+                    // played.
+                    // Formula: depth - max(depth * ln(i), 1)
+                    int reducedDepth = depth - ReductionDepthTable[depth, i];
                 
-                // In the case we couldn't apply LMR, we just set our evaluation to a value greater than alpha to force
-                // a full depth search.
-            } else evaluation = alpha + 1;
-            
-            #endregion
-            
-            #region Principle Variation Search
-            
-            if (evaluation > alpha) {
-                if (i == 0)
-                    // If we haven't searched any moves, we should do a full depth search.
-                    
                     // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                     // our opponent will obviously be bad for us.
-                    evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
-                else {
-                    // In the case that we cannot do LMR (being unsafe at this depth or for this move) or LMR fails, we
-                    // should do a normal principle variation search. Thanks to transposition tables, this research is
-                    // reasonably fast.
+                    evaluation = -AbSearch(board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha);
+                
+                    // In the case that LMR fails, our evaluation will be greater than alpha which will force a
+                    // principle variation research. However, in the case we couldn't apply LMR (due to safety reasons,
+                    // setting the evaluation to be a value greater than alpha allows us to force the principle
+                    // variation search.
+                } else evaluation = alpha + 1;
+                
+                #endregion
+                
+                #region Principle Variation Search
+            
+                if (evaluation > alpha) {
+                    // If we couldn't do LMR because it was unsafe or if LMR failed, then we should try researching on
+                    // the principle variation window. If this is a research, it'll be nearly no impact thanks to
+                    // transposition tables.
                     evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha);
 
                     if (evaluation > alpha && evaluation < beta)
-                        // In the case that the evaluation is good enough to change our alpha, but not good enough to cause
-                        // a beta cutoff, it's likely we're on a principle variation node. In such a case, we should do a
-                        // full proper research. Thanks to transposition tables, this research is reasonably fast.
-                    
-                        // Evaluate position by searching deeper and negating the result. An evaluation that's good for
-                        // our opponent will obviously be bad for us.
+                        // If our evaluation was good enough to change our alpha but not our beta, it means we're on a
+                        // principle variation node. Essentially: beta - alpha > 1.
+                        // This means this is our best move from the search, and it isn't too good to be deemed
+                        // an unlikely path. Thus, we should evaluate it clearly using a full-window research.
                         evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 }
+            
+                #endregion
             }
             
-            #endregion
-                
             // Undo the move.
             board.UndoMove(ref rv);
 
