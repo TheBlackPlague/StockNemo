@@ -30,8 +30,6 @@ RUN mv /Tune/StockNemo /Tune/StockNemoTUNE
 
 FROM nvidia/cuda:11.0-runtime-ubuntu20.04 AS cuda
 
-RUN mkdir Tune && mkdir cutechess-cli
-
 COPY --from=dotnetsdk ["Tune", "Tune"]
 COPY --from=dotnetsdk ["cutechess-cli", "cutechess-cli"]
 
@@ -41,4 +39,3 @@ WORKDIR /Tune
 
 RUN python -m pip install pip --upgrade && python -m pip install chess-tuning-tools
 RUN tune local -c tune.json
-
