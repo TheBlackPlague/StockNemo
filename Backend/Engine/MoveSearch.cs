@@ -322,9 +322,9 @@ public class MoveSearch
             #region Null Move Pruning
 
             // Reduction depth for null move pruning.
-            int reductionDepth = depth - NULL_MOVE_REDUCTION;
+            int reductionDepth = depth - TunedSearchParameters.NullMoveReduction;
         
-            if (notRootNode && depth > NULL_MOVE_DEPTH) {
+            if (notRootNode && depth > TunedSearchParameters.NullMoveDepth) {
                 // For null move pruning, we give the turn to the opponent and let them make the move.
                 RevertNullMove rv = board.NullMove();
                 // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.

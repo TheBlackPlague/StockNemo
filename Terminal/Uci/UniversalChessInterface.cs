@@ -44,6 +44,8 @@ public static class UniversalChessInterface
         Console.WriteLine("id name " + NAME);
         Console.WriteLine("id author " + AUTHOR);
         Console.WriteLine("option name Hash type spin default 16 min 4 max 512");
+        Console.WriteLine("option name NullMoveReduction type spin default 0 max 16");
+        Console.WriteLine("option name NullMoveDepth type spin default 0 max 16");
         
         // Let GUI know engine is ready in UCI mode.
         Console.WriteLine("uciok");
@@ -66,6 +68,12 @@ public static class UniversalChessInterface
                 TranspositionTable = null;
                 TranspositionTable = MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb);
                 Busy = false;
+                break;
+            case "NullMoveReduction":
+                TunedSearchParameters.NullMoveReduction = int.Parse(args[4]);
+                break;
+            case "NullMoveDepth":
+                TunedSearchParameters.NullMoveDepth = int.Parse(args[4]);
                 break;
         }
     }
