@@ -1,17 +1,10 @@
-﻿FROM nvidia/cuda:11.7.0-runtime-ubuntu20.04 AS base
+﻿FROM mcr.microsoft.com/dotnet/runtime:6.0 AS dotnet
 
-RUN apt-get update -y && apt-get install -y wget
-
-RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
-    sudo dpkg -i packages-microsoft-prod.deb && \
-    rm packages-microsoft-prod.deb 
-
-RUN apt-get update -y && apt-get install -y apt-transport-https dotnet-sdk-6.0 git libqt5core5a python3 python3-pip
+RUN apt-get update -y && apt-get install -y wget git libqt5core5a python3 python3-pip
 
 RUN wget https://github.com/cutechess/cutechess/releases/download/1.2.0/cutechess-cli-1.2.0-linux64.tar.gz
 
 RUN tar -xf cutechess-cli-1.2.0-linux64.tar.gz
-RUN export PATH=$PATH:/cutechess-cli
 
 RUN mkdir Tune
 
@@ -34,6 +27,15 @@ RUN git checkout $PATCH
 RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /Tune  \
     /p:PublishSingleFile=true --self-contained true
 RUN mv /Tune/StockNemo /Tune/StockNemoTUNE
+
+FROM nvidia/cuda:11.0-runtime-ubuntu20.04 AS cuda
+
+RUN mkdir Tune && mkdir cutechess-cli
+
+COPY --from=dotnet ["Tune/..", "Tune/.."]
+COPY --from=dotnet ["cutechess-cli/..", "cutechess-cli/.."]
+
+RUN export PATH=$PATH:/cutechess-cli
 
 WORKDIR /Tune
 
