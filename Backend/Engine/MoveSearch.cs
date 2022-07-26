@@ -432,8 +432,11 @@ public class MoveSearch
 
             #region Late Move Pruning
 
-            if (quietMove && move.Promotion == Promotion.None && lmp && bestEvaluation > NEG_INFINITY && 
-                quietMoveCounter > lmpQuietThreshold) break;
+            if (lmp && bestEvaluation > NEG_INFINITY && quietMoveCounter > lmpQuietThreshold) 
+                // If we are past a certain threshold and we have searched the required quiet moves for this depth for
+                // pruning to be relatively safe, we can avoid searching any more moves since the likely best move
+                // will have been determined by now.
+                break;
 
             #endregion
 
