@@ -453,19 +453,27 @@ public class MoveSearch
             #region Principle Variation Search
             
             if (evaluation > alpha) {
-                // In the case that we cannot do LMR (being unsafe at this depth or for this move) or LMR fails, we
-                // should do a normal principle variation search. Thanks to transposition tables, this research is
-                // reasonably fast.
-                evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha);
-
-                if (evaluation > alpha && evaluation < beta)
-                    // In the case that the evaluation is good enough to change our alpha, but not good enough to cause
-                    // a beta cutoff, it's likely we're on a principle variation node. In such a case, we should do a
-                    // full proper research. Thanks to transposition tables, this research is reasonably fast.
+                if (i == 0)
+                    // If we haven't searched any moves, we should do a full depth search.
                     
                     // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                     // our opponent will obviously be bad for us.
                     evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+                else {
+                    // In the case that we cannot do LMR (being unsafe at this depth or for this move) or LMR fails, we
+                    // should do a normal principle variation search. Thanks to transposition tables, this research is
+                    // reasonably fast.
+                    evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha);
+
+                    if (evaluation > alpha && evaluation < beta)
+                        // In the case that the evaluation is good enough to change our alpha, but not good enough to cause
+                        // a beta cutoff, it's likely we're on a principle variation node. In such a case, we should do a
+                        // full proper research. Thanks to transposition tables, this research is reasonably fast.
+                    
+                        // Evaluate position by searching deeper and negating the result. An evaluation that's good for
+                        // our opponent will obviously be bad for us.
+                        evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+                }
             }
             
             #endregion
