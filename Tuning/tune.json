@@ -1,5 +1,4 @@
 ﻿{
-    
     "engines": [
         {
             "command": "StockNemoTUNE",
@@ -14,37 +13,29 @@
             }
         }
     ],
-    
     "parameter_ranges": {
         "NullMoveReduction": "Integer(0, 16)",
         "NullMoveDepth": "Integer(0, 16)"
     },
-    
-    "engine1_tc": "10+0.1",
-    "engine2_tc": "10+0.1",
-    
+    "engine1_tc": "5+0.05",
+    "engine2_tc": "5+0.05",
     "opening_file": "UHO_XXL_+0.90_+1.19.epd",
-    
     "rounds": 128,
     "concurrency": 64,
-    
     "adjudicate_draws": true,
     "draw_score": 10,
     "draw_movenumber": 40,
     "draw_movecount": 4,
-    
     "adjudicate_resign": true,
     "resign_score": 400,
     "resign_movecount": 4,
-    
-    "result_every": 1,
-    "plot_every": 1,
+    "result_every": 500,
+    "plot_every": 500,
     "plot_path": "plots",
-    
     "acq_function": "pvrs",
     "acq_function_samples": 0,
     "gp_burnin": 3,
     "gp_initial_burnin": 200,
+    "n_initial_points": 32,
     "random_seed": 836717
-    
 }
