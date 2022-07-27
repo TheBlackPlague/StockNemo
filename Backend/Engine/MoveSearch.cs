@@ -27,6 +27,8 @@ public class MoveSearch
     private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
 
+    private const int LMP_DEPTH_THRESHOLD = 3;
+
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
 
@@ -89,7 +91,7 @@ public class MoveSearch
         return bestMove;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int AspirationSearch(EngineBoard board, int depth, int previousEvaluation)
     {
         // Set base window size.
@@ -412,6 +414,10 @@ public class MoveSearch
         int nextDepth = depth - 1;
             
         int i = 0;
+        int quietMoveCounter = 0;
+        int lmpQuietThreshold = 3 + depth * depth;
+        bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
+        bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -422,6 +428,17 @@ public class MoveSearch
             OrderedMoveEntry move = moveList[i];
 
             bool quietMove = !board.All(oppositeColor)[move.To];
+            quietMoveCounter += quietMove.ToByte();
+
+            #region Late Move Pruning
+
+            if (lmp && bestEvaluation > NEG_INFINITY && quietMoveCounter > lmpQuietThreshold) 
+                // If we are past a certain threshold and we have searched the required quiet moves for this depth for
+                // pruning to be relatively safe, we can avoid searching any more moves since the likely best move
+                // will have been determined by now.
+                break;
+
+            #endregion
 
             // Make the move.
             RevertMove rv = board.Move(ref move);
@@ -442,7 +459,7 @@ public class MoveSearch
                 
                 #region Late Move Reduction
                 
-                if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
+                if (i >= LMR_FULL_SEARCH_THRESHOLD && lmr) {
                     // If we're past the move count and depth threshold where we can usually safely apply LMR and we
                     // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
 
@@ -517,7 +534,7 @@ public class MoveSearch
         return bestEvaluation;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int QSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
     {
         #region Out of Time
