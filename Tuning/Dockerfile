@@ -23,7 +23,7 @@ RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /Tune  \
     /p:PublishSingleFile=true --self-contained true
 RUN mv /Tune/StockNemo /Tune/StockNemoNOTUNE
 
-RUN git checkout $PATCH
+RUN git checkout $TUNE
 RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /Tune  \
     /p:PublishSingleFile=true --self-contained true
 RUN mv /Tune/StockNemo /Tune/StockNemoTUNE
