@@ -15,8 +15,8 @@ public class MoveSearch
     private const int NEG_INFINITY = -POS_INFINITY;
     private const int MATE = POS_INFINITY - 1;
 
-    private const int NULL_MOVE_REDUCTION = 6;
-    private const int NULL_MOVE_DEPTH = 14;
+    private const int NULL_MOVE_REDUCTION = 9;
+    private const int NULL_MOVE_DEPTH = 7;
 
     private const int ASPIRATION_BOUND = 3500;
     private const int ASPIRATION_DELTA = 30;
