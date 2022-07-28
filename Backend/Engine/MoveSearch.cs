@@ -99,12 +99,12 @@ public class MoveSearch
         int alpha = NEG_INFINITY;
         int beta = POS_INFINITY;
 
-        if (depth > ASPIRATION_DEPTH) {
+        if (depth > TunedSearchParameters.AspirationDepth) {
             // If we're searching deeper than our aspiration depth, then we should modify the window based on our
             // previous evaluation and aspiration size. If the window isn't reasonably correct, it'll get reset later
             // anyways.
-            alpha = previousEvaluation - ASPIRATION_SIZE;
-            beta = previousEvaluation + ASPIRATION_SIZE;
+            alpha = previousEvaluation - TunedSearchParameters.AspirationSize;
+            beta = previousEvaluation + TunedSearchParameters.AspirationSize;
         }
 
         int research = 0;
@@ -142,12 +142,12 @@ public class MoveSearch
                 research++;
                 
                 // If our best evaluation was somehow worse than our alpha, we should resize our window and research.
-                alpha = Math.Max(alpha - research * research * ASPIRATION_DELTA, NEG_INFINITY);
+                alpha = Math.Max(alpha - research * research * TunedSearchParameters.AspirationDelta, NEG_INFINITY);
             } else if (bestEvaluation >= beta) {
                 research++;
                 
                 // If our evaluation was somehow better than our beta, we should resize our window and research.
-                beta = Math.Min(beta + research * research * ASPIRATION_DELTA, POS_INFINITY);
+                beta = Math.Min(beta + research * research * TunedSearchParameters.AspirationDelta, POS_INFINITY);
                 
                 // If our evaluation was within our window, we should return the result avoiding any researches.
             } else return bestEvaluation;
@@ -326,9 +326,9 @@ public class MoveSearch
             #region Null Move Pruning
 
             // Reduction depth for null move pruning.
-            int reductionDepth = depth - TunedSearchParameters.NullMoveReduction;
+            int reductionDepth = depth - NULL_MOVE_REDUCTION;
         
-            if (notRootNode && depth > TunedSearchParameters.NullMoveDepth) {
+            if (notRootNode && depth > NULL_MOVE_DEPTH) {
                 // For null move pruning, we give the turn to the opponent and let them make the move.
                 RevertNullMove rv = board.NullMove();
                 // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.

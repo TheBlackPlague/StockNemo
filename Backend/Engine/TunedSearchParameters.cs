@@ -3,7 +3,8 @@
 public static class TunedSearchParameters
 {
 
-    public static int NullMoveReduction = 3;
-    public static int NullMoveDepth = 2;
+    public static int AspirationSize = 50;
+    public static int AspirationDelta = 30;
+    public static int AspirationDepth = 4;
 
 }

@@ -14,8 +14,9 @@
         }
     ],
     "parameter_ranges": {
-        "NullMoveReduction": "Integer(0, 16)",
-        "NullMoveDepth": "Integer(0, 16)"
+        "AspirationSize": "Integer(5, 100)",
+        "AspirationDelta": "Integer(5, 100)",
+        "AspirationDepth": "Integer(1, 8)"
     },
     "engine1_tc": "5+0.05",
     "engine2_tc": "5+0.05",
@@ -36,6 +37,6 @@
     "acq_function_samples": 0,
     "gp_burnin": 3,
     "gp_initial_burnin": 200,
-    "n_initial_points": 32,
+    "n_initial_points": 30,
     "random_seed": 836717
 }
