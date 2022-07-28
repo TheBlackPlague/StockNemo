@@ -15,10 +15,11 @@ public class MoveSearch
     private const int NEG_INFINITY = -POS_INFINITY;
     private const int MATE = POS_INFINITY - 1;
 
-    private const int NULL_MOVE_REDUCTION = 3;
-    private const int NULL_MOVE_DEPTH = NULL_MOVE_REDUCTION - 1;
+    private const int NULL_MOVE_REDUCTION = 4;
+    private const int NULL_MOVE_DEPTH = 2;
 
     private const int ASPIRATION_BOUND = 3500;
+    private const int ASPIRATION_SIZE = 50;
     private const int ASPIRATION_DELTA = 30;
     private const int ASPIRATION_DEPTH = 4;
 
@@ -26,6 +27,8 @@ public class MoveSearch
 
     private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
+
+    private const int LMP_DEPTH_THRESHOLD = 3;
 
     private const int NODE_COUNTING_DEPTH = 8;
     private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
@@ -89,7 +92,7 @@ public class MoveSearch
         return bestMove;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int AspirationSearch(EngineBoard board, int depth, int previousEvaluation)
     {
         // Set base window size.
@@ -98,9 +101,10 @@ public class MoveSearch
 
         if (depth > ASPIRATION_DEPTH) {
             // If we're searching deeper than our aspiration depth, then we should modify the window based on our
-            // previous evaluation. If the window isn't reasonably correct, it'll get reset later anyways.
-            alpha = previousEvaluation - 50;
-            beta = previousEvaluation + 50;
+            // previous evaluation and aspiration size. If the window isn't reasonably correct, it'll get reset later
+            // anyways.
+            alpha = previousEvaluation - ASPIRATION_SIZE;
+            beta = previousEvaluation + ASPIRATION_SIZE;
         }
 
         int research = 0;
@@ -412,6 +416,10 @@ public class MoveSearch
         int nextDepth = depth - 1;
             
         int i = 0;
+        int quietMoveCounter = 0;
+        int lmpQuietThreshold = 3 + depth * depth;
+        bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
+        bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -422,6 +430,17 @@ public class MoveSearch
             OrderedMoveEntry move = moveList[i];
 
             bool quietMove = !board.All(oppositeColor)[move.To];
+            quietMoveCounter += quietMove.ToByte();
+
+            #region Late Move Pruning
+
+            if (lmp && bestEvaluation > NEG_INFINITY && quietMoveCounter > lmpQuietThreshold) 
+                // If we are past a certain threshold and we have searched the required quiet moves for this depth for
+                // pruning to be relatively safe, we can avoid searching any more moves since the likely best move
+                // will have been determined by now.
+                break;
+
+            #endregion
 
             // Make the move.
             RevertMove rv = board.Move(ref move);
@@ -442,7 +461,7 @@ public class MoveSearch
                 
                 #region Late Move Reduction
                 
-                if (i >= LMR_FULL_SEARCH_THRESHOLD && depth >= LMR_DEPTH_THRESHOLD && !inCheck) {
+                if (i >= LMR_FULL_SEARCH_THRESHOLD && lmr) {
                     // If we're past the move count and depth threshold where we can usually safely apply LMR and we
                     // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
 
@@ -517,7 +536,7 @@ public class MoveSearch
         return bestEvaluation;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int QSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
     {
         #region Out of Time
