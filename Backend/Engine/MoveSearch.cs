@@ -19,6 +19,7 @@ public class MoveSearch
     private const int NULL_MOVE_DEPTH = 2;
 
     private const int ASPIRATION_BOUND = 3500;
+    private const int ASPIRATION_SIZE = 50;
     private const int ASPIRATION_DELTA = 30;
     private const int ASPIRATION_DEPTH = 4;
 
@@ -100,9 +101,10 @@ public class MoveSearch
 
         if (depth > ASPIRATION_DEPTH) {
             // If we're searching deeper than our aspiration depth, then we should modify the window based on our
-            // previous evaluation. If the window isn't reasonably correct, it'll get reset later anyways.
-            alpha = previousEvaluation - 50;
-            beta = previousEvaluation + 50;
+            // previous evaluation and aspiration size. If the window isn't reasonably correct, it'll get reset later
+            // anyways.
+            alpha = previousEvaluation - ASPIRATION_SIZE;
+            beta = previousEvaluation + ASPIRATION_SIZE;
         }
 
         int research = 0;
