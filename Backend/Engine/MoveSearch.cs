@@ -19,8 +19,8 @@ public class MoveSearch
     private const int NULL_MOVE_DEPTH = 2;
 
     private const int ASPIRATION_BOUND = 3500;
-    private const int ASPIRATION_SIZE = 16;
-    private const int ASPIRATION_DELTA = 23;
+    private const int ASPIRATION_SIZE = 15;
+    private const int ASPIRATION_DELTA = 24;
     private const int ASPIRATION_DEPTH = 4;
 
     private const int RAZORING_EVALUATION_THRESHOLD = 150;
