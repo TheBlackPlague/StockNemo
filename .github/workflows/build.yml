@@ -12,11 +12,11 @@ jobs:
           - configuration: win10-x64
             file_extension: .exe
           - configuration: win10-x86
-              file_extension: .exe
+            file_extension: .exe
           - configuration: win10-arm64
-              file_extension: .exe
+            file_extension: .exe
           - configuration: win10-arm
-              file_extension: .exe
+            file_extension: .exe
         
     runs-on: ubuntu-latest
     steps:
