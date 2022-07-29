@@ -39,12 +39,13 @@ jobs:
           cd bin/Release/net6.0/${{ matrix.configuration }}/publish
           mv StockNemo StockNemo-${{ matrix.version }}
       - name: Upload binary for ${{ matrix.configuration }}
-        uses: actions/upload-artifact@v3
       - if: ${{ matrix.file_extension }} != null
+        uses: actions/upload-artifact@v3
         with:
           name: stocknemo-${{ matrix.configuration }}
           path: Terminal/bin/Release/net6.0/${{ matrix.configuration }}/publish/StockNemo-${{ matrix.version }}${{ matrix.file_extension }}
       - if: ${{ matrix.file_extension }} == null
+        uses: actions/upload-artifact@v3
         with:
           name: stocknemo-${{ matrix.configuration }}
           path: Terminal/bin/Release/net6.0/${{ matrix.configuration }}/publish/StockNemo-${{ matrix.version }}
