@@ -11,7 +11,7 @@ RUN mv /App/StockNemo /lcbot/engines/StockNemo
 
 WORKDIR "/lcbot"
 COPY ["config.yml", "config.yml"]
-COPY ["Perfect2021.bin", "engines/"]
+COPY ["StockNemoGM.bin", "engines/"]
 RUN pip3 install wheel &&\
     pip3 install -r requirements.txt
 
