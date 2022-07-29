@@ -168,11 +168,7 @@ public struct BitBoard
     public bool this[Square sq]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get
-        {
-            byte value = (byte)(Internal >> (int)sq & 1UL);
-            return Unsafe.As<byte, bool>(ref value);
-        }
+        get => (Internal & 1UL << (int)sq) != 0UL;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set
         {
@@ -184,11 +180,7 @@ public struct BitBoard
     public bool this[int i]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get
-        {
-            byte value = (byte)(Internal >> i & 1UL);
-            return Unsafe.As<byte, bool>(ref value);
-        }
+        get => (Internal & 1UL << i) != 0UL;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set
         {
