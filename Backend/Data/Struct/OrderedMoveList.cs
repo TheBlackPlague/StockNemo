@@ -37,17 +37,40 @@ public readonly ref struct OrderedMoveList
         SearchedMove tableMove
         )
     {
+        // Compare our move with the one found from transposition table. There's no guarantee the transposition move
+        // is even legal, so this acts as a sort of legal verification for it too.
+        // Regardless, if our move is equal to that (also proving that it is legal for this position), then give it
+        // highest priority, making it the first move we make.
         if (move == tableMove) return PRIORITY - 1;
         
+        // Score promotions based on the type of promotion it is. 
+        // Promotion | Score
+        // Queen     | PRIORITY - 4 (HIGHEST)
+        // Bishop    | PRIORITY - 5
+        // Knight    | PRIORITY - 6
+        // Rook      | PRIORITY - 7 (LOWEST)
         if (move.Promotion != Promotion.None) return PRIORITY - 8 + (int)move.Promotion;
 
+        // Score captures based on the piece capturing and the piece being captured.
+        // The idea behind it is to give highest priority to captures that are capturing most valuable pieces
+        // with least valuable pieces.
         Piece to = board.At(move.To).Item1;
         if (to != Piece.Empty) return MvvLva(board.At(move.From).Item1, to) * 10000;
 
+        // If the move is a quiet move (not capture / promotion), then we should check if it is a killer move or history
+        // move.
+        // Killer moves are moves that are very likely to cause a beta cutoff.
+        // History moves are moves that have been scored as most likely alpha changing moves, depending on how many
+        // times the move changed alpha (gave us a guaranteed best move).
+        
+        // Check if move is a rank 1 killer move (extremely local, recently updated).
         if (move == KillerMoveOne) return 900000;
         // ReSharper disable once ConvertIfStatementToReturnStatement
+        
+        // Check if move is a rank 2 killer move (less local, might've been updated long time ago).
         if (move == KillerMoveTwo) return 800000;
 
+        // Return the updated history score for the move.
         return HistoryTable[pieceToMove, board.ColorToMove, move.To];
     }
     

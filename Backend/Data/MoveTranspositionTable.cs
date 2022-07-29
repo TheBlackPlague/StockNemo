@@ -52,10 +52,12 @@ public unsafe class MoveTranspositionTable
         ref MoveTranspositionTableEntry oldEntry = ref Internal.AA(index);
         
         if (oldEntry.Type == MoveTranspositionTableEntryType.Invalid) {
+            // If the previous entry wasn't valid (there was no previous entry), replace it with the new entry. 
             Internal.AA(index) = entry;
             return;
         }
         
+        // If the old entry is more than 3 depths higher than the new entry, than avoid replacing it.
         if (oldEntry.Depth - 3 > entry.Depth) return;
         Internal.AA(index) = entry;
     }
