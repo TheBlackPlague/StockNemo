@@ -97,6 +97,10 @@
         * Alpha Unchanged Update
         * Beta Cutoff Update
         * Alpha Beta Delta Cutoff
+      * Reverse Futility Pruning
+        * Up to six-ply
+        * None on mate branches
+        * Depth and Improving based Margin
       * Razoring
         * QSearch Evaluation
         * Shallow Threshold
@@ -104,7 +108,16 @@
         * Three-ply Depth Reduction
         * Non-Razoring Depth
       * Fail-soft Alpha Beta Pruning
+        * Late Move Pruning
+          * Post Best Move Found
+          * Quiet Move Threshold
+          * Non Principle Variation Branches
+          * Up to three-ply
         * Late Move Reduction
+          * Depth and Moves Played Logarithmic Reduction
+          * At least three-ply
+        * Principle Variation Search
+          * Full Search on First Move 
     * Quiescence Search (QSearch)
       * Static Evaluation
         * Beta Cutoff
