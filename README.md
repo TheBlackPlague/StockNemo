@@ -172,3 +172,5 @@ Stockfish Team for providing numerous insights and making a brilliant engine,
 used numerous times to debug StockNemo.
 - [OpenBench](https://github.com/AndyGrant/OpenBench) by Andrew Grant for making
 an amazing framework that allows distributed testing of StockNemo.
+- [Chess Tuning Tools](https://github.com/kiudee/chess-tuning-tools) by Karlson 
+Pfannschmidt for being an amazing utility software to tune StockNemo.
