@@ -26,10 +26,8 @@ public class BitBoard
     [Test]
     public void MarkA1AsTrue()
     {
-        Backend.Data.Struct.BitBoard useBoard = new(Backend.Data.Struct.BitBoard.Default)
-        {
-            [Square.A1] = true
-        };
+        Backend.Data.Struct.BitBoard useBoard = new(Backend.Data.Struct.BitBoard.Default);
+        useBoard.True(Square.A1);
             
         Assert.IsTrue(useBoard[Square.A1]);
     }
@@ -41,7 +39,7 @@ public class BitBoard
             
         for (int h = 0; h < 8; h++)
         for (int v = 0; v < 8; v++) {
-            if (v < 2) useBoard[v * 8 + h] = true;
+            if (v < 2) useBoard.True(v * 8 + h);
         }
 
         bool success = true;
@@ -72,10 +70,10 @@ public class BitBoard
         for (int v = 0; v < 8; v++) {
             switch (v) {
                 case < 2:
-                    whiteBoard[v * 8 + h] = true;
+                    whiteBoard.True(v * 8 + h);
                     break;
                 case > 5:
-                    blackBoard[v * 8 + h] = true;
+                    blackBoard.True(v * 8 + h);
                     break;
             }
         }
