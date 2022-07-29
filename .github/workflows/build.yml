@@ -3,136 +3,164 @@ name: .NET Core Build
 on: push
 
 jobs:
-  Windows:
-
+  Build:
+    strategy:
+      matrix: 
+        version: [4.0.0.0]
+        configuration: [win10-x64, win10-x86, win10-arm64, win10-arm, linux-x64, linux-musl-x64, linux-arm, linux-arm64, osx.10.14-x64, osx.10.15-x64, osx.11.0-x64]
+        include:
+          - configuration: [win10-x64, win10-x86, win10-arm64, win10-arm]
+            file_extension: .exe
+        
     runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: 6.0.300
-      - name: Build for Windows 10/11. (x64)
-        run: |
-          cd Terminal
-          dotnet publish -r win10-x64 -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Build for Windows 10/11. (x86)
-        run: |
-          cd Terminal
-          dotnet publish -r win10-x86 -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Build for Windows 10/11. (ARM-64)
-        run: |
-          cd Terminal
-          dotnet publish -r win10-arm64 -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Build for Windows 10/11. (ARM)
-        run: |
-          cd Terminal
-          dotnet publish -r win10-arm -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Upload Windows 10/11. (x64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-win-x64
-          path: Terminal/bin/Release/net6.0/win10-x64/publish/StockNemo.exe
-      - name: Upload Windows 10/11. (x86)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-win-x86
-          path: Terminal/bin/Release/net6.0/win10-x86/publish/StockNemo.exe
-      - name: Upload Windows 10/11. (ARM-64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-win-arm64
-          path: Terminal/bin/Release/net6.0/win10-arm64/publish/StockNemo.exe
-      - name: Upload Windows 10/11. (ARM)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-win-arm
-          path: Terminal/bin/Release/net6.0/win10-arm/publish/StockNemo.exe
-          
-
-  Linux:
-    
-    runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v2
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: 6.0.300
-      - name: Build for Linux. (x64)
+      - name: Build for ${{ matrix.configuration }}
         run: |
           cd Terminal
-          dotnet publish -r linux-x64 -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Build for Linux. (musl-x64)
-        run: |
-          cd Terminal
-          dotnet publish -r linux-musl-x64 -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Build for Linux. (ARM)
-        run: |
-          cd Terminal
-          dotnet publish -r linux-arm -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Build for Linux. (ARM-64)
-        run: |
-          cd Terminal
-          dotnet publish -r linux-arm64 -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Upload Linux. (x64)
+          dotnet publish -r ${{ matrix.configuration }} -c Release /p:PublishSingleFile=true --self-contained true
+          cd bin/Release/net6.0/${{ matrix.configuration }}/publish
+          mv StockNemo${{ matrix.file_extension }} StockNemo-${{ matrix.version }}${{ matrix.file_extension }}
+      - name: Upload binary for ${{ matrix.configuration }}
         uses: actions/upload-artifact@v3
         with:
-          name: stocknemo-linux-x64
-          path: Terminal/bin/Release/net6.0/linux-x64/publish/StockNemo
-      - name: Upload Linux. (musl-x64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-linux-musl-x64
-          path: Terminal/bin/Release/net6.0/linux-musl-x64/publish/StockNemo
-      - name: Upload Linux. (ARM)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-linux-arm
-          path: Terminal/bin/Release/net6.0/linux-arm/publish/StockNemo
-      - name: Upload Linux. (ARM-64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-linux-arm64
-          path: Terminal/bin/Release/net6.0/linux-arm64/publish/StockNemo
-          
-
-  MacOS:
-    
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: 6.0.300
-      - name: Build for MacOS Mojave. (x64)
-        run: |
-          cd Terminal
-          dotnet publish -r osx.10.14-x64 -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Build for MacOS Catalina. (x64)
-        run: |
-          cd Terminal
-          dotnet publish -r osx.10.15-x64 -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Build for MacOS Big Sur. (x64)
-        run: |
-          cd Terminal
-          dotnet publish -r osx.11.0-x64 -c Release /p:PublishSingleFile=true --self-contained true
-      - name: Upload MacOS Mojave. (x64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-macos-mojave-x64
-          path: Terminal/bin/Release/net6.0/osx.10.14-x64/publish/StockNemo
-      - name: Upload MacOS Catalina. (x64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-macos-catalina-x64
-          path: Terminal/bin/Release/net6.0/osx.10.15-x64/publish/StockNemo
-      - name: Upload MacOS Big Sur. (x64)
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-macos-big-sur-x64
-          path: Terminal/bin/Release/net6.0/osx.11.0-x64/publish/StockNemo
+          name: stocknemo-${{ matrix.configuration }}
+          path: Terminal/bin/Release/net6.0/${{ matrix.configuration }}/publish/StockNemo-${{ matrix.version }}${{ matrix.file_extension }}
+  
+#  Windows:
+#
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v3
+#      - name: Setup .NET Core
+#        uses: actions/setup-dotnet@v2
+#        with:
+#          dotnet-version: 6.0.300
+#      - name: Build for Windows 10/11. (x64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r win10-x64 -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Build for Windows 10/11. (x86)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r win10-x86 -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Build for Windows 10/11. (ARM-64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r win10-arm64 -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Build for Windows 10/11. (ARM)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r win10-arm -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Upload Windows 10/11. (x64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-win-x64
+#          path: Terminal/bin/Release/net6.0/win10-x64/publish/StockNemo.exe
+#      - name: Upload Windows 10/11. (x86)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-win-x86
+#          path: Terminal/bin/Release/net6.0/win10-x86/publish/StockNemo.exe
+#      - name: Upload Windows 10/11. (ARM-64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-win-arm64
+#          path: Terminal/bin/Release/net6.0/win10-arm64/publish/StockNemo.exe
+#      - name: Upload Windows 10/11. (ARM)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-win-arm
+#          path: Terminal/bin/Release/net6.0/win10-arm/publish/StockNemo.exe
+#          
+#
+#  Linux:
+#    
+#    runs-on: ubuntu-latest
+#    
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Setup .NET Core
+#        uses: actions/setup-dotnet@v2
+#        with:
+#          dotnet-version: 6.0.300
+#      - name: Build for Linux. (x64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r linux-x64 -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Build for Linux. (musl-x64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r linux-musl-x64 -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Build for Linux. (ARM)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r linux-arm -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Build for Linux. (ARM-64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r linux-arm64 -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Upload Linux. (x64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-linux-x64
+#          path: Terminal/bin/Release/net6.0/linux-x64/publish/StockNemo
+#      - name: Upload Linux. (musl-x64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-linux-musl-x64
+#          path: Terminal/bin/Release/net6.0/linux-musl-x64/publish/StockNemo
+#      - name: Upload Linux. (ARM)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-linux-arm
+#          path: Terminal/bin/Release/net6.0/linux-arm/publish/StockNemo
+#      - name: Upload Linux. (ARM-64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-linux-arm64
+#          path: Terminal/bin/Release/net6.0/linux-arm64/publish/StockNemo
+#          
+#
+#  MacOS:
+#    
+#    runs-on: ubuntu-latest
+#    
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Setup .NET Core
+#        uses: actions/setup-dotnet@v2
+#        with:
+#          dotnet-version: 6.0.300
+#      - name: Build for MacOS Mojave. (x64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r osx.10.14-x64 -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Build for MacOS Catalina. (x64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r osx.10.15-x64 -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Build for MacOS Big Sur. (x64)
+#        run: |
+#          cd Terminal
+#          dotnet publish -r osx.11.0-x64 -c Release /p:PublishSingleFile=true --self-contained true
+#      - name: Upload MacOS Mojave. (x64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-macos-mojave-x64
+#          path: Terminal/bin/Release/net6.0/osx.10.14-x64/publish/StockNemo
+#      - name: Upload MacOS Catalina. (x64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-macos-catalina-x64
+#          path: Terminal/bin/Release/net6.0/osx.10.15-x64/publish/StockNemo
+#      - name: Upload MacOS Big Sur. (x64)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: stocknemo-macos-big-sur-x64
+#          path: Terminal/bin/Release/net6.0/osx.11.0-x64/publish/StockNemo
