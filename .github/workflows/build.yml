@@ -25,32 +25,17 @@ jobs:
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: 6.0.300
-      - if: ${{ matrix.file_extension }} != null
-        name: Build for ${{ matrix.configuration }}
+      - name: Build for ${{ matrix.configuration }}
         run: |
           cd Terminal
           dotnet publish -r ${{ matrix.configuration }} -c Release /p:PublishSingleFile=true --self-contained true
           cd bin/Release/net6.0/${{ matrix.configuration }}/publish
           mv StockNemo${{ matrix.file_extension }} StockNemo-${{ matrix.version }}${{ matrix.file_extension }}
-      - if: ${{ matrix.file_extension }} == null
-        name: Build for ${{ matrix.configuration }}
-        run: |
-          cd Terminal
-          dotnet publish -r ${{ matrix.configuration }} -c Release /p:PublishSingleFile=true --self-contained true
-          cd bin/Release/net6.0/${{ matrix.configuration }}/publish
-          mv StockNemo StockNemo-${{ matrix.version }}
-      - if: ${{ matrix.file_extension }} != null
-        name: Upload binary for ${{ matrix.configuration }}
+      - name: Upload binary for ${{ matrix.configuration }}
         uses: actions/upload-artifact@v3
         with:
           name: stocknemo-${{ matrix.configuration }}
           path: Terminal/bin/Release/net6.0/${{ matrix.configuration }}/publish/StockNemo-${{ matrix.version }}${{ matrix.file_extension }}
-      - if: ${{ matrix.file_extension }} == null
-        name: Upload binary for ${{ matrix.configuration }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: stocknemo-${{ matrix.configuration }}
-          path: Terminal/bin/Release/net6.0/${{ matrix.configuration }}/publish/StockNemo-${{ matrix.version }}
   
 #  Windows:
 #
