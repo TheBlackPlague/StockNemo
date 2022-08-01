@@ -346,7 +346,16 @@ public class MoveSearch
             }
 
             #endregion
-        } else if (inCheck) depth++;
+        } else if (inCheck) {
+            #region Check Extension
+
+            // If we're in check, then it's better to evaluate this position deeper as to get good idea of situation,
+            // avoiding unseen blunders. Due to the number of moves being very less when under check, one shouldn't
+            // be concerned about search explosion.
+            depth++;
+
+            #endregion
+        }
 
         #region Move List Creation
 
