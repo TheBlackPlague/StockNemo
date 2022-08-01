@@ -284,6 +284,7 @@ public class MoveSearch
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
         bool improving = false;
         
+        // ReSharper disable once ConvertIfStatementToSwitchStatement
         if (!inCheck && !pvNode) {
             // We should use the evaluation from our transposition table if we had a hit.
             // As that evaluation isn't truly static and may have been from a previous deep search.
@@ -343,6 +344,15 @@ public class MoveSearch
                 // In the case our evaluation was better than our beta, we achieved a cutoff here. 
                 if (evaluation >= beta) return beta;
             }
+
+            #endregion
+        } else if (inCheck) {
+            #region Check Extension
+
+            // If we're in check, then it's better to evaluate this position deeper as to get good idea of situation,
+            // avoiding unseen blunders. Due to the number of moves being very less when under check, one shouldn't
+            // be concerned about search explosion.
+            depth++;
 
             #endregion
         }
