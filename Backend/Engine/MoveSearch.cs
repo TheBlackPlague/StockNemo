@@ -284,6 +284,7 @@ public class MoveSearch
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
         bool improving = false;
         
+        // ReSharper disable once ConvertIfStatementToSwitchStatement
         if (!inCheck && !pvNode) {
             // We should use the evaluation from our transposition table if we had a hit.
             // As that evaluation isn't truly static and may have been from a previous deep search.
@@ -345,7 +346,7 @@ public class MoveSearch
             }
 
             #endregion
-        }
+        } else if (inCheck) depth++;
 
         #region Move List Creation
 
