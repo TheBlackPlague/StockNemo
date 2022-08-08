@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Backend.Engine.NNUE;
@@ -12,12 +12,19 @@ public static class NN
     public static void Forward(double[] input, double[] weight, double[] output, int offset = 0)
     {
         int inputSize = input.Length;
+        int loopSize = inputSize / VSize.Double;
         int outputSize = output.Length;
         int weightStride = 0;
 
         for (int i = 0; i < outputSize; i++) {
             double sum = 0;
-            for (int j = 0; j < inputSize; j++) sum += input.AA(j) * weight.AA(weightStride + j);
+            int vectorIndex = 0;
+            for (int j = 0; j < loopSize; j++) {
+                Vector<double> iVec = new(input, vectorIndex);
+                Vector<double> wVec = new(weight, weightStride + vectorIndex);
+                sum += Vector.Sum(iVec * wVec);
+                vectorIndex += VSize.Double;
+            }
             output.AA(offset + i) = sum;
             weightStride += inputSize;
         }
@@ -27,12 +34,19 @@ public static class NN
     public static void Forward(int[] input, int[] weight, int[] output, int offset = 0)
     {
         int inputSize = input.Length;
+        int loopSize = inputSize / VSize.Int;
         int outputSize = output.Length;
         int weightStride = 0;
 
         for (int i = 0; i < outputSize; i++) {
             int sum = 0;
-            for (int j = 0; j < inputSize; j++) sum += input.AA(j) * weight.AA(weightStride + j);
+            int vectorIndex = 0;
+            for (int j = 0; j < loopSize; j++) {
+                Vector<int> iVec = new(input, vectorIndex);
+                Vector<int> wVec = new(weight, weightStride + vectorIndex);
+                sum += Vector.Sum(iVec * wVec);
+                vectorIndex += VSize.Int;
+            }
             output.AA(offset + i) = sum;
             weightStride += inputSize;
         }
@@ -42,12 +56,19 @@ public static class NN
     public static void Forward(short[] input, short[] weight, short[] output, int offset = 0)
     {
         int inputSize = input.Length;
+        int loopSize = inputSize / VSize.Short;
         int outputSize = output.Length;
         int weightStride = 0;
 
         for (int i = 0; i < outputSize; i++) {
             short sum = 0;
-            for (int j = 0; j < inputSize; j++) sum += (short)(input.AA(j) * weight.AA(weightStride + j));
+            int vectorIndex = 0;
+            for (int j = 0; j < loopSize; j++) {
+                Vector<short> iVec = new(input, vectorIndex);
+                Vector<short> wVec = new(weight, weightStride + vectorIndex);
+                sum += Vector.Sum(iVec * wVec);
+                vectorIndex += VSize.Short;
+            }
             output.AA(offset + i) = sum;
             weightStride += inputSize;
         }
@@ -57,12 +78,19 @@ public static class NN
     public static void Forward(sbyte[] input, sbyte[] weight, sbyte[] output, int offset = 0)
     {
         int inputSize = input.Length;
+        int loopSize = inputSize / VSize.SByte;
         int outputSize = output.Length;
         int weightStride = 0;
 
         for (int i = 0; i < outputSize; i++) {
             sbyte sum = 0;
-            for (int j = 0; j < inputSize; j++) sum += (sbyte)(input.AA(j) * weight.AA(weightStride + j));
+            int vectorIndex = 0;
+            for (int j = 0; j < loopSize; j++) {
+                Vector<sbyte> iVec = new(input, vectorIndex);
+                Vector<sbyte> wVec = new(weight, weightStride + vectorIndex);
+                sum += Vector.Sum(iVec * wVec);
+                vectorIndex += VSize.SByte;
+            }
             output.AA(offset + i) = sum;
             weightStride += inputSize;
         }
@@ -77,30 +105,72 @@ public static class NN
         int offset = 0)
     {
         int size = input.Length;
-        for (int i = 0; i < size; i++) output.AA(offset + i) = Math.Clamp(input.AA(i) + bias.AA(i), min, max);
+        int loopSize = size / VSize.Double;
+        Vector<double> minVec = new(min);
+        Vector<double> maxVec = new(max);
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<double> iVec = new(input, vectorIndex);
+            Vector<double> bVec = new(bias, vectorIndex);
+            Vector<double> clamped = (iVec + bVec).Clamp(ref minVec, ref maxVec);
+            clamped.CopyTo(output, offset + vectorIndex);
+            vectorIndex += VSize.Double;
+        }
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClippedReLU(int[] input, int[] bias, int[] output, int min, int max, int offset = 0)
     {
         int size = input.Length;
-        for (int i = 0; i < size; i++) output.AA(offset + i) = Math.Clamp(input.AA(i) + bias.AA(i), min, max);
+        int loopSize = size / VSize.Int;
+        Vector<int> minVec = new(min);
+        Vector<int> maxVec = new(max);
+        
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<int> iVec = new(input, vectorIndex);
+            Vector<int> bVec = new(bias, vectorIndex);
+            Vector<int> clamped = (iVec + bVec).Clamp(ref minVec, ref maxVec);
+            clamped.CopyTo(output, offset + vectorIndex);
+            vectorIndex += VSize.Int;
+        }
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClippedReLU(short[] input, short[] bias, short[] output, short min, short max, int offset = 0)
     {
         int size = input.Length;
-        for (int i = 0; i < size; i++) 
-            output.AA(offset + i) = Math.Clamp((short)(input.AA(i) + bias.AA(i)), min, max);
+        int loopSize = size / VSize.Short;
+        Vector<short> minVec = new(min);
+        Vector<short> maxVec = new(max);
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<short> iVec = new(input, vectorIndex);
+            Vector<short> bVec = new(bias, vectorIndex);
+            Vector<short> clamped = (iVec + bVec).Clamp(ref minVec, ref maxVec);
+            clamped.CopyTo(output, offset + vectorIndex);
+            vectorIndex += VSize.Short;
+        }
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClippedReLU(sbyte[] input, sbyte[] bias, sbyte[] output, sbyte min, sbyte max, int offset = 0)
     {
         int size = input.Length;
-        for (int i = 0; i < size; i++) 
-            output.AA(offset + i) = Math.Clamp((sbyte)(input.AA(i) + bias.AA(i)), min, max);
+        int loopSize = size / VSize.SByte;
+        Vector<sbyte> minVec = new(min);
+        Vector<sbyte> maxVec = new(max);
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<sbyte> iVec = new(input, vectorIndex);
+            Vector<sbyte> bVec = new(bias, vectorIndex);
+            Vector<sbyte> clamped = (iVec + bVec).Clamp(ref minVec, ref maxVec);
+            clamped.CopyTo(output, offset + vectorIndex);
+            vectorIndex += VSize.SByte;
+        }
     }
 
     #endregion
