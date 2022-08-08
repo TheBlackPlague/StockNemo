@@ -40,28 +40,32 @@ public class BasicNNUE
         const int colorStride = 64 * 6;
         const int pieceStride = 64;
         
+        Array.Clear(WhitePOV);
+        Array.Clear(BlackPOV);
+        
         for (PieceColor color = PieceColor.White; color < PieceColor.None; color++)
         for (Piece piece = Piece.Pawn; piece < Piece.Empty; piece++) {
-            BitBoardIterator iterator = board.All(piece, color).GetEnumerator();
+            BitBoardIterator whiteIterator = board.All(piece, color).GetEnumerator();
+            BitBoardIterator blackIterator = board.All(piece, color).GetEnumerator();
+            Piece originalPiece = piece;
+            if (piece == Piece.Rook) piece += 2;
+            else if (piece == Piece.Knight || piece == Piece.Bishop) piece--;
 
-            Square sq = iterator.Current;
-            while (iterator.MoveNext()) {
+            Square sq = whiteIterator.Current;
+            while (whiteIterator.MoveNext()) {
                 int index = (int)color * colorStride + (int)piece * pieceStride + (int)sq;
                 WhitePOV.AA(index) = 1;
-                sq = iterator.Current;
+                sq = whiteIterator.Current;
             }
-        }
-        
-        for (PieceColor color = PieceColor.Black; color < PieceColor.None; color--)
-        for (Piece piece = Piece.Pawn; piece < Piece.Empty; piece++) {
-            BitBoardIterator iterator = board.All(piece, color).GetEnumerator();
 
-            Square sq = iterator.Current;
-            while (iterator.MoveNext()) {
+            sq = blackIterator.Current;
+            while (blackIterator.MoveNext()) {
                 int index = (int)Util.OppositeColor(color) * colorStride + (int)piece * pieceStride + ((int)sq ^ 56);
                 BlackPOV.AA(index) = 1;
-                sq = iterator.Current;
+                sq = blackIterator.Current;
             }
+
+            piece = originalPiece;
         }
         
         NN.Forward(WhitePOV, FeatureWeight, Accumulator.A);
