@@ -13,6 +13,7 @@ public static class Program
         BitBoardMapRunner();
         MoveListRunner();
         PerftRunner();
+        NNUERunner();
     }
 
     public static void BitBoardMapRunner()
@@ -31,6 +32,12 @@ public static class Program
     {
         PreMark();
         BenchmarkRunner.Run<Perft>();
+    }
+    
+    public static void NNUERunner()
+    {
+        PreMark();
+        BenchmarkRunner.Run<NNUE>();
     }
 
     private static void PreMark()
