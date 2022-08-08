@@ -72,6 +72,7 @@ public static class NN
 
     #region ClippedReLU(value[] input, value[] bias, value[] output, value min, value max, int offset = 0)
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClippedReLU(double[] input, double[] bias, double[] output, double min, double max,
         int offset = 0)
     {
@@ -79,12 +80,14 @@ public static class NN
         for (int i = 0; i < size; i++) output.AA(offset + i) = Math.Clamp(input.AA(i) + bias.AA(i), min, max);
     }
     
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClippedReLU(int[] input, int[] bias, int[] output, int min, int max, int offset = 0)
     {
         int size = input.Length;
         for (int i = 0; i < size; i++) output.AA(offset + i) = Math.Clamp(input.AA(i) + bias.AA(i), min, max);
     }
     
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClippedReLU(short[] input, short[] bias, short[] output, short min, short max, int offset = 0)
     {
         int size = input.Length;
@@ -92,6 +95,7 @@ public static class NN
             output.AA(offset + i) = Math.Clamp((short)(input.AA(i) + bias.AA(i)), min, max);
     }
     
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClippedReLU(sbyte[] input, sbyte[] bias, sbyte[] output, sbyte min, sbyte max, int offset = 0)
     {
         int size = input.Length;
