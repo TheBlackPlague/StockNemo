@@ -83,7 +83,7 @@ public class BasicNNUE
         NN.ClippedReLU(Accumulator.B, FeatureBias, Flatten, CR_MIN, CR_MAX, secondOffset);
         
         NN.Forward(Flatten, OutWeight, Output);
-        return (Output[0] + OutBias[0]) * SCALE;
+        return (Output.AA(0) + OutBias.AA(0)) * SCALE;
     }
 
     #region JSON
