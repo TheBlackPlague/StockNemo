@@ -17,22 +17,26 @@ public class BasicNNUE
     private const int HIDDEN = 256;
     private const int OUTPUT = 1;
     private const int CR_MIN = 0;
-    private const int CR_MAX = 1;
+    private const int CR_MAX = 1 * QA;
     private const int SCALE = 400;
 
-    private readonly double[] FeatureWeight = new double[INPUT * HIDDEN];
-    private readonly double[] FeatureBias = new double[HIDDEN];
-    private readonly double[] OutWeight = new double[HIDDEN * 2 * OUTPUT];
-    private readonly double[] OutBias = new double[OUTPUT];
+    private const int QA = 255;
+    private const int QB = 64;
+    private const int QAB = QA * QB;
 
-    private readonly double[] WhitePOV = new double[INPUT];
-    private readonly double[] BlackPOV = new double[INPUT];
+    private readonly int[] FeatureWeight = new int[INPUT * HIDDEN];
+    private readonly int[] FeatureBias = new int[HIDDEN];
+    private readonly int[] OutWeight = new int[HIDDEN * 2 * OUTPUT];
+    private readonly int[] OutBias = new int[OUTPUT];
 
-    private readonly BasicAccumulator Accumulator = new(HIDDEN);
+    private readonly int[] WhitePOV = new int[INPUT];
+    private readonly int[] BlackPOV = new int[INPUT];
 
-    private readonly double[] Flatten = new double[HIDDEN * 2];
+    private readonly BasicAccumulator<int> Accumulator = new(HIDDEN);
 
-    private readonly double[] Output = new double[OUTPUT];
+    private readonly int[] Flatten = new int[HIDDEN * 2];
+
+    private readonly int[] Output = new int[OUTPUT];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RefreshAccumulator(Board board)
@@ -73,7 +77,7 @@ public class BasicNNUE
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public double Evaluate(PieceColor colorToMove)
+    public int Evaluate(PieceColor colorToMove)
     {
         int firstOffset = 0;
         int secondOffset = 256;
@@ -87,7 +91,7 @@ public class BasicNNUE
         NN.ClippedReLU(Accumulator.B, FeatureBias, Flatten, CR_MIN, CR_MAX, secondOffset);
         
         NN.Forward(Flatten, OutWeight, Output);
-        return (Output.AA(0) + OutBias.AA(0)) * SCALE;
+        return (Output.AA(0) + OutBias.AA(0)) * SCALE / QAB;
     }
 
     #region JSON
@@ -100,19 +104,19 @@ public class BasicNNUE
         foreach (KeyValuePair<string, JToken> property in jsonObject) {
             switch (property.Key) {
                 case "ft.weight":
-                    Weight(property.Value, FeatureWeight, INPUT);
+                    Weight(property.Value, FeatureWeight, INPUT, QA);
                     Console.WriteLine("Feature weights loaded.");
                     break;
                 case "ft.bias":
-                    Bias(property.Value, FeatureBias);
+                    Bias(property.Value, FeatureBias, QA);
                     Console.WriteLine("Feature bias loaded.");
                     break;
                 case "out.weight":
-                    Weight(property.Value, OutWeight, HIDDEN * 2);
+                    Weight(property.Value, OutWeight, HIDDEN * 2, QB);
                     Console.WriteLine("Out weights loaded.");
                     break;
                 case "out.bias":
-                    Bias(property.Value, OutBias);
+                    Bias(property.Value, OutBias, QB);
                     Console.WriteLine("Out bias loaded.");
                     break;
             }
@@ -121,7 +125,7 @@ public class BasicNNUE
         Console.WriteLine("BasicNNUE loaded from JSON.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Weight(JToken weightRelation, double[] weightArray, int stride)
+        void Weight(JToken weightRelation, int[] weightArray, int stride, int k)
         {
             int i = 0;
             foreach (JToken output in weightRelation) {
@@ -129,7 +133,7 @@ public class BasicNNUE
                 foreach (JToken weight in output) {
                     int index = i * stride + j;
                     double value = weight.ToObject<double>();
-                    weightArray.AA(index) = value;
+                    weightArray.AA(index) = (int)(value * k);
                     j++;
                 }
                 i++;
@@ -137,12 +141,12 @@ public class BasicNNUE
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Bias(JToken biasRelation, double[] biasArray)
+        void Bias(JToken biasRelation, int[] biasArray, int k)
         {
             int i = 0;
             foreach (JToken bias in biasRelation) {
                 double value = bias.ToObject<double>();
-                biasArray.AA(i) = value;
+                biasArray.AA(i) = (int)(value * k);
                 i++;
             }
         }

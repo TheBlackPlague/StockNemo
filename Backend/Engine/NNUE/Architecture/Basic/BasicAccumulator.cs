@@ -3,16 +3,16 @@
 namespace Backend.Engine.NNUE.Architecture.Basic;
 
 [Serializable]
-public class BasicAccumulator
+public class BasicAccumulator<T> where T : struct
 {
 
-    public readonly double[] A;
-    public readonly double[] B;
+    public readonly T[] A;
+    public readonly T[] B;
 
     public BasicAccumulator(int size)
     {
-        A = new double[size];
-        B = new double[size];
+        A = new T[size];
+        B = new T[size];
     }
 
 }
