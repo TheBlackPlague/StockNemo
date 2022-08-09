@@ -175,4 +175,132 @@ public static class NN
 
     #endregion
 
+    #region AddToAll(value[] all, value[] delta, int offset = 0)
+
+    public static void AddToAll(double[] all, double[] delta, int offset)
+    {
+        int allSize = all.Length;
+        int loopSize = allSize / VSize.Double;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<double> aVec = new(all, vectorIndex);
+            Vector<double> dVec = new(delta, offset + vectorIndex);
+            Vector<double> result = aVec + dVec;
+            result.CopyTo(all, vectorIndex);
+            vectorIndex += VSize.Double;
+        }
+    }
+    
+    public static void AddToAll(int[] all, int[] delta, int offset)
+    {
+        int allSize = all.Length;
+        int loopSize = allSize / VSize.Int;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<int> aVec = new(all, vectorIndex);
+            Vector<int> dVec = new(delta, offset + vectorIndex);
+            Vector<int> result = aVec + dVec;
+            result.CopyTo(all, vectorIndex);
+            vectorIndex += VSize.Int;
+        }
+    }
+    
+    public static void AddToAll(short[] all, short[] delta, int offset)
+    {
+        int allSize = all.Length;
+        int loopSize = allSize / VSize.Short;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<short> aVec = new(all, vectorIndex);
+            Vector<short> dVec = new(delta, offset + vectorIndex);
+            Vector<short> result = aVec + dVec;
+            result.CopyTo(all, vectorIndex);
+            vectorIndex += VSize.Short;
+        }
+    }
+    
+    public static void AddToAll(sbyte[] all, sbyte[] delta, int offset)
+    {
+        int allSize = all.Length;
+        int loopSize = allSize / VSize.SByte;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<sbyte> aVec = new(all, vectorIndex);
+            Vector<sbyte> dVec = new(delta, offset + vectorIndex);
+            Vector<sbyte> result = aVec + dVec;
+            result.CopyTo(all, vectorIndex);
+            vectorIndex += VSize.SByte;
+        }
+    }
+
+    #endregion
+    
+    #region SubtractFromAll(value[] all, value[] delta, int offset = 0)
+
+    public static void SubtractFromAll(double[] all, double[] delta, int offset)
+    {
+        int allSize = all.Length;
+        int loopSize = allSize / VSize.Double;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<double> aVec = new(all, vectorIndex);
+            Vector<double> dVec = new(delta, offset + vectorIndex);
+            Vector<double> result = aVec - dVec;
+            result.CopyTo(all, vectorIndex);
+            vectorIndex += VSize.Double;
+        }
+    }
+    
+    public static void SubtractFromAll(int[] all, int[] delta, int offset)
+    {
+        int allSize = all.Length;
+        int loopSize = allSize / VSize.Int;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<int> aVec = new(all, vectorIndex);
+            Vector<int> dVec = new(delta, offset + vectorIndex);
+            Vector<int> result = aVec - dVec;
+            result.CopyTo(all, vectorIndex);
+            vectorIndex += VSize.Int;
+        }
+    }
+    
+    public static void SubtractFromAll(short[] all, short[] delta, int offset)
+    {
+        int allSize = all.Length;
+        int loopSize = allSize / VSize.Short;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<short> aVec = new(all, vectorIndex);
+            Vector<short> dVec = new(delta, offset + vectorIndex);
+            Vector<short> result = aVec - dVec;
+            result.CopyTo(all, vectorIndex);
+            vectorIndex += VSize.Short;
+        }
+    }
+    
+    public static void SubtractFromAll(sbyte[] all, sbyte[] delta, int offset)
+    {
+        int allSize = all.Length;
+        int loopSize = allSize / VSize.SByte;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            Vector<sbyte> aVec = new(all, vectorIndex);
+            Vector<sbyte> dVec = new(delta, offset + vectorIndex);
+            Vector<sbyte> result = aVec - dVec;
+            result.CopyTo(all, vectorIndex);
+            vectorIndex += VSize.SByte;
+        }
+    }
+
+    #endregion
+
 }
