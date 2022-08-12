@@ -35,7 +35,7 @@ public class EngineBoard : Board
             throw new InvalidOperationException("Invalid move provided by GUI.");
         
         OrderedMoveEntry entry = new(from, to, promotion);
-        Move(ref entry);
+        MoveNNUE(ref entry);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -65,17 +65,17 @@ public class EngineBoard : Board
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public RevertMove Move(ref OrderedMoveEntry move)
+    public RevertMove MoveNNUE(ref OrderedMoveEntry move)
     {
-        RevertMove rv = Move(move.From, move.To, move.Promotion);
+        RevertMove rv = MoveNNUE(move.From, move.To, move.Promotion);
         History.Append(ZobristHash);
         return rv;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public new void UndoMove(ref RevertMove rv)
+    public new void UndoMoveNNUE(ref RevertMove rv)
     {
-        base.UndoMove(ref rv);
+        base.UndoMoveNNUE(ref rv);
         History.RemoveLast();
     }
 
