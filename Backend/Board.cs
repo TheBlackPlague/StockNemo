@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Engine;
 
 namespace Backend;
 
@@ -112,6 +113,8 @@ public class Board
             // Thus, we need to set it in revert move to ensure we can properly revert it.
             rv.CapturedPiece = pieceT;
             rv.CapturedColor = colorT;
+            
+            Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceT, colorT, to, false);
         }
 
         if (EnPassantTarget == to && pieceF == Piece.Pawn) {
@@ -119,6 +122,8 @@ public class Board
             Square epPieceSq = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
             PieceColor oppositeColor = Util.OppositeColor(colorF);
             Map.Empty(Piece.Pawn, oppositeColor, epPieceSq);
+            
+            Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Pawn, oppositeColor, epPieceSq, false);
 
             // Set it in revert move.
             rv.EnPassant = true;
@@ -139,10 +144,15 @@ public class Board
 
         // Make the move.
         Map.Move(pieceF, colorF, pieceT, colorT, from, to);
+        
+        Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, from, false);
+        Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, to);
 
         if (promotion != Promotion.None) {
             Map.Empty(pieceF, colorF, to);
             Map.InsertPiece(to, (Piece)promotion, colorF);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, to, false);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator((Piece)promotion, colorF, to);
             rv.Promotion = true;
         }
 
@@ -223,6 +233,9 @@ public class Board
                         Piece.Rook, colorF, Piece.Empty, PieceColor.None, 
                         rv.SecondaryFrom, rv.SecondaryTo
                     );
+                    
+                    Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, colorF, rv.SecondaryFrom, false);
+                    Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, colorF, rv.SecondaryTo);
                 }
 
                 break;
@@ -307,29 +320,46 @@ public class Board
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);
 
         if (rv.Promotion) {
-            PieceColor color = Map[rv.To].Item2;
-            Map.Empty(rv.To);
+            (Piece piece, PieceColor color) = Map[rv.To];
+            Map.Empty(piece, color, rv.To);
             Map.InsertPiece(rv.To, Piece.Pawn, color);
+            
+            Evaluation.NNUE.EfficientlyUpdateAccumulator(piece, color, rv.To, false);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Pawn, color, rv.To);
         }
+        
+        (Piece pF, PieceColor cF) = Map[rv.To];
+        (Piece pT, PieceColor cT) = Map[rv.From];
 
         // Undo the move by moving the piece back.
-        Map.Move(rv.To, rv.From);
+        Map.Move(pF, cF, pT, cT, rv.To, rv.From);
+        
+        Evaluation.NNUE.EfficientlyUpdateAccumulator(pF, cF, rv.To, false);
+        Evaluation.NNUE.EfficientlyUpdateAccumulator(pF, cF, rv.From);
             
         if (rv.EnPassant) {
             // If it was an EP attack, we must insert a pawn at the affected square.
             Square insertion = rv.CapturedColor == PieceColor.White ? rv.To + 8 : rv.To - 8;
             Map.InsertPiece(insertion, Piece.Pawn, rv.CapturedColor);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Pawn, rv.CapturedColor, insertion);
             return;
         }
 
         if (rv.CapturedPiece != Piece.Empty) {
             // If a capture happened, we must insert the piece at the relevant square.
             Map.InsertPiece(rv.To, rv.CapturedPiece, rv.CapturedColor);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator(rv.CapturedPiece, rv.CapturedColor, rv.To);
             return;
         }
 
         // If there was a secondary move (castling), revert the secondary move.
-        if (rv.SecondaryFrom != Square.Na) Map.Move(rv.SecondaryTo, rv.SecondaryFrom);
+        // ReSharper disable once InvertIf
+        if (rv.SecondaryFrom != Square.Na) {
+            Map.Move(rv.SecondaryTo, rv.SecondaryFrom);
+            
+            Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, cF, rv.SecondaryTo, false);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, cF, rv.SecondaryFrom);
+        }
     }
         
     #endregion

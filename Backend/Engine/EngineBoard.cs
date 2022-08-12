@@ -14,7 +14,11 @@ public class EngineBoard : Board
     private EngineBoard(EngineBoard board) : base(board) => History = board.History.Clone();
 
     protected EngineBoard(string boardData, string turnData, string castlingData, string enPassantTargetData) :
-        base(boardData, turnData, castlingData, enPassantTargetData) => History = new RepetitionHistory();
+        base(boardData, turnData, castlingData, enPassantTargetData)
+    {
+        History = new RepetitionHistory();
+        Evaluation.NNUE.RefreshAccumulator(this);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Piece PieceOnly(Square sq) => Map.PieceOnly(sq);

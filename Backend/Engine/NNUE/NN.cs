@@ -1,12 +1,28 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
+using Backend.Data.Enum;
 
 namespace Backend.Engine.NNUE;
 
 public static class NN
 {
 
-    #region void Forward(value[] input, value[] weight, value[] output, int offset = 0)
+    #region PieceToNN(Piece piece)
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Piece PieceToNN(Piece piece)
+    {
+        return piece switch
+        {
+            Piece.Rook => piece + 2,
+            Piece.Knight or Piece.Bishop => piece - 1,
+            _ => piece
+        };
+    }
+
+    #endregion
+
+    #region Forward(value[] input, value[] weight, value[] output, int offset = 0)
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Forward(double[] input, double[] weight, double[] output, int offset = 0)
@@ -175,128 +191,136 @@ public static class NN
 
     #endregion
 
-    #region AddToAll(value[] all, value[] delta, int offset = 0)
+    #region AddToAll(value[] input, value[] delta, int offset)
 
-    public static void AddToAll(double[] all, double[] delta, int offset)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void AddToAll(double[] input, double[] delta, int offset)
     {
-        int allSize = all.Length;
-        int loopSize = allSize / VSize.Double;
+        int size = input.Length;
+        int loopSize = size / VSize.Double;
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<double> aVec = new(all, vectorIndex);
+            Vector<double> iVec = new(input, vectorIndex);
             Vector<double> dVec = new(delta, offset + vectorIndex);
-            Vector<double> result = aVec + dVec;
-            result.CopyTo(all, vectorIndex);
+            Vector<double> rVec = iVec + dVec;
+            rVec.CopyTo(input, vectorIndex);
             vectorIndex += VSize.Double;
         }
     }
     
-    public static void AddToAll(int[] all, int[] delta, int offset)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void AddToAll(int[] input, int[] delta, int offset)
     {
-        int allSize = all.Length;
-        int loopSize = allSize / VSize.Int;
+        int size = input.Length;
+        int loopSize = size / VSize.Int;
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<int> aVec = new(all, vectorIndex);
+            Vector<int> iVec = new(input, vectorIndex);
             Vector<int> dVec = new(delta, offset + vectorIndex);
-            Vector<int> result = aVec + dVec;
-            result.CopyTo(all, vectorIndex);
+            Vector<int> rVec = iVec + dVec;
+            rVec.CopyTo(input, vectorIndex);
             vectorIndex += VSize.Int;
         }
     }
     
-    public static void AddToAll(short[] all, short[] delta, int offset)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void AddToAll(short[] input, short[] delta, int offset)
     {
-        int allSize = all.Length;
-        int loopSize = allSize / VSize.Short;
+        int size = input.Length;
+        int loopSize = size / VSize.Short;
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<short> aVec = new(all, vectorIndex);
+            Vector<short> iVec = new(input, vectorIndex);
             Vector<short> dVec = new(delta, offset + vectorIndex);
-            Vector<short> result = aVec + dVec;
-            result.CopyTo(all, vectorIndex);
+            Vector<short> rVec = iVec + dVec;
+            rVec.CopyTo(input, vectorIndex);
             vectorIndex += VSize.Short;
         }
     }
     
-    public static void AddToAll(sbyte[] all, sbyte[] delta, int offset)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void AddToAll(sbyte[] input, sbyte[] delta, int offset)
     {
-        int allSize = all.Length;
-        int loopSize = allSize / VSize.SByte;
+        int size = input.Length;
+        int loopSize = size / VSize.SByte;
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<sbyte> aVec = new(all, vectorIndex);
+            Vector<sbyte> iVec = new(input, vectorIndex);
             Vector<sbyte> dVec = new(delta, offset + vectorIndex);
-            Vector<sbyte> result = aVec + dVec;
-            result.CopyTo(all, vectorIndex);
+            Vector<sbyte> rVec = iVec + dVec;
+            rVec.CopyTo(input, vectorIndex);
             vectorIndex += VSize.SByte;
         }
     }
-
+    
     #endregion
     
-    #region SubtractFromAll(value[] all, value[] delta, int offset = 0)
+    #region SubtractFromAll(value[] input, value[] delta, int offset)
 
-    public static void SubtractFromAll(double[] all, double[] delta, int offset)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SubtractFromAll(double[] input, double[] delta, int offset)
     {
-        int allSize = all.Length;
-        int loopSize = allSize / VSize.Double;
+        int size = input.Length;
+        int loopSize = size / VSize.Double;
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<double> aVec = new(all, vectorIndex);
+            Vector<double> iVec = new(input, vectorIndex);
             Vector<double> dVec = new(delta, offset + vectorIndex);
-            Vector<double> result = aVec - dVec;
-            result.CopyTo(all, vectorIndex);
+            Vector<double> rVec = iVec - dVec;
+            rVec.CopyTo(input, vectorIndex);
             vectorIndex += VSize.Double;
         }
     }
     
-    public static void SubtractFromAll(int[] all, int[] delta, int offset)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SubtractFromAll(int[] input, int[] delta, int offset)
     {
-        int allSize = all.Length;
-        int loopSize = allSize / VSize.Int;
+        int size = input.Length;
+        int loopSize = size / VSize.Int;
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<int> aVec = new(all, vectorIndex);
+            Vector<int> iVec = new(input, vectorIndex);
             Vector<int> dVec = new(delta, offset + vectorIndex);
-            Vector<int> result = aVec - dVec;
-            result.CopyTo(all, vectorIndex);
+            Vector<int> rVec = iVec - dVec;
+            rVec.CopyTo(input, vectorIndex);
             vectorIndex += VSize.Int;
         }
     }
     
-    public static void SubtractFromAll(short[] all, short[] delta, int offset)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SubtractFromAll(short[] input, short[] delta, int offset)
     {
-        int allSize = all.Length;
-        int loopSize = allSize / VSize.Short;
+        int size = input.Length;
+        int loopSize = size / VSize.Short;
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<short> aVec = new(all, vectorIndex);
+            Vector<short> iVec = new(input, vectorIndex);
             Vector<short> dVec = new(delta, offset + vectorIndex);
-            Vector<short> result = aVec - dVec;
-            result.CopyTo(all, vectorIndex);
+            Vector<short> rVec = iVec - dVec;
+            rVec.CopyTo(input, vectorIndex);
             vectorIndex += VSize.Short;
         }
     }
     
-    public static void SubtractFromAll(sbyte[] all, sbyte[] delta, int offset)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SubtractFromAll(sbyte[] input, sbyte[] delta, int offset)
     {
-        int allSize = all.Length;
-        int loopSize = allSize / VSize.SByte;
+        int size = input.Length;
+        int loopSize = size / VSize.SByte;
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<sbyte> aVec = new(all, vectorIndex);
+            Vector<sbyte> iVec = new(input, vectorIndex);
             Vector<sbyte> dVec = new(delta, offset + vectorIndex);
-            Vector<sbyte> result = aVec - dVec;
-            result.CopyTo(all, vectorIndex);
+            Vector<sbyte> rVec = iVec - dVec;
+            rVec.CopyTo(input, vectorIndex);
             vectorIndex += VSize.SByte;
         }
     }

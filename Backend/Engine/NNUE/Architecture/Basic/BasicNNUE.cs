@@ -25,6 +25,7 @@ public class BasicNNUE
     private const int QAB = QA * QB;
 
     private readonly int[] FeatureWeight = new int[INPUT * HIDDEN];
+    private readonly int[] FlippedFeatureWeight = new int[INPUT * HIDDEN];
     private readonly int[] FeatureBias = new int[HIDDEN];
     private readonly int[] OutWeight = new int[HIDDEN * 2 * OUTPUT];
     private readonly int[] OutBias = new int[OUTPUT];
@@ -52,8 +53,8 @@ public class BasicNNUE
             BitBoardIterator whiteIterator = board.All(piece, color).GetEnumerator();
             BitBoardIterator blackIterator = board.All(piece, color).GetEnumerator();
             Piece originalPiece = piece;
-            if (piece == Piece.Rook) piece += 2;
-            else if (piece == Piece.Knight || piece == Piece.Bishop) piece--;
+            if (piece is Piece.Rook) piece += 2;
+            else if (piece is Piece.Knight or Piece.Bishop) piece--;
 
             Square sq = whiteIterator.Current;
             while (whiteIterator.MoveNext()) {
@@ -74,6 +75,31 @@ public class BasicNNUE
         
         NN.Forward(WhitePOV, FeatureWeight, Accumulator.A);
         NN.Forward(BlackPOV, FeatureWeight, Accumulator.B);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void EfficientlyUpdateAccumulator(Piece piece, PieceColor color, Square sq, bool on = true)
+    {
+        const int colorStride = 64 * 6;
+        const int pieceStride = 64;
+
+        Piece nnPiece = NN.PieceToNN(piece);
+        int opPieceStride = (int)nnPiece * pieceStride;
+
+        int whiteIndex = (int)color * colorStride + opPieceStride + (int)sq;
+        int blackIndex = (int)Util.OppositeColor(color) * colorStride + opPieceStride + ((int)sq ^ 56);
+
+        if (on) {
+            WhitePOV.AA(whiteIndex) = 1;
+            BlackPOV.AA(blackIndex) = 1;
+            NN.AddToAll(Accumulator.A, FlippedFeatureWeight, whiteIndex * HIDDEN);
+            NN.AddToAll(Accumulator.B, FlippedFeatureWeight, blackIndex * HIDDEN);
+        } else {
+            WhitePOV.AA(whiteIndex) = 0;
+            BlackPOV.AA(blackIndex) = 0;
+            NN.SubtractFromAll(Accumulator.A, FlippedFeatureWeight, whiteIndex * HIDDEN);
+            NN.SubtractFromAll(Accumulator.B, FlippedFeatureWeight, blackIndex * HIDDEN);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -105,6 +131,7 @@ public class BasicNNUE
             switch (property.Key) {
                 case "ft.weight":
                     Weight(property.Value, FeatureWeight, INPUT, QA);
+                    Weight(property.Value, FlippedFeatureWeight, HIDDEN, QA, true);
                     Console.WriteLine("Feature weights loaded.");
                     break;
                 case "ft.bias":
@@ -125,13 +152,15 @@ public class BasicNNUE
         Console.WriteLine("BasicNNUE loaded from JSON.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Weight(JToken weightRelation, int[] weightArray, int stride, int k)
+        void Weight(JToken weightRelation, int[] weightArray, int stride, int k, bool flip = false)
         {
             int i = 0;
             foreach (JToken output in weightRelation) {
                 int j = 0;
                 foreach (JToken weight in output) {
-                    int index = i * stride + j;
+                    int index;
+                    if (flip) index = j * stride + i;
+                    else index = i * stride + j;
                     double value = weight.ToObject<double>();
                     weightArray.AA(index) = (int)(value * k);
                     j++;
