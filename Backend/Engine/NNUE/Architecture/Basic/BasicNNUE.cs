@@ -166,7 +166,7 @@ public class BasicNNUE
                     Console.WriteLine("Out weights loaded.");
                     break;
                 case "out.bias":
-                    Bias(property.Value, OutBias, QB);
+                    Bias(property.Value, OutBias, QAB);
                     Console.WriteLine("Out bias loaded.");
                     break;
             }
