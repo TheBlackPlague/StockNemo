@@ -24,18 +24,18 @@ public class BasicNNUE
     private const int QB = 64;
     private const int QAB = QA * QB;
 
-    private readonly int[] FeatureWeight = new int[INPUT * HIDDEN];
-    private readonly int[] FlippedFeatureWeight = new int[INPUT * HIDDEN];
-    private readonly int[] FeatureBias = new int[HIDDEN];
-    private readonly int[] OutWeight = new int[HIDDEN * 2 * OUTPUT];
-    private readonly int[] OutBias = new int[OUTPUT];
+    private readonly short[] FeatureWeight = new short[INPUT * HIDDEN];
+    private readonly short[] FlippedFeatureWeight = new short[INPUT * HIDDEN];
+    private readonly short[] FeatureBias = new short[HIDDEN];
+    private readonly short[] OutWeight = new short[HIDDEN * 2 * OUTPUT];
+    private readonly short[] OutBias = new short[OUTPUT];
 
-    private readonly int[] WhitePOV = new int[INPUT];
-    private readonly int[] BlackPOV = new int[INPUT];
+    private readonly short[] WhitePOV = new short[INPUT];
+    private readonly short[] BlackPOV = new short[INPUT];
 
-    private readonly BasicAccumulator<int>[] Accumulators = new BasicAccumulator<int>[80];
+    private readonly BasicAccumulator<short>[] Accumulators = new BasicAccumulator<short>[80];
 
-    private readonly int[] Flatten = new int[HIDDEN * 2];
+    private readonly short[] Flatten = new short[HIDDEN * 2];
 
     private readonly int[] Output = new int[OUTPUT];
     
@@ -43,7 +43,7 @@ public class BasicNNUE
     
     public BasicNNUE()
     {
-        for (int i = 0; i < Accumulators.Length; i++) Accumulators[i] = new BasicAccumulator<int>(HIDDEN);
+        for (int i = 0; i < Accumulators.Length; i++) Accumulators[i] = new BasicAccumulator<short>(HIDDEN);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -90,7 +90,7 @@ public class BasicNNUE
             piece = originalPiece;
         }
 
-        BasicAccumulator<int> accumulator = Accumulators.AA(CurrentAccumulator);
+        BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
 
         NN.Forward(WhitePOV, FeatureWeight, accumulator.A);
         NN.Forward(BlackPOV, FeatureWeight, accumulator.B);
@@ -108,7 +108,7 @@ public class BasicNNUE
         int whiteIndex = (int)color * colorStride + opPieceStride + (int)sq;
         int blackIndex = (int)Util.OppositeColor(color) * colorStride + opPieceStride + ((int)sq ^ 56);
 
-        BasicAccumulator<int> accumulator = Accumulators.AA(CurrentAccumulator);
+        BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
 
         if (on) {
             WhitePOV.AA(whiteIndex) = 1;
@@ -134,7 +134,7 @@ public class BasicNNUE
             secondOffset = 0;
         }
         
-        BasicAccumulator<int> accumulator = Accumulators.AA(CurrentAccumulator);
+        BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
         
         NN.ClippedReLU(accumulator.A, FeatureBias, Flatten, CR_MIN, CR_MAX, firstOffset);
         NN.ClippedReLU(accumulator.B, FeatureBias, Flatten, CR_MIN, CR_MAX, secondOffset);
@@ -175,7 +175,7 @@ public class BasicNNUE
         Console.WriteLine("BasicNNUE loaded from JSON.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Weight(JToken weightRelation, int[] weightArray, int stride, int k, bool flip = false)
+        void Weight(JToken weightRelation, short[] weightArray, int stride, int k, bool flip = false)
         {
             int i = 0;
             foreach (JToken output in weightRelation) {
@@ -185,7 +185,7 @@ public class BasicNNUE
                     if (flip) index = j * stride + i;
                     else index = i * stride + j;
                     double value = weight.ToObject<double>();
-                    weightArray.AA(index) = (int)(value * k);
+                    weightArray.AA(index) = (short)(value * k);
                     j++;
                 }
                 i++;
@@ -193,12 +193,12 @@ public class BasicNNUE
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Bias(JToken biasRelation, int[] biasArray, int k)
+        void Bias(JToken biasRelation, short[] biasArray, int k)
         {
             int i = 0;
             foreach (JToken bias in biasRelation) {
                 double value = bias.ToObject<double>();
-                biasArray.AA(i) = (int)(value * k);
+                biasArray.AA(i) = (short)(value * k);
                 i++;
             }
         }

@@ -91,6 +91,28 @@ public static class NN
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Forward(short[] input, short[] weight, int[] output, int offset = 0)
+    {
+        int inputSize = input.Length;
+        int loopSize = inputSize / VSize.Short;
+        int outputSize = output.Length;
+        int weightStride = 0;
+
+        for (int i = 0; i < outputSize; i++) {
+            int sum = 0;
+            int vectorIndex = 0;
+            for (int j = 0; j < loopSize; j++) {
+                Vector<short> iVec = new(input, vectorIndex);
+                Vector<short> wVec = new(weight, weightStride + vectorIndex);
+                sum += Vector.Sum(Intrinsic.Multiply(iVec, wVec));
+                vectorIndex += VSize.Short;
+            }
+            output.AA(offset + i) = sum;
+            weightStride += inputSize;
+        }
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Forward(sbyte[] input, sbyte[] weight, sbyte[] output, int offset = 0)
     {
         int inputSize = input.Length;
