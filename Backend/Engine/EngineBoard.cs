@@ -34,8 +34,8 @@ public class EngineBoard : Board
         if (promotion != Promotion.None && !moveList.Promotion) 
             throw new InvalidOperationException("Invalid move provided by GUI.");
         
-        OrderedMoveEntry entry = new(from, to, promotion);
-        MoveNNUE(ref entry);
+        MoveNNUE(from, to, promotion);
+        History.Append(ZobristHash);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
