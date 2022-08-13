@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using Backend.Engine.NNUE.Vectorization;
 
 namespace Backend.Engine.NNUE;
 

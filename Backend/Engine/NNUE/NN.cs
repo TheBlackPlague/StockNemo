@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
+using Backend.Engine.NNUE.Vectorization;
 
 namespace Backend.Engine.NNUE;
 

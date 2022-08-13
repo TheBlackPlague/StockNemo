@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace Backend.Engine.NNUE;
+namespace Backend.Engine.NNUE.Vectorization;
 
 public static class VSize
 {
