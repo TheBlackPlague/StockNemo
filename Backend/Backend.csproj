@@ -17,6 +17,9 @@
 
     <ItemGroup>
       <None Remove="Engine\NNUE\Model\BasicNNUE.nnue" />
+    </ItemGroup>
+
+    <ItemGroup>
       <EmbeddedResource Include="Engine\NNUE\Model\BasicNNUE.nnue">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>

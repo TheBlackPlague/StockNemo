@@ -100,6 +100,7 @@ public class Board
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    // ReSharper disable once MemberCanBeProtected.Global
     public RevertMove MoveNNUE(Square from, Square to, Promotion promotion = Promotion.None)
     {
         (Piece pieceF, PieceColor colorF) = Map[from];
@@ -453,85 +454,6 @@ public class Board
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);
 
         return rv;
-    }
-        
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void UndoMoveNNUE(ref RevertMove rv)
-    {
-        // Remove castling rights from hash to allow easy update.
-        Zobrist.HashCastlingRights(
-            ref Map.ZobristHash, 
-            Map.WhiteKCastle, Map.WhiteQCastle, 
-            Map.BlackKCastle, Map.BlackQCastle
-        );
-        
-        // Revert to old castling rights.
-        Map.WhiteKCastle = rv.WhiteKCastle;
-        Map.WhiteQCastle = rv.WhiteQCastle;
-        Map.BlackKCastle = rv.BlackKCastle;
-        Map.BlackQCastle = rv.BlackQCastle;
-        
-        // Re-hash castling rights.
-        Zobrist.HashCastlingRights(
-            ref Map.ZobristHash, 
-            Map.WhiteKCastle, Map.WhiteQCastle, 
-            Map.BlackKCastle, Map.BlackQCastle
-        );
-            
-        // Update Zobrist.
-        if (Map.EnPassantTarget != Square.Na) 
-            Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
-        // Revert to the previous EP target.
-        Map.EnPassantTarget = rv.EnPassantTarget;
-        if (Map.EnPassantTarget != Square.Na) 
-            // If we don't have an empty EP, we should hash it in.
-            Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
-
-        // Revert to previous turn.
-        Map.ColorToMove = rv.ColorToMove;
-        Zobrist.FlipTurnInHash(ref Map.ZobristHash);
-
-        if (rv.Promotion) {
-            (Piece piece, PieceColor color) = Map[rv.To];
-            Map.Empty(piece, color, rv.To);
-            Map.InsertPiece(rv.To, Piece.Pawn, color);
-            
-            Evaluation.NNUE.EfficientlyUpdateAccumulator(piece, color, rv.To, false);
-            Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Pawn, color, rv.To);
-        }
-        
-        (Piece pF, PieceColor cF) = Map[rv.To];
-        (Piece pT, PieceColor cT) = Map[rv.From];
-
-        // Undo the move by moving the piece back.
-        Map.Move(pF, cF, pT, cT, rv.To, rv.From);
-        
-        Evaluation.NNUE.EfficientlyUpdateAccumulator(pF, cF, rv.To, false);
-        Evaluation.NNUE.EfficientlyUpdateAccumulator(pF, cF, rv.From);
-            
-        if (rv.EnPassant) {
-            // If it was an EP attack, we must insert a pawn at the affected square.
-            Square insertion = rv.CapturedColor == PieceColor.White ? rv.To + 8 : rv.To - 8;
-            Map.InsertPiece(insertion, Piece.Pawn, rv.CapturedColor);
-            Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Pawn, rv.CapturedColor, insertion);
-            return;
-        }
-
-        if (rv.CapturedPiece != Piece.Empty) {
-            // If a capture happened, we must insert the piece at the relevant square.
-            Map.InsertPiece(rv.To, rv.CapturedPiece, rv.CapturedColor);
-            Evaluation.NNUE.EfficientlyUpdateAccumulator(rv.CapturedPiece, rv.CapturedColor, rv.To);
-            return;
-        }
-
-        // If there was a secondary move (castling), revert the secondary move.
-        // ReSharper disable once InvertIf
-        if (rv.SecondaryFrom != Square.Na) {
-            Map.Move(rv.SecondaryTo, rv.SecondaryFrom);
-            
-            Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, cF, rv.SecondaryTo, false);
-            Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, cF, rv.SecondaryFrom);
-        }
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]

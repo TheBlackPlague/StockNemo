@@ -67,15 +67,17 @@ public class EngineBoard : Board
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RevertMove MoveNNUE(ref OrderedMoveEntry move)
     {
+        Evaluation.NNUE.PushAccumulator();
         RevertMove rv = MoveNNUE(move.From, move.To, move.Promotion);
         History.Append(ZobristHash);
         return rv;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public new void UndoMoveNNUE(ref RevertMove rv)
+    public new void UndoMove(ref RevertMove rv)
     {
-        base.UndoMoveNNUE(ref rv);
+        base.UndoMove(ref rv);
+        Evaluation.NNUE.PullAccumulator();
         History.RemoveLast();
     }
 

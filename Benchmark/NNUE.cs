@@ -16,6 +16,13 @@ public class NNUE
     public void RefreshBasicAccumulator() => BasicNNUE.RefreshAccumulator(Board);
 
     [Benchmark]
+    public void PushPullAccumulator()
+    {
+        BasicNNUE.PushAccumulator();
+        BasicNNUE.PullAccumulator();
+    }
+
+    [Benchmark]
     public void Eua()
     {
         BasicNNUE.EfficientlyUpdateAccumulator(Piece.Pawn, PieceColor.White, Square.E2, false);

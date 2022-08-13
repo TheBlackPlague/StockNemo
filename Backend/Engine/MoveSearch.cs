@@ -512,7 +512,7 @@ public class MoveSearch
             }
             
             // Undo the move.
-            board.UndoMoveNNUE(ref rv);
+            board.UndoMove(ref rv);
 
             if (!HandleEvaluation(evaluation, ref move, quietMove)) {
                 if (quietMove && KillerMoveTable[0, plyFromRoot] != move) {
@@ -635,7 +635,7 @@ public class MoveSearch
             int evaluation = -QSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 
             // Undo the move.
-            board.UndoMoveNNUE(ref rv);
+            board.UndoMove(ref rv);
 
             if (!HandleEvaluation(evaluation)) break;
             

@@ -33,11 +33,28 @@ public class BasicNNUE
     private readonly int[] WhitePOV = new int[INPUT];
     private readonly int[] BlackPOV = new int[INPUT];
 
-    private readonly BasicAccumulator<int> Accumulator = new(HIDDEN);
+    private readonly BasicAccumulator<int>[] Accumulators = new BasicAccumulator<int>[80];
 
     private readonly int[] Flatten = new int[HIDDEN * 2];
 
     private readonly int[] Output = new int[OUTPUT];
+    
+    private int CurrentAccumulator;
+    
+    public BasicNNUE()
+    {
+        for (int i = 0; i < Accumulators.Length; i++) Accumulators[i] = new BasicAccumulator<int>(HIDDEN);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void PushAccumulator()
+    {
+        Accumulators.AA(CurrentAccumulator).CopyTo(Accumulators.AA(CurrentAccumulator + 1));
+        CurrentAccumulator++;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void PullAccumulator() => CurrentAccumulator--;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RefreshAccumulator(Board board)
@@ -72,9 +89,11 @@ public class BasicNNUE
 
             piece = originalPiece;
         }
-        
-        NN.Forward(WhitePOV, FeatureWeight, Accumulator.A);
-        NN.Forward(BlackPOV, FeatureWeight, Accumulator.B);
+
+        BasicAccumulator<int> accumulator = Accumulators.AA(CurrentAccumulator);
+
+        NN.Forward(WhitePOV, FeatureWeight, accumulator.A);
+        NN.Forward(BlackPOV, FeatureWeight, accumulator.B);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -89,16 +108,18 @@ public class BasicNNUE
         int whiteIndex = (int)color * colorStride + opPieceStride + (int)sq;
         int blackIndex = (int)Util.OppositeColor(color) * colorStride + opPieceStride + ((int)sq ^ 56);
 
+        BasicAccumulator<int> accumulator = Accumulators.AA(CurrentAccumulator);
+
         if (on) {
             WhitePOV.AA(whiteIndex) = 1;
             BlackPOV.AA(blackIndex) = 1;
-            NN.AddToAll(Accumulator.A, FlippedFeatureWeight, whiteIndex * HIDDEN);
-            NN.AddToAll(Accumulator.B, FlippedFeatureWeight, blackIndex * HIDDEN);
+            NN.AddToAll(accumulator.A, FlippedFeatureWeight, whiteIndex * HIDDEN);
+            NN.AddToAll(accumulator.B, FlippedFeatureWeight, blackIndex * HIDDEN);
         } else {
             WhitePOV.AA(whiteIndex) = 0;
             BlackPOV.AA(blackIndex) = 0;
-            NN.SubtractFromAll(Accumulator.A, FlippedFeatureWeight, whiteIndex * HIDDEN);
-            NN.SubtractFromAll(Accumulator.B, FlippedFeatureWeight, blackIndex * HIDDEN);
+            NN.SubtractFromAll(accumulator.A, FlippedFeatureWeight, whiteIndex * HIDDEN);
+            NN.SubtractFromAll(accumulator.B, FlippedFeatureWeight, blackIndex * HIDDEN);
         }
     }
 
@@ -113,8 +134,10 @@ public class BasicNNUE
             secondOffset = 0;
         }
         
-        NN.ClippedReLU(Accumulator.A, FeatureBias, Flatten, CR_MIN, CR_MAX, firstOffset);
-        NN.ClippedReLU(Accumulator.B, FeatureBias, Flatten, CR_MIN, CR_MAX, secondOffset);
+        BasicAccumulator<int> accumulator = Accumulators.AA(CurrentAccumulator);
+        
+        NN.ClippedReLU(accumulator.A, FeatureBias, Flatten, CR_MIN, CR_MAX, firstOffset);
+        NN.ClippedReLU(accumulator.B, FeatureBias, Flatten, CR_MIN, CR_MAX, secondOffset);
         
         NN.Forward(Flatten, OutWeight, Output);
         return (Output.AA(0) + OutBias.AA(0)) * SCALE / QAB;
