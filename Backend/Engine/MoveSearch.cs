@@ -89,6 +89,8 @@ public class MoveSearch
                 depth++;
             }
         } catch (OperationCanceledException) {}
+        
+        Evaluation.NNUE.ResetAccumulator();
         return bestMove;
     }
 

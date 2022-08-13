@@ -47,6 +47,9 @@ public class BasicNNUE
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ResetAccumulator() => CurrentAccumulator = 0;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PushAccumulator()
     {
         Accumulators.AA(CurrentAccumulator).CopyTo(Accumulators.AA(CurrentAccumulator + 1));

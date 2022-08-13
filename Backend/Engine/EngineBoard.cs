@@ -17,6 +17,7 @@ public class EngineBoard : Board
         base(boardData, turnData, castlingData, enPassantTargetData)
     {
         History = new RepetitionHistory();
+        Evaluation.NNUE.ResetAccumulator();
         Evaluation.NNUE.RefreshAccumulator(this);
     }
 
