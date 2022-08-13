@@ -13,7 +13,7 @@ public static class Intrinsic
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector<int> Multiply(Vector<short> a, Vector<short> b)
     {
-        if (Avx2.X64.IsSupported) {
+        if (Avx2.IsSupported) {
             Vector256<short> one = a.AsVector256();
             Vector256<short> two = b.AsVector256();
 
@@ -21,7 +21,7 @@ public static class Intrinsic
         }
         
         // ReSharper disable once InvertIf
-        if (Sse2.X64.IsSupported) {
+        if (Sse2.IsSupported) {
             Vector128<short> one = a.AsVector128();
             Vector128<short> two = b.AsVector128();
 
