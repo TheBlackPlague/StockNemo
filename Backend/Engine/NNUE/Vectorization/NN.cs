@@ -104,7 +104,7 @@ public static class NN
             for (int j = 0; j < loopSize; j++) {
                 Vector<short> iVec = new(input, vectorIndex);
                 Vector<short> wVec = new(weight, weightStride + vectorIndex);
-                sum += Vector.Sum(Intrinsic.Multiply(iVec, wVec));
+                sum += Vector.Sum(VMethod.MultiplyAddAdjacent(iVec, wVec));
                 vectorIndex += VSize.Short;
             }
             output.AA(offset + i) = sum;
