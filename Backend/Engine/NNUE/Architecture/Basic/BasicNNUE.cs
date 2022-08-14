@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Engine.NNUE.Vectorization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
