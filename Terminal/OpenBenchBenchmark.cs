@@ -40,14 +40,18 @@ public static class OpenBenchBenchmark
         ulong total = 0;
         MoveTranspositionTable table = MoveTranspositionTable.GenerateTable(16);
         TimeControl timeControl = new(9999999);
-        
-        Stopwatch stopwatch = Stopwatch.StartNew();
+
+        double elapsedMs = 0;
         for (int i = 0; i < BenchmarkFen.Length; i++) {
             string fen = BenchmarkFen[i];
             Console.WriteLine("Position (" + (i + 1) + "/" + BenchmarkFen.Length + "): " + fen);
             DisplayBoard board = DisplayBoard.FromFen(fen);
             MoveSearch search = new(board, table, timeControl);
+            
+            Stopwatch stopwatch = Stopwatch.StartNew();
             OrderedMoveEntry bestMove = search.IterativeDeepening(DEPTH);
+            stopwatch.Stop();
+            elapsedMs += stopwatch.Elapsed.TotalMilliseconds;
             
             string from = bestMove.From.ToString().ToLower();
             string to = bestMove.To.ToString().ToLower();
@@ -55,9 +59,8 @@ public static class OpenBenchBenchmark
             Console.WriteLine("bestmove " + from + to + promotion);
             total += (ulong)search.TotalNodeSearchCount;
         }
-        stopwatch.Stop();
 
-        int speed = (int)((int)total / ((float)stopwatch.ElapsedMilliseconds / 1000));
+        double speed = (int)(total / (elapsedMs / 1000));
         Console.WriteLine(total + " nodes " + speed + " nps");
     }
 

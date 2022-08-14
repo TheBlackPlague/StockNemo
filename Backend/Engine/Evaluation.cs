@@ -1,23 +1,46 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Engine.NNUE.Architecture.Basic;
 
 namespace Backend.Engine;
 
 public static class Evaluation
 {
 
+    private const string NNUE_FILE = "Backend.Engine.NNUE.Model.BasicNNUE.nnue";
+
     private const int BISHOP_PAIR_EARLY = 25;
     private const int BISHOP_PAIR_LATE = 50;
     
     // ReSharper disable once InconsistentNaming
     public static readonly MaterialDevelopmentTable MDT = new();
+    public static readonly BasicNNUE NNUE;
+
+    static Evaluation()
+    {
+        // NNUE = new BasicNNUE();
+        // NNUE.FromJson(File.OpenRead());
+        // Util.SaveBinary(NNUE, File.OpenWrite());
+        using Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(NNUE_FILE);
+        NNUE = Util.ReadBinary<BasicNNUE>(stream);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int RelativeEvaluation(Board board)
     {
-        return NormalEvaluation(board) * (-2 * (int)board.ColorToMove + 1);
+        return NNEvaluation(board);
+        // return NormalEvaluation(board) * (-2 * (int)board.ColorToMove + 1);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int NNEvaluation(Board board)
+    {
+        // NNUE.RefreshAccumulator(board);
+        return NNUE.Evaluate(board.ColorToMove);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

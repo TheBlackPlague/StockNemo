@@ -37,10 +37,13 @@ internal class DisplayBoard : EngineBoard
     
     public string ToString(bool flip = false)
     {
+        int evaluation = Evaluation.RelativeEvaluation(this);
+        if (ColorToMove == PieceColor.Black) evaluation = -evaluation;
+        
         string board = DrawBoardCli(flip).ToString().Trim(' ');
         string fen = "FEN: " + GenerateFen() + "\n";
         string hash = "Hash: " + $"{Map.ZobristHash:X}\n";
-        string eval = "Evaluation: " + Evaluation.NormalEvaluation(this);
+        string eval = "Evaluation: " + evaluation;
         return board + fen + hash + eval;
     }
     

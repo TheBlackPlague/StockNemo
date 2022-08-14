@@ -89,6 +89,8 @@ public class MoveSearch
                 depth++;
             }
         } catch (OperationCanceledException) {}
+        
+        Evaluation.NNUE.ResetAccumulator();
         return bestMove;
     }
 
@@ -453,7 +455,7 @@ public class MoveSearch
             #endregion
 
             // Make the move.
-            RevertMove rv = board.Move(ref move);
+            RevertMove rv = board.MoveNNUE(ref move);
             TotalNodeSearchCount++;
             
             int evaluation;
@@ -627,7 +629,7 @@ public class MoveSearch
                 
             // Make the move.
             OrderedMoveEntry move = moveList[i];
-            RevertMove rv = board.Move(ref move);
+            RevertMove rv = board.MoveNNUE(ref move);
             TotalNodeSearchCount++;
         
             // Evaluate position by searching deeper and negating the result. An evaluation that's good for
