@@ -151,7 +151,9 @@ public class MoveSearch
                 // If our evaluation was somehow better than our beta, we should resize our window and research.
                 beta = Math.Min(beta + research * research * ASPIRATION_DELTA, POS_INFINITY);
                 
-                // Update our best move in case our evaluation was better than beta to get best possible move.
+                // Update our best move in case our evaluation was better than beta.
+                // The move we get in future surely can't be worse than this so it's fine to update our best move
+                // directly on a beta cutoff.
                 bestMove = PvTable.Get(0);
 
                 // If our evaluation was within our window, we should return the result avoiding any researches.
