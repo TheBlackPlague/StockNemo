@@ -74,7 +74,7 @@ public class MoveSearch
             Stopwatch stopwatch = Stopwatch.StartNew();
             bool timePreviouslyUpdated = false;
             while (!TimeControl.Finished() && depth <= selectedDepth) {
-                evaluation = AspirationSearch(Board, depth, evaluation);
+                evaluation = AspirationSearch(Board, depth, evaluation, ref bestMove);
                 bestMove = PvTable.Get(0);
 
                 // Try counting nodes to see if we can exit the search early.
@@ -95,7 +95,7 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int AspirationSearch(EngineBoard board, int depth, int previousEvaluation)
+    private int AspirationSearch(EngineBoard board, int depth, int previousEvaluation, ref OrderedMoveEntry bestMove)
     {
         // Set base window size.
         int alpha = NEG_INFINITY;
@@ -151,6 +151,9 @@ public class MoveSearch
                 // If our evaluation was somehow better than our beta, we should resize our window and research.
                 beta = Math.Min(beta + research * research * ASPIRATION_DELTA, POS_INFINITY);
                 
+                // Update our best move in case our evaluation was better than beta to get best possible move.
+                bestMove = PvTable.Get(0);
+
                 // If our evaluation was within our window, we should return the result avoiding any researches.
             } else return bestEvaluation;
 
