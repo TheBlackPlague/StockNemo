@@ -70,6 +70,9 @@
     * Tapered Evaluation
       * Early Game
       * Late Game
+    * Neural Network Evaluation
+      * Tempo Sensitive
+      * Perspective Evaluation
   * **Move Policy (Move Ordering)**:
     * Transposition Table Move (Normal Move Generation)
     * Promotion Move
@@ -107,6 +110,7 @@
       * Null Move Pruning
         * Three-ply Depth Reduction
         * Non-Razoring Depth
+      * Check Extension
       * Fail-soft Alpha Beta Pruning
         * Late Move Pruning
           * Post Best Move Found
