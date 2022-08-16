@@ -182,6 +182,7 @@ public static class UniversalChessInterface
         const int maxDepth = 63;
         int time = maxTime;
         int depth = maxDepth;
+        int movesToGo = -1;
 
         if (args.Length == 1) {
             ActiveTimeControl = new TimeControl(time);
@@ -212,6 +213,10 @@ public static class UniversalChessInterface
                     timeIncForColor[1] = int.Parse(args[++argPosition]);
                     time = 0;
                     break;
+                case "movestogo":
+                    movesToGo = int.Parse(args[++argPosition]);
+                    time = 0;
+                    break;
                 case "depth":
                     depth = Math.Min(maxDepth, int.Parse(args[++argPosition]));
                     break;
@@ -225,7 +230,8 @@ public static class UniversalChessInterface
         }
 
         if (time == maxTime || timeSpecified) ActiveTimeControl = new TimeControl(time);
-        else ActiveTimeControl = new TimeControl(timeForColor, timeIncForColor, Board.ColorToMove, MoveCount);
+        else ActiveTimeControl = 
+            new TimeControl(movesToGo, timeForColor, timeIncForColor, Board.ColorToMove, MoveCount);
 
         SkipParameter:
         TaskFactory factory = new();

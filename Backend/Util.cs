@@ -1,7 +1,9 @@
 using System;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using Backend.Data.Enum;
 
 namespace Backend;
@@ -50,6 +52,24 @@ public static class Util
         return 
             ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(array.AA(firstIndex)), secondIndex);
 #endif
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public static void SaveBinary<T>(T data, Stream stream)
+    {
+        BinaryFormatter writer = new();
+#pragma warning disable SYSLIB0011
+        writer.Serialize(stream, data);
+#pragma warning restore SYSLIB0011
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public static T ReadBinary<T>(Stream stream)
+    {
+        BinaryFormatter reader = new();
+#pragma warning disable SYSLIB0011
+        return (T)reader.Deserialize(stream);
+#pragma warning restore SYSLIB0011
     }
 
 }

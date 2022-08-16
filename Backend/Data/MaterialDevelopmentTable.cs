@@ -179,6 +179,7 @@ public class MaterialDevelopmentTable
 
     static MaterialDevelopmentTable()
     {
+        // Merge material values with development values.
         for (int i = 0; i < 12; i++) for (int j = i * 64; j < (i + 1) * 64; j++) Internal[j] += Material[i];
     }
 

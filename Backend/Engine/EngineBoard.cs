@@ -14,7 +14,12 @@ public class EngineBoard : Board
     private EngineBoard(EngineBoard board) : base(board) => History = board.History.Clone();
 
     protected EngineBoard(string boardData, string turnData, string castlingData, string enPassantTargetData) :
-        base(boardData, turnData, castlingData, enPassantTargetData) => History = new RepetitionHistory();
+        base(boardData, turnData, castlingData, enPassantTargetData)
+    {
+        History = new RepetitionHistory();
+        Evaluation.NNUE.ResetAccumulator();
+        Evaluation.NNUE.RefreshAccumulator(this);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Piece PieceOnly(Square sq) => Map.PieceOnly(sq);
@@ -30,8 +35,8 @@ public class EngineBoard : Board
         if (promotion != Promotion.None && !moveList.Promotion) 
             throw new InvalidOperationException("Invalid move provided by GUI.");
         
-        OrderedMoveEntry entry = new(from, to, promotion);
-        Move(ref entry);
+        MoveNNUE(from, to, promotion);
+        History.Append(ZobristHash);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,9 +66,10 @@ public class EngineBoard : Board
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public RevertMove Move(ref OrderedMoveEntry move)
+    public RevertMove MoveNNUE(ref OrderedMoveEntry move)
     {
-        RevertMove rv = Move(move.From, move.To, move.Promotion);
+        Evaluation.NNUE.PushAccumulator();
+        RevertMove rv = MoveNNUE(move.From, move.To, move.Promotion);
         History.Append(ZobristHash);
         return rv;
     }
@@ -72,6 +78,7 @@ public class EngineBoard : Board
     public new void UndoMove(ref RevertMove rv)
     {
         base.UndoMove(ref rv);
+        Evaluation.NNUE.PullAccumulator();
         History.RemoveLast();
     }
 

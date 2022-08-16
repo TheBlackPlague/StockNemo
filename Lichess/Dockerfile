@@ -1,4 +1,4 @@
-﻿FROM ghcr.io/theblackplague/stocknemo:3.0.0.2 as LAUNCH
+﻿FROM ghcr.io/theblackplague/stocknemo:5.0.0.0 as LAUNCH
 
 LABEL org.opencontainers.image.source=https://github.com/TheBlackPlague/StockNemo
 
@@ -11,7 +11,7 @@ RUN mv /App/StockNemo /lcbot/engines/StockNemo
 
 WORKDIR "/lcbot"
 COPY ["config.yml", "config.yml"]
-COPY ["Perfect2021.bin", "engines/"]
+COPY ["StockNemoGM.bin", "engines/"]
 RUN pip3 install wheel &&\
     pip3 install -r requirements.txt
 

@@ -32,7 +32,7 @@
 <a href="https://lichess.org/@/StockNemo">
 <img
         alt="Lichess"
-        src="https://img.shields.io/badge/Play%20on%20LICHESS-v3.0.0.1-green?logo=lichess&style=for-the-badge"
+        src="https://img.shields.io/badge/Play%20on%20LICHESS-v4.0.0.0-green?logo=lichess&style=for-the-badge"
 >
 </a>
 </p>
@@ -70,6 +70,9 @@
     * Tapered Evaluation
       * Early Game
       * Late Game
+    * Neural Network Evaluation
+      * Tempo Sensitive
+      * Perspective Evaluation
   * **Move Policy (Move Ordering)**:
     * Transposition Table Move (Normal Move Generation)
     * Promotion Move
@@ -97,14 +100,28 @@
         * Alpha Unchanged Update
         * Beta Cutoff Update
         * Alpha Beta Delta Cutoff
+      * Reverse Futility Pruning
+        * Up to six-ply
+        * None on mate branches
+        * Depth and Improving based Margin
       * Razoring
         * QSearch Evaluation
         * Shallow Threshold
       * Null Move Pruning
         * Three-ply Depth Reduction
         * Non-Razoring Depth
+      * Check Extension
       * Fail-soft Alpha Beta Pruning
+        * Late Move Pruning
+          * Post Best Move Found
+          * Quiet Move Threshold
+          * Non Principle Variation Branches
+          * Up to three-ply
         * Late Move Reduction
+          * Depth and Moves Played Logarithmic Reduction
+          * At least three-ply
+        * Principle Variation Search
+          * Full Search on First Move 
     * Quiescence Search (QSearch)
       * Static Evaluation
         * Beta Cutoff
@@ -172,3 +189,5 @@ Stockfish Team for providing numerous insights and making a brilliant engine,
 used numerous times to debug StockNemo.
 - [OpenBench](https://github.com/AndyGrant/OpenBench) by Andrew Grant for making
 an amazing framework that allows distributed testing of StockNemo.
+- [Chess Tuning Tools](https://github.com/kiudee/chess-tuning-tools) by Karlson 
+Pfannschmidt for being an amazing utility software to tune StockNemo.

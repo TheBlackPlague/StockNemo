@@ -26,10 +26,14 @@ public class TimeControl
     private static long GetCurrentTime() => DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TimeControl(ReadOnlySpan<int> timeForColor, ReadOnlySpan<int> timeIncForColor, 
+    public TimeControl(int movesToGo, ReadOnlySpan<int> timeForColor, ReadOnlySpan<int> timeIncForColor, 
         PieceColor colorToMove, int moveCount)
     {
         Time = timeForColor[(int)colorToMove] / BASE_DIV;
+
+        if (movesToGo != -1 && movesToGo < BASE_DIV) {
+            Time = Math.Max(Time, timeForColor[(int)colorToMove] / movesToGo - 100);
+        }
 
         if (moveCount >= INCREMENT_MOVE_BOUND) Time += timeIncForColor[(int)colorToMove] / INCREMENT_DIV;
 

@@ -19,8 +19,8 @@ public class MoveSearch
     private const int NULL_MOVE_DEPTH = 2;
 
     private const int ASPIRATION_BOUND = 3500;
-    private const int ASPIRATION_SIZE = 50;
-    private const int ASPIRATION_DELTA = 30;
+    private const int ASPIRATION_SIZE = 16;
+    private const int ASPIRATION_DELTA = 23;
     private const int ASPIRATION_DEPTH = 4;
 
     private const int RAZORING_EVALUATION_THRESHOLD = 150;
@@ -74,7 +74,7 @@ public class MoveSearch
             Stopwatch stopwatch = Stopwatch.StartNew();
             bool timePreviouslyUpdated = false;
             while (!TimeControl.Finished() && depth <= selectedDepth) {
-                evaluation = AspirationSearch(Board, depth, evaluation);
+                evaluation = AspirationSearch(Board, depth, evaluation, ref bestMove);
                 bestMove = PvTable.Get(0);
 
                 // Try counting nodes to see if we can exit the search early.
@@ -89,11 +89,13 @@ public class MoveSearch
                 depth++;
             }
         } catch (OperationCanceledException) {}
+        
+        Evaluation.NNUE.ResetAccumulator();
         return bestMove;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int AspirationSearch(EngineBoard board, int depth, int previousEvaluation)
+    private int AspirationSearch(EngineBoard board, int depth, int previousEvaluation, ref OrderedMoveEntry bestMove)
     {
         // Set base window size.
         int alpha = NEG_INFINITY;
@@ -149,6 +151,11 @@ public class MoveSearch
                 // If our evaluation was somehow better than our beta, we should resize our window and research.
                 beta = Math.Min(beta + research * research * TunedSearchParameters.AspirationDelta, POS_INFINITY);
                 
+                // Update our best move in case our evaluation was better than beta.
+                // The move we get in future surely can't be worse than this so it's fine to update our best move
+                // directly on a beta cutoff.
+                bestMove = PvTable.Get(0);
+
                 // If our evaluation was within our window, we should return the result avoiding any researches.
             } else return bestEvaluation;
 
@@ -284,6 +291,7 @@ public class MoveSearch
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
         bool improving = false;
         
+        // ReSharper disable once ConvertIfStatementToSwitchStatement
         if (!inCheck && !pvNode) {
             // We should use the evaluation from our transposition table if we had a hit.
             // As that evaluation isn't truly static and may have been from a previous deep search.
@@ -343,6 +351,15 @@ public class MoveSearch
                 // In the case our evaluation was better than our beta, we achieved a cutoff here. 
                 if (evaluation >= beta) return beta;
             }
+
+            #endregion
+        } else if (inCheck) {
+            #region Check Extension
+
+            // If we're in check, then it's better to evaluate this position deeper as to get good idea of situation,
+            // avoiding unseen blunders. Due to the number of moves being very less when under check, one shouldn't
+            // be concerned about search explosion.
+            depth++;
 
             #endregion
         }
@@ -443,7 +460,7 @@ public class MoveSearch
             #endregion
 
             // Make the move.
-            RevertMove rv = board.Move(ref move);
+            RevertMove rv = board.MoveNNUE(ref move);
             TotalNodeSearchCount++;
             
             int evaluation;
@@ -617,7 +634,7 @@ public class MoveSearch
                 
             // Make the move.
             OrderedMoveEntry move = moveList[i];
-            RevertMove rv = board.Move(ref move);
+            RevertMove rv = board.MoveNNUE(ref move);
             TotalNodeSearchCount++;
         
             // Evaluate position by searching deeper and negating the result. An evaluation that's good for
