@@ -333,7 +333,7 @@ public class MoveSearch
                 RevertNullMove rv = board.NullMove();
                 
                 // Reduction depth for null move pruning.
-                int reductionDepth = depth - (NULL_MOVE_REDUCTION + (depth >> 2));
+                int reductionDepth = depth - depth / 3;
                 
                 // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
                 // The idea is that if there are cutoffs, most will be found using this reduced search and we can cutoff
