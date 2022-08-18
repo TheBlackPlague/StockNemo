@@ -11,7 +11,8 @@ namespace Backend.Engine;
 public static class Evaluation
 {
 
-    private const string NNUE_FILE = "Backend.Engine.NNUE.Model.BasicNNUE.nnue";
+    private const string NNUE_FILE = "Backend.Engine.NNUE.Model.BasicNNUE";
+    private const string HASH = "9db597c5dd";
 
     private const int BISHOP_PAIR_EARLY = 25;
     private const int BISHOP_PAIR_LATE = 50;
@@ -25,7 +26,8 @@ public static class Evaluation
         // NNUE = new BasicNNUE();
         // NNUE.FromJson(File.OpenRead());
         // Util.SaveBinary(NNUE, File.OpenWrite());
-        using Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(NNUE_FILE);
+        const string resource = NNUE_FILE + "-" + HASH + ".nnue";
+        using Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource);
         NNUE = Util.ReadBinary<BasicNNUE>(stream);
     }
 
