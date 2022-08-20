@@ -28,7 +28,7 @@ RUN dotnet publish "Terminal.csproj" -c Release -r linux-x64 -o /Tune  \
     /p:PublishSingleFile=true --self-contained true
 RUN mv /Tune/StockNemo /Tune/StockNemoTUNE
 
-FROM nvidia/cuda:11.0-runtime-ubuntu20.04 AS cuda
+FROM nvidia/cuda:11.0.3-runtime-ubuntu20.04 AS cuda
 
 RUN rm /etc/apt/sources.list.d/cuda.list
 RUN apt-key del 7fa2af80
