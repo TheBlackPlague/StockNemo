@@ -3,8 +3,8 @@
 public static class TunedSearchParameters
 {
 
-    public static int AspirationSize = 50;
-    public static int AspirationDelta = 30;
-    public static int AspirationDepth = 4;
+    public static int ReverseFutilityDepthThreshold = 7;
+    public static int ReverseFutilityD = 67;
+    public static int ReverseFutilityI = 76;
 
 }

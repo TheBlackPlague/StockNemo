@@ -44,9 +44,9 @@ public static class UniversalChessInterface
         Console.WriteLine("id name " + NAME);
         Console.WriteLine("id author " + AUTHOR);
         Console.WriteLine("option name Hash type spin default 16 min 4 max 512");
-        Console.WriteLine("option name AspirationSize type spin default 50 min 5 max 100");
-        Console.WriteLine("option name AspirationDelta type spin default 30 min 5 max 100");
-        Console.WriteLine("option name AspirationDepth type spin default 4 min 1 max 8");
+        Console.WriteLine("option name ReverseFutilityDepthThreshold type spin default 7 min 1 max 15");
+        Console.WriteLine("option name ReverseFutilityD type spin default 67 min 5 max 150");
+        Console.WriteLine("option name ReverseFutilityI type spin default 76 min 5 max 150");
 
         // Let GUI know engine is ready in UCI mode.
         Console.WriteLine("uciok");
@@ -70,14 +70,14 @@ public static class UniversalChessInterface
                 TranspositionTable = MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb);
                 Busy = false;
                 break;
-            case "AspirationSize":
-                TunedSearchParameters.AspirationSize = int.Parse(args[4]);
+            case "ReverseFutilityDepthThreshold":
+                TunedSearchParameters.ReverseFutilityDepthThreshold = int.Parse(args[4]);
                 break;
-            case "AspirationDelta":
-                TunedSearchParameters.AspirationDelta = int.Parse(args[4]);
+            case "ReverseFutilityD":
+                TunedSearchParameters.ReverseFutilityD = int.Parse(args[4]);
                 break;
-            case "AspirationDepth":
-                TunedSearchParameters.AspirationDepth = int.Parse(args[4]);
+            case "ReverseFutilityI":
+                TunedSearchParameters.ReverseFutilityI = int.Parse(args[4]);
                 break;
         }
     }
