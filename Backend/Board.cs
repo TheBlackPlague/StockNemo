@@ -71,33 +71,6 @@ public class Board
     #endregion
 
     #region Move
-        
-    public MoveResult SecureMove(Square from, Square to, Promotion promotion = Promotion.None)
-    {
-        MoveList moveList = MoveList.WithoutProvidedPins(this, from);
-        BitBoard moves = moveList.Moves;
-
-        // If the requested move isn't found in legal moves for our square, then we cannot make the move
-        // securely. Return a failure result.
-        if (!moves[to] || (promotion != Promotion.None && !moveList.Promotion)) return MoveResult.Fail;
-            
-        // Make the move.
-        Move(from, to, promotion);
-            
-        PieceColor color = Map[to].Item2;
-        PieceColor oppositeColor = Util.OppositeColor(color);
-
-        // Get all legal moves available for opposing pieces.
-        MoveList opposingMoveList = new(this, oppositeColor);
-            
-        // If opponent cannot make a legal move, it means they have no moves left which is a checkmate.
-        if (opposingMoveList.Count == 0) return MoveResult.Checkmate;
-
-        // If the king is under attack, it's a check. Otherwise it was just a successful move.
-        BitBoard kingLoc = KingLoc(oppositeColor);
-        return MoveList.UnderAttack(this, kingLoc, color) ? 
-            MoveResult.SuccessAndCheck : MoveResult.Success;
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     // ReSharper disable once MemberCanBeProtected.Global
