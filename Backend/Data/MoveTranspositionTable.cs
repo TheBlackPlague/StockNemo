@@ -12,6 +12,8 @@ public unsafe class MoveTranspositionTable
 {
 
     private const int MB_TO_B = 1_048_576;
+    
+    private const int REPLACEMENT_DEPTH_THRESHOLD = 3;
 
     private readonly int HashFilter;
     private MoveTranspositionTableEntry[] Internal;
@@ -57,8 +59,8 @@ public unsafe class MoveTranspositionTable
             return;
         }
         
-        // If the old entry is more than 3 depths higher than the new entry, than avoid replacing it.
-        if (oldEntry.Depth - 3 > entry.Depth) return;
+        // If the old entry is higher than the new entry by a depth more than the threshold, than avoid replacing it.
+        if (oldEntry.Depth - REPLACEMENT_DEPTH_THRESHOLD > entry.Depth) return;
         Internal.AA(index) = entry;
     }
 
