@@ -39,7 +39,7 @@ public class TimeControl
 
         // ReSharper disable once InvertIf
         if (moveCount >= DELTA_MOVE_BOUND) {
-            int dTime = timeForColor[(int)colorToMove] - timeForColor[(int)Util.OppositeColor(colorToMove)];
+            int dTime = timeForColor[(int)colorToMove] - timeForColor[(int)colorToMove.OppositeColor()];
             if (dTime >= DELTA_THRESHOLD) Time += dTime / DELTA_DIV;
         }
         

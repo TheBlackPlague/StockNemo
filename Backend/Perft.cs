@@ -86,7 +86,7 @@ public class Perft
         ulong count = 0;
 
         // Figure out color and opposite color from the one set in the board.
-        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        PieceColor oppositeColor = board.ColorToMove.OppositeColor();
 
         // Get all squares occupied by our color.
         BitBoard colored = board.All(board.ColorToMove);
@@ -259,7 +259,7 @@ public class Perft
         ulong count = 0;
 
         // Figure out color and opposite color from the one set in the board.
-        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        PieceColor oppositeColor = board.ColorToMove.OppositeColor();
 
         // Get all squares occupied by our color.
         BitBoard colored = board.All(board.ColorToMove);

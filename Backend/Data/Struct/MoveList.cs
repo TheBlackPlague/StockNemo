@@ -188,7 +188,7 @@ public ref struct MoveList
     public static MoveList WithoutProvidedPins(Board board, Square from)
     {
         (Piece piece, PieceColor color) = board.At(from);
-        PieceColor oppositeColor = Util.OppositeColor(color);
+        PieceColor oppositeColor = color.OppositeColor();
         
         Square kingSq = board.KingLoc(color);
         (BitBoard horizontalVertical, BitBoard diagonal) = PinBitBoards(board, kingSq, color, oppositeColor);
@@ -320,7 +320,7 @@ public ref struct MoveList
             return;
         }
         
-        PieceColor oppositeColor = Util.OppositeColor(color);
+        PieceColor oppositeColor = color.OppositeColor();
         BitBoard opposite = Board.All(oppositeColor);
         Square epPieceSq = Square.Na;
         
@@ -407,7 +407,7 @@ public ref struct MoveList
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void LegalPawnMoveSet(PieceColor color)
     {
-        PieceColor oppositeColor = Util.OppositeColor(color);
+        PieceColor oppositeColor = color.OppositeColor();
         BitBoard from = From;
         BitBoard opposite = Board.All(oppositeColor);
         Square epPieceSq = Square.Na;
@@ -576,7 +576,7 @@ public ref struct MoveList
         // or not by removing the king.
         if (!kingMoves) return;
 
-        PieceColor oppositeColor = Util.OppositeColor(color);
+        PieceColor oppositeColor = color.OppositeColor();
         BitBoardIterator kingMovesIterator = kingMoves.GetEnumerator();
         Square move = kingMovesIterator.Current;
         Board.RemovePiece(Piece.King, color, From);

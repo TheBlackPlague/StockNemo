@@ -286,7 +286,7 @@ public class MoveSearch
         int nextPlyFromRoot = plyFromRoot + 1;
 
         // Determine whether we should prune moves.
-        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        PieceColor oppositeColor = board.ColorToMove.OppositeColor();
         Square kingSq = board.KingLoc(board.ColorToMove);
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
         bool improving = false;

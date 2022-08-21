@@ -29,9 +29,6 @@ public static class Util
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PieceColor OppositeColor(PieceColor color) => (PieceColor)((int)color ^ 0x1);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     // ReSharper disable once InconsistentNaming
     public static ref T AA<T>(this T[] array, int index)
     {

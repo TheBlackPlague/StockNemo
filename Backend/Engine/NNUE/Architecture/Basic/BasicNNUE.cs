@@ -86,7 +86,7 @@ public class BasicNNUE
 
             sq = blackIterator.Current;
             while (blackIterator.MoveNext()) {
-                int index = (int)Util.OppositeColor(color) * colorStride + (int)piece * pieceStride + ((int)sq ^ 56);
+                int index = (int)color.OppositeColor() * colorStride + (int)piece * pieceStride + ((int)sq ^ 56);
                 BlackPOV.AA(index) = 1;
                 sq = blackIterator.Current;
             }
@@ -110,7 +110,7 @@ public class BasicNNUE
         int opPieceStride = (int)nnPiece * pieceStride;
 
         int whiteIndex = (int)color * colorStride + opPieceStride + (int)sq;
-        int blackIndex = (int)Util.OppositeColor(color) * colorStride + opPieceStride + ((int)sq ^ 56);
+        int blackIndex = (int)color.OppositeColor() * colorStride + opPieceStride + ((int)sq ^ 56);
 
         BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
 
