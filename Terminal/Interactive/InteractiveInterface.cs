@@ -146,7 +146,7 @@ internal static class InteractiveInterface
             }
 
             // If we're attacking opponent's king, then the opponent is under check.
-            PieceColor attackingColor = Util.OppositeColor(Board.ColorToMove);
+            PieceColor attackingColor = Board.ColorToMove.OppositeColor();
             if (MoveList.UnderAttack(Board, Board.KingLoc(Board.ColorToMove), attackingColor)) Check = true;
         }
     }
@@ -201,7 +201,7 @@ internal static class InteractiveInterface
     {
         DrawCycle.Draw(Board);
         if (Check) Console.WriteLine(Board.ColorToMove + " is under check.");
-        if (CheckMate) Console.WriteLine("Checkmate - " + Util.OppositeColor(Board.ColorToMove) + " won!");
+        if (CheckMate) Console.WriteLine("Checkmate - " + Board.ColorToMove.OppositeColor() + " won!");
     }
 
 }

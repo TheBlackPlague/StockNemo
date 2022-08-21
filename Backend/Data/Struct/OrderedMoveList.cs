@@ -90,7 +90,7 @@ public readonly ref struct OrderedMoveList
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int NormalMoveGeneration(Board board, SearchedMove transpositionMove)
     {
-        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        PieceColor oppositeColor = board.ColorToMove.OppositeColor();
 
         // Generate pins and check bitboards.
         Square kingSq = board.KingLoc(board.ColorToMove);
@@ -193,7 +193,7 @@ public readonly ref struct OrderedMoveList
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int QSearchMoveGeneration(Board board, SearchedMove transpositionMove)
     {
-        PieceColor oppositeColor = Util.OppositeColor(board.ColorToMove);
+        PieceColor oppositeColor = board.ColorToMove.OppositeColor();
         // If we only want capture moves, we should also define our opposite board.
         BitBoard opposite = board.All(oppositeColor);
 

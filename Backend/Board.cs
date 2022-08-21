@@ -94,7 +94,7 @@ public class Board
         if (EnPassantTarget == to && pieceF == Piece.Pawn) {
             // If the attack is an EP attack, we must empty the piece affected by EP.
             Square epPieceSq = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
-            PieceColor oppositeColor = Util.OppositeColor(colorF);
+            PieceColor oppositeColor = colorF.OppositeColor();
             Map.Empty(Piece.Pawn, oppositeColor, epPieceSq);
             
             Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Pawn, oppositeColor, epPieceSq, false);
@@ -249,7 +249,7 @@ public class Board
         );
 
         // Flip the turn.
-        Map.ColorToMove = Util.OppositeColor(Map.ColorToMove);
+        Map.ColorToMove = Map.ColorToMove.OppositeColor();
         
         // Update Zobrist.
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);
@@ -276,7 +276,7 @@ public class Board
         if (EnPassantTarget == to && pieceF == Piece.Pawn) {
             // If the attack is an EP attack, we must empty the piece affected by EP.
             Square epPieceSq = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
-            PieceColor oppositeColor = Util.OppositeColor(colorF);
+            PieceColor oppositeColor = colorF.OppositeColor();
             Map.Empty(Piece.Pawn, oppositeColor, epPieceSq);
 
             // Set it in revert move.
@@ -421,7 +421,7 @@ public class Board
         );
 
         // Flip the turn.
-        Map.ColorToMove = Util.OppositeColor(Map.ColorToMove);
+        Map.ColorToMove = Map.ColorToMove.OppositeColor();
         
         // Update Zobrist.
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);

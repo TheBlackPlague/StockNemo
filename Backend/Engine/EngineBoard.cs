@@ -47,7 +47,7 @@ public class EngineBoard : Board
         if (Map.EnPassantTarget != Square.Na) Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
         Map.EnPassantTarget = Square.Na;
 
-        Map.ColorToMove = Util.OppositeColor(Map.ColorToMove);
+        Map.ColorToMove = Map.ColorToMove.OppositeColor();
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);
 
         return rv;
@@ -61,7 +61,7 @@ public class EngineBoard : Board
             Zobrist.HashEp(ref Map.ZobristHash, rv.EnPassantTarget);
         }
 
-        Map.ColorToMove = Util.OppositeColor(Map.ColorToMove);
+        Map.ColorToMove = Map.ColorToMove.OppositeColor();
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);
     }
 
