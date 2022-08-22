@@ -6,22 +6,22 @@ namespace Backend.Data;
 public class LogarithmicReductionDepthTable
 {
 
-    private const int SIZE = 64 * 64;
+    private const int SIZE = 128;
 
-    private readonly int[] Internal = new int[SIZE];
+    private readonly int[] Internal = new int[SIZE * SIZE];
 
     public LogarithmicReductionDepthTable()
     {
-        for (int depth = 1; depth < 64; depth++)
-        for (int played = 1; played < 64; played++) {
-            Internal[depth * 64 + played] = Math.Max((int)Math.Log(depth) * (int)Math.Log(played), 1);
+        for (int depth = 1; depth < SIZE; depth++)
+        for (int played = 1; played < SIZE; played++) {
+            Internal[depth * SIZE + played] = Math.Max((int)Math.Log(depth) * (int)Math.Log(played), 1);
         }
     }
 
     public int this[int depth, int played]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Internal.AA(depth * 64 + played);
+        get => Internal.AA(depth * SIZE + played);
     }
 
 }

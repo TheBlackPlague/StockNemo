@@ -7,7 +7,7 @@ namespace Backend.Data;
 public class PrincipleVariationTable
 {
 
-    private const int SIZE = 64;
+    private const int SIZE = 128;
 
     private readonly int[] Length = new int[SIZE];
     private readonly OrderedMoveEntry[] Internal = GC.AllocateUninitializedArray<OrderedMoveEntry>(SIZE * SIZE);

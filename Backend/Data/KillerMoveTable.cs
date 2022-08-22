@@ -6,19 +6,19 @@ namespace Backend.Data;
 public class KillerMoveTable
 {
 
-    private const int SIZE = 2 * 64;
+    private const int SIZE = 128;
 
-    private readonly OrderedMoveEntry[] Internal = new OrderedMoveEntry[SIZE];
+    private readonly OrderedMoveEntry[] Internal = new OrderedMoveEntry[2 * SIZE];
 
     public OrderedMoveEntry this[int type, int ply]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Internal.AA(type * 64 + ply);
+        get => Internal.AA(type * SIZE + ply);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => Internal.AA(type * 64 + ply) = value;
+        set => Internal.AA(type * SIZE + ply) = value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ReOrder(int ply) => Internal.AA(64 + ply) = Internal.AA(ply);
+    public void ReOrder(int ply) => Internal.AA(SIZE + ply) = Internal.AA(ply);
 
 }
