@@ -32,7 +32,7 @@
 <a href="https://lichess.org/@/StockNemo">
 <img
         alt="Lichess"
-        src="https://img.shields.io/badge/Play%20on%20LICHESS-v4.0.0.0-green?logo=lichess&style=for-the-badge"
+        src="https://img.shields.io/badge/Play%20on%20LICHESS-v5.1.0.0-green?logo=lichess&style=for-the-badge"
 >
 </a>
 </p>
