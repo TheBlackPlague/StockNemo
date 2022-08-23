@@ -7,7 +7,7 @@ namespace Backend.Engine.NNUE.Vectorization;
 public static class NN
 {
 
-    #region PieceToNN(Piece piece)
+    private const int UNROLL = 4;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Piece PieceToNN(Piece piece)
@@ -20,59 +20,11 @@ public static class NN
         };
     }
 
-    #endregion
-
-    #region Forward(value[] input, value[] weight, value[] output, int offset = 0)
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Forward(double[] input, double[] weight, double[] output, int offset = 0)
-    {
-        int inputSize = input.Length;
-        int loopSize = inputSize / VSize.Double;
-        int outputSize = output.Length;
-        int weightStride = 0;
-
-        for (int i = 0; i < outputSize; i++) {
-            double sum = 0;
-            int vectorIndex = 0;
-            for (int j = 0; j < loopSize; j++) {
-                Vector<double> iVec = new(input, vectorIndex);
-                Vector<double> wVec = new(weight, weightStride + vectorIndex);
-                sum += Vector.Sum(iVec * wVec);
-                vectorIndex += VSize.Double;
-            }
-            output.AA(offset + i) = sum;
-            weightStride += inputSize;
-        }
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Forward(int[] input, int[] weight, int[] output, int offset = 0)
-    {
-        int inputSize = input.Length;
-        int loopSize = inputSize / VSize.Int;
-        int outputSize = output.Length;
-        int weightStride = 0;
-
-        for (int i = 0; i < outputSize; i++) {
-            int sum = 0;
-            int vectorIndex = 0;
-            for (int j = 0; j < loopSize; j++) {
-                Vector<int> iVec = new(input, vectorIndex);
-                Vector<int> wVec = new(weight, weightStride + vectorIndex);
-                sum += Vector.Sum(iVec * wVec);
-                vectorIndex += VSize.Int;
-            }
-            output.AA(offset + i) = sum;
-            weightStride += inputSize;
-        }
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Forward(short[] input, short[] weight, short[] output, int offset = 0)
     {
         int inputSize = input.Length;
-        int loopSize = inputSize / VSize.Short;
+        int loopSize = inputSize / VSize.Short / UNROLL;
         int outputSize = output.Length;
         int weightStride = 0;
 
@@ -80,10 +32,27 @@ public static class NN
             short sum = 0;
             int vectorIndex = 0;
             for (int j = 0; j < loopSize; j++) {
-                Vector<short> iVec = new(input, vectorIndex);
-                Vector<short> wVec = new(weight, weightStride + vectorIndex);
+                int unrolledIndex = vectorIndex + VSize.Short;
+                int unrolledIndex2 = unrolledIndex + VSize.Short;
+                int unrolledIndex3 = unrolledIndex2 + VSize.Short;
+                
+                Vector<short> iVec = input.NewVector(vectorIndex);
+                Vector<short> wVec = weight.NewVector(weightStride + vectorIndex);
                 sum += Vector.Sum(iVec * wVec);
-                vectorIndex += VSize.Short;
+                
+                Vector<short> iVec2 = input.NewVector(unrolledIndex);
+                Vector<short> wVec2 = weight.NewVector(weightStride + unrolledIndex);
+                sum += Vector.Sum(iVec2 * wVec2);
+                
+                Vector<short> iVec3 = input.NewVector(unrolledIndex2);
+                Vector<short> wVec3 = weight.NewVector(weightStride + unrolledIndex2);
+                sum += Vector.Sum(iVec3 * wVec3);
+                
+                Vector<short> iVec4 = input.NewVector(unrolledIndex3);
+                Vector<short> wVec4 = weight.NewVector(weightStride + unrolledIndex3);
+                sum += Vector.Sum(iVec4 * wVec4);
+                
+                vectorIndex = unrolledIndex3 + VSize.Short;
             }
             output.AA(offset + i) = sum;
             weightStride += inputSize;
@@ -94,7 +63,7 @@ public static class NN
     public static void Forward(short[] input, short[] weight, int[] output, int offset = 0)
     {
         int inputSize = input.Length;
-        int loopSize = inputSize / VSize.Short;
+        int loopSize = inputSize / VSize.Short / UNROLL;
         int outputSize = output.Length;
         int weightStride = 0;
 
@@ -102,76 +71,30 @@ public static class NN
             int sum = 0;
             int vectorIndex = 0;
             for (int j = 0; j < loopSize; j++) {
-                Vector<short> iVec = new(input, vectorIndex);
-                Vector<short> wVec = new(weight, weightStride + vectorIndex);
+                int unrolledIndex = vectorIndex + VSize.Short;
+                int unrolledIndex2 = unrolledIndex + VSize.Short;
+                int unrolledIndex3 = unrolledIndex2 + VSize.Short;
+                
+                Vector<short> iVec = input.NewVector(vectorIndex);
+                Vector<short> wVec = weight.NewVector(weightStride + vectorIndex);
                 sum += Vector.Sum(VMethod.MultiplyAddAdjacent(iVec, wVec));
-                vectorIndex += VSize.Short;
+                
+                Vector<short> iVec2 = input.NewVector(unrolledIndex);
+                Vector<short> wVec2 = weight.NewVector(weightStride + unrolledIndex);
+                sum += Vector.Sum(VMethod.MultiplyAddAdjacent(iVec2, wVec2));
+                
+                Vector<short> iVec3 = input.NewVector(unrolledIndex2);
+                Vector<short> wVec3 = weight.NewVector(weightStride + unrolledIndex2);
+                sum += Vector.Sum(VMethod.MultiplyAddAdjacent(iVec3, wVec3));
+                
+                Vector<short> iVec4 = input.NewVector(unrolledIndex3);
+                Vector<short> wVec4 = weight.NewVector(weightStride + unrolledIndex3);
+                sum += Vector.Sum(VMethod.MultiplyAddAdjacent(iVec4, wVec4));
+                
+                vectorIndex = unrolledIndex3 + VSize.Short;
             }
             output.AA(offset + i) = sum;
             weightStride += inputSize;
-        }
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Forward(sbyte[] input, sbyte[] weight, sbyte[] output, int offset = 0)
-    {
-        int inputSize = input.Length;
-        int loopSize = inputSize / VSize.SByte;
-        int outputSize = output.Length;
-        int weightStride = 0;
-
-        for (int i = 0; i < outputSize; i++) {
-            sbyte sum = 0;
-            int vectorIndex = 0;
-            for (int j = 0; j < loopSize; j++) {
-                Vector<sbyte> iVec = new(input, vectorIndex);
-                Vector<sbyte> wVec = new(weight, weightStride + vectorIndex);
-                sum += Vector.Sum(iVec * wVec);
-                vectorIndex += VSize.SByte;
-            }
-            output.AA(offset + i) = sum;
-            weightStride += inputSize;
-        }
-    }
-    
-    #endregion
-
-    #region ClippedReLU(value[] input, value[] bias, value[] output, value min, value max, int offset = 0)
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ClippedReLU(double[] input, double[] bias, double[] output, double min, double max,
-        int offset = 0)
-    {
-        int size = input.Length;
-        int loopSize = size / VSize.Double;
-        Vector<double> minVec = new(min);
-        Vector<double> maxVec = new(max);
-
-        int vectorIndex = 0;
-        for (int i = 0; i < loopSize; i++) {
-            Vector<double> iVec = new(input, vectorIndex);
-            Vector<double> bVec = new(bias, vectorIndex);
-            Vector<double> clamped = (iVec + bVec).Clamp(ref minVec, ref maxVec);
-            clamped.CopyTo(output, offset + vectorIndex);
-            vectorIndex += VSize.Double;
-        }
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ClippedReLU(int[] input, int[] bias, int[] output, int min, int max, int offset = 0)
-    {
-        int size = input.Length;
-        int loopSize = size / VSize.Int;
-        Vector<int> minVec = new(min);
-        Vector<int> maxVec = new(max);
-        
-        int vectorIndex = 0;
-        for (int i = 0; i < loopSize; i++) {
-            Vector<int> iVec = new(input, vectorIndex);
-            Vector<int> bVec = new(bias, vectorIndex);
-            Vector<int> clamped = (iVec + bVec).Clamp(ref minVec, ref maxVec);
-            clamped.CopyTo(output, offset + vectorIndex);
-            vectorIndex += VSize.Int;
         }
     }
     
@@ -179,139 +102,73 @@ public static class NN
     public static void ClippedReLU(short[] input, short[] bias, short[] output, short min, short max, int offset = 0)
     {
         int size = input.Length;
-        int loopSize = size / VSize.Short;
+        int loopSize = size / VSize.Short / UNROLL;
         Vector<short> minVec = new(min);
         Vector<short> maxVec = new(max);
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<short> iVec = new(input, vectorIndex);
-            Vector<short> bVec = new(bias, vectorIndex);
+            int unrolledIndex = vectorIndex + VSize.Short;
+            int unrolledIndex2 = unrolledIndex + VSize.Short;
+            int unrolledIndex3 = unrolledIndex2 + VSize.Short;
+
+            Vector<short> iVec = input.NewVector(vectorIndex);
+            Vector<short> bVec = bias.NewVector(vectorIndex);
             Vector<short> clamped = (iVec + bVec).Clamp(ref minVec, ref maxVec);
-            clamped.CopyTo(output, offset + vectorIndex);
-            vectorIndex += VSize.Short;
+            clamped.ToArray(output, offset + vectorIndex);
+            
+            Vector<short> iVec2 = input.NewVector(unrolledIndex);
+            Vector<short> bVec2 = bias.NewVector(unrolledIndex);
+            Vector<short> clamped2 = (iVec2 + bVec2).Clamp(ref minVec, ref maxVec);
+            clamped2.ToArray(output, offset + unrolledIndex);
+            
+            Vector<short> iVec3 = input.NewVector(unrolledIndex2);
+            Vector<short> bVec3 = bias.NewVector(unrolledIndex2);
+            Vector<short> clamped3 = (iVec3 + bVec3).Clamp(ref minVec, ref maxVec);
+            clamped3.ToArray(output, offset + unrolledIndex2);
+            
+            Vector<short> iVec4 = input.NewVector(unrolledIndex3);
+            Vector<short> bVec4 = bias.NewVector(unrolledIndex3);
+            Vector<short> clamped4 = (iVec4 + bVec4).Clamp(ref minVec, ref maxVec);
+            clamped4.ToArray(output, offset + unrolledIndex3);
+            
+            vectorIndex = unrolledIndex3 + VSize.Short;
         }
     }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ClippedReLU(sbyte[] input, sbyte[] bias, sbyte[] output, sbyte min, sbyte max, int offset = 0)
-    {
-        int size = input.Length;
-        int loopSize = size / VSize.SByte;
-        Vector<sbyte> minVec = new(min);
-        Vector<sbyte> maxVec = new(max);
 
-        int vectorIndex = 0;
-        for (int i = 0; i < loopSize; i++) {
-            Vector<sbyte> iVec = new(input, vectorIndex);
-            Vector<sbyte> bVec = new(bias, vectorIndex);
-            Vector<sbyte> clamped = (iVec + bVec).Clamp(ref minVec, ref maxVec);
-            clamped.CopyTo(output, offset + vectorIndex);
-            vectorIndex += VSize.SByte;
-        }
-    }
-
-    #endregion
-
-    #region AddToAll(value[] input, value[] delta, int offset)
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void AddToAll(double[] input, double[] delta, int offset)
-    {
-        int size = input.Length;
-        int loopSize = size / VSize.Double;
-
-        int vectorIndex = 0;
-        for (int i = 0; i < loopSize; i++) {
-            Vector<double> iVec = new(input, vectorIndex);
-            Vector<double> dVec = new(delta, offset + vectorIndex);
-            Vector<double> rVec = iVec + dVec;
-            rVec.CopyTo(input, vectorIndex);
-            vectorIndex += VSize.Double;
-        }
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void AddToAll(int[] input, int[] delta, int offset)
-    {
-        int size = input.Length;
-        int loopSize = size / VSize.Int;
-
-        int vectorIndex = 0;
-        for (int i = 0; i < loopSize; i++) {
-            Vector<int> iVec = new(input, vectorIndex);
-            Vector<int> dVec = new(delta, offset + vectorIndex);
-            Vector<int> rVec = iVec + dVec;
-            rVec.CopyTo(input, vectorIndex);
-            vectorIndex += VSize.Int;
-        }
-    }
-    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void AddToAll(short[] input, short[] delta, int offset)
     {
         int size = input.Length;
-        int loopSize = size / VSize.Short;
+        int loopSize = size / VSize.Short / UNROLL;
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<short> iVec = new(input, vectorIndex);
-            Vector<short> dVec = new(delta, offset + vectorIndex);
+            int unrolledIndex = vectorIndex + VSize.Short;
+            int unrolledIndex2 = unrolledIndex + VSize.Short;
+            int unrolledIndex3 = unrolledIndex2 + VSize.Short;
+            
+            Vector<short> iVec = input.NewVector(vectorIndex);
+            Vector<short> dVec = delta.NewVector(offset + vectorIndex);
             Vector<short> rVec = iVec + dVec;
-            rVec.CopyTo(input, vectorIndex);
-            vectorIndex += VSize.Short;
-        }
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void AddToAll(sbyte[] input, sbyte[] delta, int offset)
-    {
-        int size = input.Length;
-        int loopSize = size / VSize.SByte;
+            rVec.ToArray(input, vectorIndex);
+            
+            Vector<short> iVec2 = input.NewVector(unrolledIndex);
+            Vector<short> dVec2 = delta.NewVector(offset + unrolledIndex);
+            Vector<short> rVec2 = iVec2 + dVec2;
+            rVec2.ToArray(input, unrolledIndex);
+            
+            Vector<short> iVec3 = input.NewVector(unrolledIndex2);
+            Vector<short> dVec3 = delta.NewVector(offset + unrolledIndex2);
+            Vector<short> rVec3 = iVec3 + dVec3;
+            rVec3.ToArray(input, unrolledIndex2);
+            
+            Vector<short> iVec4 = input.NewVector(unrolledIndex3);
+            Vector<short> dVec4 = delta.NewVector(offset + unrolledIndex3);
+            Vector<short> rVec4 = iVec4 + dVec4;
+            rVec4.ToArray(input, unrolledIndex3);
 
-        int vectorIndex = 0;
-        for (int i = 0; i < loopSize; i++) {
-            Vector<sbyte> iVec = new(input, vectorIndex);
-            Vector<sbyte> dVec = new(delta, offset + vectorIndex);
-            Vector<sbyte> rVec = iVec + dVec;
-            rVec.CopyTo(input, vectorIndex);
-            vectorIndex += VSize.SByte;
-        }
-    }
-    
-    #endregion
-    
-    #region SubtractFromAll(value[] input, value[] delta, int offset)
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SubtractFromAll(double[] input, double[] delta, int offset)
-    {
-        int size = input.Length;
-        int loopSize = size / VSize.Double;
-
-        int vectorIndex = 0;
-        for (int i = 0; i < loopSize; i++) {
-            Vector<double> iVec = new(input, vectorIndex);
-            Vector<double> dVec = new(delta, offset + vectorIndex);
-            Vector<double> rVec = iVec - dVec;
-            rVec.CopyTo(input, vectorIndex);
-            vectorIndex += VSize.Double;
-        }
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SubtractFromAll(int[] input, int[] delta, int offset)
-    {
-        int size = input.Length;
-        int loopSize = size / VSize.Int;
-
-        int vectorIndex = 0;
-        for (int i = 0; i < loopSize; i++) {
-            Vector<int> iVec = new(input, vectorIndex);
-            Vector<int> dVec = new(delta, offset + vectorIndex);
-            Vector<int> rVec = iVec - dVec;
-            rVec.CopyTo(input, vectorIndex);
-            vectorIndex += VSize.Int;
+            vectorIndex = unrolledIndex3 + VSize.Short;
         }
     }
     
@@ -319,34 +176,36 @@ public static class NN
     public static void SubtractFromAll(short[] input, short[] delta, int offset)
     {
         int size = input.Length;
-        int loopSize = size / VSize.Short;
+        int loopSize = size / VSize.Short / UNROLL;
 
         int vectorIndex = 0;
         for (int i = 0; i < loopSize; i++) {
-            Vector<short> iVec = new(input, vectorIndex);
-            Vector<short> dVec = new(delta, offset + vectorIndex);
+            int unrolledIndex = vectorIndex + VSize.Short;
+            int unrolledIndex2 = unrolledIndex + VSize.Short;
+            int unrolledIndex3 = unrolledIndex2 + VSize.Short;
+            
+            Vector<short> iVec = input.NewVector(vectorIndex);
+            Vector<short> dVec = delta.NewVector(offset + vectorIndex);
             Vector<short> rVec = iVec - dVec;
-            rVec.CopyTo(input, vectorIndex);
-            vectorIndex += VSize.Short;
+            rVec.ToArray(input, vectorIndex);
+            
+            Vector<short> iVec2 = input.NewVector(unrolledIndex);
+            Vector<short> dVec2 = delta.NewVector(offset + unrolledIndex);
+            Vector<short> rVec2 = iVec2 - dVec2;
+            rVec2.ToArray(input, unrolledIndex);
+            
+            Vector<short> iVec3 = input.NewVector(unrolledIndex2);
+            Vector<short> dVec3 = delta.NewVector(offset + unrolledIndex2);
+            Vector<short> rVec3 = iVec3 - dVec3;
+            rVec3.ToArray(input, unrolledIndex2);
+            
+            Vector<short> iVec4 = input.NewVector(unrolledIndex3);
+            Vector<short> dVec4 = delta.NewVector(offset + unrolledIndex3);
+            Vector<short> rVec4 = iVec4 - dVec4;
+            rVec4.ToArray(input, unrolledIndex3);
+
+            vectorIndex = unrolledIndex3 + VSize.Short;
         }
     }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SubtractFromAll(sbyte[] input, sbyte[] delta, int offset)
-    {
-        int size = input.Length;
-        int loopSize = size / VSize.SByte;
-
-        int vectorIndex = 0;
-        for (int i = 0; i < loopSize; i++) {
-            Vector<sbyte> iVec = new(input, vectorIndex);
-            Vector<sbyte> dVec = new(delta, offset + vectorIndex);
-            Vector<sbyte> rVec = iVec - dVec;
-            rVec.CopyTo(input, vectorIndex);
-            vectorIndex += VSize.SByte;
-        }
-    }
-
-    #endregion
 
 }

@@ -100,7 +100,7 @@ public class BasicNNUE
         NN.Forward(BlackPOV, FeatureWeight, accumulator.B);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void EfficientlyUpdateAccumulator(Piece piece, PieceColor color, Square sq, bool on = true)
     {
         const int colorStride = 64 * 6;
@@ -127,7 +127,7 @@ public class BasicNNUE
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int Evaluate(PieceColor colorToMove)
     {
         int firstOffset = 0;

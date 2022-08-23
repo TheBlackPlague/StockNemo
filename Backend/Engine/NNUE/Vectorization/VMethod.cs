@@ -10,6 +10,18 @@ public static class VMethod
 {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector<T> NewVector<T>(this T[] values, int index = 0) where T : struct
+    {
+        return Unsafe.ReadUnaligned<Vector<T>>(ref Unsafe.As<T, byte>(ref values.AA(index)));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ToArray<T>(this Vector<T> vector, T[] array, int offset = 0) where T : struct
+    {
+        Unsafe.WriteUnaligned(ref Unsafe.As<T, byte>(ref array.AA(offset)), vector);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector<T> Clamp<T>(this Vector<T> value, ref Vector<T> min, ref Vector<T> max) where T : struct
     {
         return Vector.Max(min, Vector.Min(max, value));
