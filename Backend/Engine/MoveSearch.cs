@@ -366,7 +366,7 @@ public class MoveSearch
             // If we're in check, then it's better to evaluate this position deeper as to get good idea of situation,
             // avoiding unseen blunders. Due to the number of moves being very less when under check, one shouldn't
             // be concerned about search explosion.
-            depth += CHECK_EXTENSION;
+            depth += TunedParameters.CheckExtension;
 
             #endregion
         }
@@ -441,7 +441,7 @@ public class MoveSearch
             
         int i = 0;
         int quietMoveCounter = 0;
-        int lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
+        int lmpQuietThreshold = TunedParameters.LmpQuietThresholdBase + depth * depth;
         bool lmp = notRootNode && !inCheck && !pvNode && depth <= TunedParameters.LmpDepthThreshold;
         bool lmr = depth >= TunedParameters.LmrDepthThreshold && !inCheck;
         while (i < moveCount) {

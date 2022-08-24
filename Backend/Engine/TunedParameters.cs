@@ -15,7 +15,9 @@ public static class TunedParameters
     public static int NullMoveScalingFactor = 3;
     public static int NullMoveScalingCorrection = 1;
     public static int LmpDepthThreshold = 3;
+    public static int LmpQuietThresholdBase = 3;
     public static int LmrDepthThreshold = 3;
     public static int LmrFullSearchThreshold = 4;
+    public static int CheckExtension = 1;
 
 }

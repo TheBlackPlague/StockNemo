@@ -56,8 +56,10 @@ public static class UniversalChessInterface
         Console.WriteLine("option name NullMoveScalingFactor type spin default 3 min 2 max 6");
         Console.WriteLine("option name NullMoveScalingCorrection type spin default 1 min 1 max 4");
         Console.WriteLine("option name LmpDepthThreshold type spin default 3 min 2 max 6");
+        Console.WriteLine("option name LmpQuietThresholdBase type spin default 3 min 1 max 5");
         Console.WriteLine("option name LmrDepthThreshold type spin default 3 min 2 max 6");
         Console.WriteLine("option name LmrFullSearchThreshold type spin default 4 min 1 max 7");
+        Console.WriteLine("option name CheckExtension type spin default 1 min 1 max 3");
 
         // Let GUI know engine is ready in UCI mode.
         Console.WriteLine("uciok");
@@ -117,11 +119,17 @@ public static class UniversalChessInterface
             case "LmpDepthThreshold":
                 TunedParameters.LmpDepthThreshold = int.Parse(args[4]);
                 break;
+            case "LmpQuietThresholdBase":
+                TunedParameters.LmpQuietThresholdBase = int.Parse(args[4]);
+                break;
             case "LmrDepthThreshold":
                 TunedParameters.LmrDepthThreshold = int.Parse(args[4]);
                 break;
             case "LmrFullSearchThreshold":
                 TunedParameters.LmrFullSearchThreshold = int.Parse(args[4]);
+                break;
+            case "CheckExtension":
+                TunedParameters.CheckExtension = int.Parse(args[4]);
                 break;
         }
     }
