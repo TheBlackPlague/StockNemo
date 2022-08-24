@@ -17,6 +17,8 @@ public class MoveSearch
 
     private const int NULL_MOVE_REDUCTION = 4;
     private const int NULL_MOVE_DEPTH = 2;
+    private const int NULL_MOVE_SCALING_FACTOR = 3;
+    private const int NULL_MOVE_SCALING_CORRECTION = 1;
 
     private const int ASPIRATION_BOUND = 3500;
     private const int ASPIRATION_SIZE = 16;
@@ -337,15 +339,16 @@ public class MoveSearch
                 // For null move pruning, we give the turn to the opponent and let them make the move.
                 RevertNullMove rv = board.NullMove();
                 
-                // Reduction depth for null move pruning.
-                int reductionDepth = depth - NULL_MOVE_REDUCTION - (depth / 3 - 1);
+                // Reduced depth for null move pruning.
+                int reducedDepth = depth - NULL_MOVE_REDUCTION - 
+                                   (depth / NULL_MOVE_SCALING_FACTOR - NULL_MOVE_SCALING_CORRECTION);
                 
                 // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
                 // The idea is that if there are cutoffs, most will be found using this reduced search and we can cutoff
                 // this branch earlier.
                 // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
                 // QSearch).
-                int evaluation = -AbSearch(board, nextPlyFromRoot, reductionDepth, -beta, -beta + 1);
+                int evaluation = -AbSearch(board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
                 // Undo the null move so we can get back to original state of the board.
                 board.UndoNullMove(rv);
         
