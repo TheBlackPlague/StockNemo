@@ -444,7 +444,6 @@ public class MoveSearch
         int lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
         bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
         bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
-        bool aggressiveLmr = improving && depth >= LMR_DEPTH_THRESHOLD * 2;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -493,7 +492,7 @@ public class MoveSearch
                     // Determine what the reduced depth will be depending on the current depth and number of moves
                     // played.
                     // Formula: depth - max(depth * ln(i), 1)
-                    int reducedDepth = depth - ReductionDepthTable[depth, i] - aggressiveLmr.ToByte();
+                    int reducedDepth = depth - ReductionDepthTable[depth, i] - (!improving).ToByte();
                 
                     // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                     // our opponent will obviously be bad for us.
