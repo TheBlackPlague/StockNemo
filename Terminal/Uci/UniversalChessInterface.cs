@@ -44,9 +44,20 @@ public static class UniversalChessInterface
         Console.WriteLine("id name " + NAME);
         Console.WriteLine("id author " + AUTHOR);
         Console.WriteLine("option name Hash type spin default 16 min 4 max 512");
+        Console.WriteLine("option name AspirationDepth type spin default 4 min 2 max 6");
+        Console.WriteLine("option name AspirationSize type spin default 16 min 10 max 30");
+        Console.WriteLine("option name AspirationDelta type spin default 23 min 10 max 35");
         Console.WriteLine("option name ReverseFutilityDepthThreshold type spin default 7 min 1 max 15");
         Console.WriteLine("option name ReverseFutilityD type spin default 67 min 5 max 150");
         Console.WriteLine("option name ReverseFutilityI type spin default 76 min 5 max 150");
+        Console.WriteLine("option name RazoringEvaluationThreshold type spin default 150 min 30 max 300");
+        Console.WriteLine("option name NullMoveDepth type spin default 2 min 2 max 6");
+        Console.WriteLine("option name NullMoveReduction type spin default 4 min 2 max 8");
+        Console.WriteLine("option name NullMoveScalingFactor type spin default 3 min 2 max 6");
+        Console.WriteLine("option name NullMoveScalingCorrection type spin default 1 min 1 max 4");
+        Console.WriteLine("option name LmpDepthThreshold type spin default 3 min 2 max 6");
+        Console.WriteLine("option name LmrDepthThreshold type spin default 3 min 2 max 6");
+        Console.WriteLine("option name LmrFullSearchThreshold type spin default 4 min 1 max 7");
 
         // Let GUI know engine is ready in UCI mode.
         Console.WriteLine("uciok");
@@ -70,14 +81,47 @@ public static class UniversalChessInterface
                 TranspositionTable = MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb);
                 Busy = false;
                 break;
+            case "AspirationDepth":
+                TunedParameters.AspirationDepth = int.Parse(args[4]);
+                break;
+            case "AspirationSize":
+                TunedParameters.AspirationSize = int.Parse(args[4]);
+                break;
+            case "AspirationDelta":
+                TunedParameters.AspirationDelta = int.Parse(args[4]);
+                break;
             case "ReverseFutilityDepthThreshold":
-                TunedSearchParameters.ReverseFutilityDepthThreshold = int.Parse(args[4]);
+                TunedParameters.ReverseFutilityDepthThreshold = int.Parse(args[4]);
                 break;
             case "ReverseFutilityD":
-                TunedSearchParameters.ReverseFutilityD = int.Parse(args[4]);
+                TunedParameters.ReverseFutilityD = int.Parse(args[4]);
                 break;
             case "ReverseFutilityI":
-                TunedSearchParameters.ReverseFutilityI = int.Parse(args[4]);
+                TunedParameters.ReverseFutilityI = int.Parse(args[4]);
+                break;
+            case "RazoringEvaluationThreshold":
+                TunedParameters.RazoringEvaluationThreshold = int.Parse(args[4]);
+                break;
+            case "NullMoveDepth":
+                TunedParameters.NullMoveDepth = int.Parse(args[4]);
+                break;
+            case "NullMoveReduction":
+                TunedParameters.NullMoveReduction = int.Parse(args[4]);
+                break;
+            case "NullMoveScalingFactor":
+                TunedParameters.NullMoveScalingFactor = int.Parse(args[4]);
+                break;
+            case "NullMoveScalingCorrection":
+                TunedParameters.NullMoveScalingCorrection = int.Parse(args[4]);
+                break;
+            case "LmpDepthThreshold":
+                TunedParameters.LmpDepthThreshold = int.Parse(args[4]);
+                break;
+            case "LmrDepthThreshold":
+                TunedParameters.LmrDepthThreshold = int.Parse(args[4]);
+                break;
+            case "LmrFullSearchThreshold":
+                TunedParameters.LmrFullSearchThreshold = int.Parse(args[4]);
                 break;
         }
     }

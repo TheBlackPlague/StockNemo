@@ -103,12 +103,12 @@ public class MoveSearch
         int alpha = NEG_INFINITY;
         int beta = POS_INFINITY;
 
-        if (depth > ASPIRATION_DEPTH) {
+        if (depth > TunedParameters.AspirationDepth) {
             // If we're searching deeper than our aspiration depth, then we should modify the window based on our
             // previous evaluation and aspiration size. If the window isn't reasonably correct, it'll get reset later
             // anyways.
-            alpha = previousEvaluation - ASPIRATION_SIZE;
-            beta = previousEvaluation + ASPIRATION_SIZE;
+            alpha = previousEvaluation - TunedParameters.AspirationSize;
+            beta = previousEvaluation + TunedParameters.AspirationSize;
         }
 
         int research = 0;
@@ -146,12 +146,12 @@ public class MoveSearch
                 research++;
                 
                 // If our best evaluation was somehow worse than our alpha, we should resize our window and research.
-                alpha = Math.Max(alpha - research * research * ASPIRATION_DELTA, NEG_INFINITY);
+                alpha = Math.Max(alpha - research * research * TunedParameters.AspirationDelta, NEG_INFINITY);
             } else if (bestEvaluation >= beta) {
                 research++;
                 
                 // If our evaluation was somehow better than our beta, we should resize our window and research.
-                beta = Math.Min(beta + research * research * ASPIRATION_DELTA, POS_INFINITY);
+                beta = Math.Min(beta + research * research * TunedParameters.AspirationDelta, POS_INFINITY);
                 
                 // Update our best move in case our evaluation was better than beta.
                 // The move we get in future surely can't be worse than this so it's fine to update our best move
@@ -309,7 +309,7 @@ public class MoveSearch
             #region Reverse Futility Pruning
 
             // ReSharper disable once ConvertIfStatementToSwitchStatement
-            if (depth < TunedSearchParameters.ReverseFutilityDepthThreshold && Math.Abs(beta) < MATE &&
+            if (depth < TunedParameters.ReverseFutilityDepthThreshold && Math.Abs(beta) < MATE &&
                 // If our depth is less than our threshold and our beta is less than mate on each end of the number
                 // line, then attempting reverse futility pruning is safe.
                 
@@ -317,14 +317,14 @@ public class MoveSearch
                 // evaluation and a margin: D * depth + I * improving.
                 // If it is greater or equal than beta, then in most cases than not, it is futile to further evaluate
                 // this tree and hence better to just return early.
-                positionalEvaluation - TunedSearchParameters.ReverseFutilityD * depth + TunedSearchParameters.ReverseFutilityI * improving.ToByte() >= beta)
+                positionalEvaluation - TunedParameters.ReverseFutilityD * depth + TunedParameters.ReverseFutilityI * improving.ToByte() >= beta)
                 return beta;
 
             #endregion
             
             #region Razoring
             
-            if (depth == 1 && positionalEvaluation + RAZORING_EVALUATION_THRESHOLD < alpha)
+            if (depth == 1 && positionalEvaluation + TunedParameters.RazoringEvaluationThreshold < alpha)
                 // If after any move, the positional evaluation of the resulting position with some added threshold is
                 // less than alpha, then the opponent will be able to find at least one move that improves their
                 // position.
@@ -335,13 +335,13 @@ public class MoveSearch
             
             #region Null Move Pruning
         
-            if (notRootNode && depth > NULL_MOVE_DEPTH) {
+            if (notRootNode && depth > TunedParameters.NullMoveDepth) {
                 // For null move pruning, we give the turn to the opponent and let them make the move.
                 RevertNullMove rv = board.NullMove();
                 
                 // Reduced depth for null move pruning.
-                int reducedDepth = depth - NULL_MOVE_REDUCTION - 
-                                   (depth / NULL_MOVE_SCALING_FACTOR - NULL_MOVE_SCALING_CORRECTION);
+                int reducedDepth = depth - TunedParameters.NullMoveReduction - 
+                                   (depth / TunedParameters.NullMoveScalingFactor - TunedParameters.NullMoveScalingCorrection);
                 
                 // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
                 // The idea is that if there are cutoffs, most will be found using this reduced search and we can cutoff
@@ -439,8 +439,8 @@ public class MoveSearch
         int i = 0;
         int quietMoveCounter = 0;
         int lmpQuietThreshold = 3 + depth * depth;
-        bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
-        bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
+        bool lmp = notRootNode && !inCheck && !pvNode && depth <= TunedParameters.LmpDepthThreshold;
+        bool lmr = depth >= TunedParameters.LmrDepthThreshold && !inCheck;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -482,7 +482,7 @@ public class MoveSearch
                 
                 #region Late Move Reduction
                 
-                if (i >= LMR_FULL_SEARCH_THRESHOLD && lmr) {
+                if (i >= TunedParameters.LmrFullSearchThreshold && lmr) {
                     // If we're past the move count and depth threshold where we can usually safely apply LMR and we
                     // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
 
