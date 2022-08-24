@@ -30,6 +30,7 @@ public class MoveSearch
     private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
 
+    private const int LMP_QUIET_THRESHOLD_BASE = 3;
     private const int LMP_DEPTH_THRESHOLD = 3;
 
     private const int NODE_COUNTING_DEPTH = 8;
@@ -38,6 +39,8 @@ public class MoveSearch
     private const int REVERSE_FUTILITY_D = 67;
     private const int REVERSE_FUTILITY_I = 76;
     private const int REVERSE_FUTILITY_DEPTH_THRESHOLD = 7;
+
+    private const int CHECK_EXTENSION = 1;
 
     private const float TIME_TO_DEPTH_THRESHOLD = 0.2f;
 
@@ -363,7 +366,7 @@ public class MoveSearch
             // If we're in check, then it's better to evaluate this position deeper as to get good idea of situation,
             // avoiding unseen blunders. Due to the number of moves being very less when under check, one shouldn't
             // be concerned about search explosion.
-            depth++;
+            depth += CHECK_EXTENSION;
 
             #endregion
         }
@@ -438,7 +441,7 @@ public class MoveSearch
             
         int i = 0;
         int quietMoveCounter = 0;
-        int lmpQuietThreshold = 3 + depth * depth;
+        int lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
         bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
         bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {
