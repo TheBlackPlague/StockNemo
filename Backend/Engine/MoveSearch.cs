@@ -491,7 +491,7 @@ public class MoveSearch
 
                     // Determine what the reduced depth will be depending on the current depth and number of moves
                     // played.
-                    // Formula: depth - max(depth * ln(i), 1)
+                    // Formula: depth - max(ln(depth) * ln(i), 1)
                     int reducedDepth = depth - ReductionDepthTable[depth, i] - (!improving).ToByte();
                 
                     // Evaluate position by searching deeper and negating the result. An evaluation that's good for
