@@ -27,6 +27,7 @@ public class MoveSearch
 
     private const int RAZORING_EVALUATION_THRESHOLD = 150;
 
+    private const int LMR_BASE = 0;
     private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
 
@@ -491,8 +492,8 @@ public class MoveSearch
 
                     // Determine what the reduced depth will be depending on the current depth and number of moves
                     // played.
-                    // Formula: depth - max(depth * ln(i), 1)
-                    int reducedDepth = depth - ReductionDepthTable[depth, i];
+                    // Formula: depth - max(ln(depth) * ln(i), 1)
+                    int reducedDepth = depth - LMR_BASE - ReductionDepthTable[depth, i];
                 
                     // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                     // our opponent will obviously be bad for us.
