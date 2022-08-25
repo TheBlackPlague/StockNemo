@@ -445,8 +445,7 @@ public class MoveSearch
         int i = 0;
         int quietMoveCounter = 0;
         int lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
-        bool fp = notRootNode && !inCheck && !pvNode;
-        bool lmp = fp && depth <= LMP_DEPTH_THRESHOLD;
+        bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
         bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
@@ -462,7 +461,7 @@ public class MoveSearch
 
             #region Futility Pruning
 
-            if (fp && i > 0 && quietMove && positionalEvaluation + depth * FUTILITY_DEPTH_FACTOR <= alpha) 
+            if (i > 0 && quietMove && positionalEvaluation + depth * FUTILITY_DEPTH_FACTOR <= alpha) 
                 // If our move is a quiet and static evaluation of a position with a depth-relative margin is below
                 // our alpha, then the move won't really help us improve our position. And nor will any future move.
                 // Hence, it's futile to evaluate this position any further.
