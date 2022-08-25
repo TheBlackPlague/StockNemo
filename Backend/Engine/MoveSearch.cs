@@ -17,6 +17,8 @@ public class MoveSearch
 
     private const int NULL_MOVE_REDUCTION = 4;
     private const int NULL_MOVE_DEPTH = 2;
+    private const int NULL_MOVE_SCALING_FACTOR = 3;
+    private const int NULL_MOVE_SCALING_CORRECTION = 1;
 
     private const int ASPIRATION_BOUND = 3500;
     private const int ASPIRATION_SIZE = 16;
@@ -28,6 +30,7 @@ public class MoveSearch
     private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
 
+    private const int LMP_QUIET_THRESHOLD_BASE = 3;
     private const int LMP_DEPTH_THRESHOLD = 3;
 
     private const int NODE_COUNTING_DEPTH = 8;
@@ -36,6 +39,8 @@ public class MoveSearch
     private const int REVERSE_FUTILITY_D = 67;
     private const int REVERSE_FUTILITY_I = 76;
     private const int REVERSE_FUTILITY_DEPTH_THRESHOLD = 7;
+
+    private const int CHECK_EXTENSION = 1;
 
     private const float TIME_TO_DEPTH_THRESHOLD = 0.2f;
 
@@ -337,15 +342,16 @@ public class MoveSearch
                 // For null move pruning, we give the turn to the opponent and let them make the move.
                 RevertNullMove rv = board.NullMove();
                 
-                // Reduction depth for null move pruning.
-                int reductionDepth = depth - NULL_MOVE_REDUCTION - (depth / 3 - 1);
+                // Reduced depth for null move pruning.
+                int reducedDepth = depth - NULL_MOVE_REDUCTION - 
+                                   (depth / NULL_MOVE_SCALING_FACTOR - NULL_MOVE_SCALING_CORRECTION);
                 
                 // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
                 // The idea is that if there are cutoffs, most will be found using this reduced search and we can cutoff
                 // this branch earlier.
                 // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
                 // QSearch).
-                int evaluation = -AbSearch(board, nextPlyFromRoot, reductionDepth, -beta, -beta + 1);
+                int evaluation = -AbSearch(board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
                 // Undo the null move so we can get back to original state of the board.
                 board.UndoNullMove(rv);
         
@@ -360,7 +366,7 @@ public class MoveSearch
             // If we're in check, then it's better to evaluate this position deeper as to get good idea of situation,
             // avoiding unseen blunders. Due to the number of moves being very less when under check, one shouldn't
             // be concerned about search explosion.
-            depth++;
+            depth += CHECK_EXTENSION;
 
             #endregion
         }
@@ -435,7 +441,7 @@ public class MoveSearch
             
         int i = 0;
         int quietMoveCounter = 0;
-        int lmpQuietThreshold = 3 + depth * depth;
+        int lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
         bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
         bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {

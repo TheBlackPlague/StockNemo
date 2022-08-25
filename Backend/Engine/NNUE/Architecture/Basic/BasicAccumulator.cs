@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using Backend.Engine.NNUE.Vectorization;
 
 namespace Backend.Engine.NNUE.Architecture.Basic;
 
@@ -19,8 +20,18 @@ public class BasicAccumulator<T> where T : struct
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void CopyTo(BasicAccumulator<T> target)
     {
-        Buffer.BlockCopy(A, 0, target.A, 0, A.Length * Unsafe.SizeOf<T>());
-        Buffer.BlockCopy(B, 0, target.B, 0, B.Length * Unsafe.SizeOf<T>());
+        int size = A.Length * Unsafe.SizeOf<T>();
+            
+        Unsafe.CopyBlockUnaligned(
+            ref Unsafe.As<T, byte>(ref target.A.AA(0)), 
+            ref Unsafe.As<T, byte>(ref A.AA(0)), 
+            (uint)size
+        );
+        Unsafe.CopyBlockUnaligned(
+            ref Unsafe.As<T, byte>(ref target.B.AA(0)), 
+            ref Unsafe.As<T, byte>(ref B.AA(0)), 
+            (uint)size
+        );
     }
 
 }
