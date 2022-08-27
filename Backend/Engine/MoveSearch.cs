@@ -27,6 +27,7 @@ public class MoveSearch
 
     private const int RAZORING_EVALUATION_THRESHOLD = 150;
 
+    private const int LMR_BASE = 0;
     private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
 
@@ -39,6 +40,8 @@ public class MoveSearch
     private const int REVERSE_FUTILITY_D = 67;
     private const int REVERSE_FUTILITY_I = 76;
     private const int REVERSE_FUTILITY_DEPTH_THRESHOLD = 7;
+
+    private const int FUTILITY_DEPTH_FACTOR = 150;
 
     private const int CHECK_EXTENSION = 1;
 
@@ -296,16 +299,16 @@ public class MoveSearch
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
         bool improving = false;
         
+        // We should use the evaluation from our transposition table if we had a hit.
+        // As that evaluation isn't truly static and may have been from a previous deep search.
+        int positionalEvaluation = transpositionHit ? 
+            transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
+            
+        // Also store the evaluation to later check if it improved.
+        PositionalEvaluationStore.AA(plyFromRoot) = positionalEvaluation;
+        
         // ReSharper disable once ConvertIfStatementToSwitchStatement
         if (!inCheck && !pvNode) {
-            // We should use the evaluation from our transposition table if we had a hit.
-            // As that evaluation isn't truly static and may have been from a previous deep search.
-            int positionalEvaluation = transpositionHit ? 
-                transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
-            
-            // Also store the evaluation to later check if it improved.
-            PositionalEvaluationStore.AA(plyFromRoot) = positionalEvaluation;
-            
             // Roughly estimate whether the deeper search improves the position or not.
             improving = plyFromRoot >= 2 && positionalEvaluation >= PositionalEvaluationStore.AA(plyFromRoot - 2);
 
@@ -457,6 +460,16 @@ public class MoveSearch
             bool quietMove = !board.All(oppositeColor)[move.To];
             quietMoveCounter += quietMove.ToByte();
 
+            #region Futility Pruning
+
+            if (i > 0 && quietMove && positionalEvaluation + depth * FUTILITY_DEPTH_FACTOR <= alpha) 
+                // If our move is a quiet and static evaluation of a position with a depth-relative margin is below
+                // our alpha, then the move won't really help us improve our position. And nor will any future move.
+                // Hence, it's futile to evaluate this position any further.
+                break;
+
+            #endregion
+
             #region Late Move Pruning
 
             if (lmp && bestEvaluation > NEG_INFINITY && quietMoveCounter > lmpQuietThreshold) 
@@ -493,7 +506,7 @@ public class MoveSearch
                     // Determine what the reduced depth will be depending on the current depth and number of moves
                     // played.
                     // Formula: depth - max(ln(depth) * ln(i), 1)
-                    int reducedDepth = depth - ReductionDepthTable[depth, i] - aggressiveLmr.ToByte();
+                    int reducedDepth = depth - LMR_BASE - ReductionDepthTable[depth, i]  - aggressiveLmr.ToByte();
                 
                     // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                     // our opponent will obviously be bad for us.
