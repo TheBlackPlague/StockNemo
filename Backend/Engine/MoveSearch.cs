@@ -505,7 +505,7 @@ public class MoveSearch
 
                     // Determine what the reduced depth will be depending on the current depth and number of moves
                     // played.
-                    // Formula: depth - max(ln(depth) * ln(i), 1)
+                    // Formula: depth - max(ln(depth) * ln(i), 1) - (improving && depth >= LMR_DEPTH_THRESHOLD * 2)
                     int reducedDepth = depth - LMR_BASE - ReductionDepthTable[depth, i]  - aggressiveLmr.ToByte();
                 
                     // Evaluate position by searching deeper and negating the result. An evaluation that's good for
