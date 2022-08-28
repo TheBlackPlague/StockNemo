@@ -503,10 +503,19 @@ public class MoveSearch
 
                     // Logarithmic reduction: ln(depth) * ln(i)
                     int r = ReductionDepthTable[depth, i];
+                    
+                    // Reduce more on non-PV nodes.
+                    if (!pvNode) r++;
+                    
+                    // Reduce furthermore if not improving.
+                    if (!improving) r++;
+                    
+                    // Avoid dropping into QSearch.
+                    int reducedDepth = Math.Max(depth - r, 1);
 
                     // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                     // our opponent will obviously be bad for us.
-                    evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth - r, -alpha - 1, -alpha);
+                    evaluation = -AbSearch(board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha);
                 
                     // In the case that LMR fails, our evaluation will be greater than alpha which will force a
                     // principle variation research. However, in the case we couldn't apply LMR (due to safety reasons,
