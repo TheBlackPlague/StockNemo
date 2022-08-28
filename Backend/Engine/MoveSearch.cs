@@ -501,13 +501,13 @@ public class MoveSearch
                     // If we're past the move count and depth threshold where we can usually safely apply LMR and we
                     // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
 
-                    // Logarithmic reduction: ln(depth) * ln(i)
+                    // Logarithmic reduction: ln(depth) * ln(i) / 2 - 0.2
                     int r = ReductionDepthTable[depth, i];
                     
                     // Reduce more on non-PV nodes.
                     if (!pvNode) r++;
                     
-                    // Reduce furthermore if not improving.
+                    // Reduce if not improving.
                     if (!improving) r++;
                     
                     // Avoid dropping into QSearch.
