@@ -445,7 +445,7 @@ public class MoveSearch
         int quietMoveCounter = 0;
         int lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
         bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
-        bool lmr = depth >= LMR_DEPTH_THRESHOLD;
+        bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -505,13 +505,10 @@ public class MoveSearch
                     int r = ReductionDepthTable[depth, i];
                     
                     // Reduce more on non-PV nodes.
-                    r += (!pvNode).ToByte();
+                    if (!pvNode) r++;
                     
-                    // Reduce more if not improving.
-                    r += (!improving).ToByte();
-                    
-                    // Reduce less if under check.
-                    r -= inCheck.ToByte();
+                    // Reduce if not improving.
+                    if (!improving) r++;
                     
                     // Avoid dropping into QSearch.
                     int reducedDepth = Math.Max(depth - r, 1);
