@@ -14,7 +14,7 @@ public class LogarithmicReductionDepthTable
     {
         for (int depth = 1; depth < SIZE; depth++)
         for (int played = 1; played < SIZE; played++) {
-            Internal[depth * SIZE + played] = Math.Max((int)Math.Log(depth) * (int)Math.Log(played), 1);
+            Internal[depth * SIZE + played] = (int)(Math.Log(depth) * Math.Log(played));
         }
     }
 
