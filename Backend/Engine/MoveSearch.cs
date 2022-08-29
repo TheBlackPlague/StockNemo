@@ -27,7 +27,6 @@ public class MoveSearch
 
     private const int RAZORING_EVALUATION_THRESHOLD = 150;
 
-    private const int LMR_BASE = 0;
     private const int LMR_FULL_SEARCH_THRESHOLD = 4;
     private const int LMR_DEPTH_THRESHOLD = 3;
 
@@ -447,7 +446,6 @@ public class MoveSearch
         int lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
         bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
         bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
-        bool aggressiveLmr = improving && depth >= LMR_DEPTH_THRESHOLD * 2;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -503,13 +501,22 @@ public class MoveSearch
                     // If we're past the move count and depth threshold where we can usually safely apply LMR and we
                     // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
 
-                    // Determine what the reduced depth will be depending on the current depth and number of moves
-                    // played.
-                    // Formula: depth - max(ln(depth) * ln(i), 1) - (improving && depth >= LMR_DEPTH_THRESHOLD * 2)
-                    int reducedDepth = depth - LMR_BASE - ReductionDepthTable[depth, i]  - aggressiveLmr.ToByte();
-                
-                    // Evaluate position by searching deeper and negating the result. An evaluation that's good for
-                    // our opponent will obviously be bad for us.
+                    // Logarithmic reduction: ln(depth) * ln(i) / 2 - 0.2
+                    int r = ReductionDepthTable[depth, i];
+                    
+                    // Reduce more on non-PV nodes.
+                    if (!pvNode) r++;
+                    
+                    // Reduce if not improving.
+                    if (!improving) r++;
+                    
+                    // Determine the reduced depth. Ensure it's >= 1 as we want to avoid dropping into QSearch.
+                    int reducedDepth = Math.Max(depth - r, 1);
+
+                    // Evaluate the position by searching at a reduced depth. The idea is that these moves will likely
+                    // not improve alpha, and thus not trigger researches. Therefore, one will be able to get away with
+                    // reduced depth searches with reasonable safety. Result is negated as an evaluation that's good
+                    // for our opponent will be bad for us.
                     evaluation = -AbSearch(board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha);
                 
                     // In the case that LMR fails, our evaluation will be greater than alpha which will force a
