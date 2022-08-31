@@ -29,7 +29,7 @@ public static class NN
         int weightStride = 0;
 
         for (int i = 0; i < outputSize; i++) {
-            short sum = 0;
+            Vector<short> sum = Vector<short>.Zero;
             int vectorIndex = 0;
             for (int j = 0; j < loopSize; j++) {
                 int unrolledIndex = vectorIndex + VSize.Short;
@@ -38,23 +38,23 @@ public static class NN
                 
                 Vector<short> iVec = input.NewVector(vectorIndex);
                 Vector<short> wVec = weight.NewVector(weightStride + vectorIndex);
-                sum += Vector.Sum(iVec * wVec);
+                sum += iVec * wVec;
                 
                 Vector<short> iVec2 = input.NewVector(unrolledIndex);
                 Vector<short> wVec2 = weight.NewVector(weightStride + unrolledIndex);
-                sum += Vector.Sum(iVec2 * wVec2);
+                sum += iVec2 * wVec2;
                 
                 Vector<short> iVec3 = input.NewVector(unrolledIndex2);
                 Vector<short> wVec3 = weight.NewVector(weightStride + unrolledIndex2);
-                sum += Vector.Sum(iVec3 * wVec3);
+                sum += iVec3 * wVec3;
                 
                 Vector<short> iVec4 = input.NewVector(unrolledIndex3);
                 Vector<short> wVec4 = weight.NewVector(weightStride + unrolledIndex3);
-                sum += Vector.Sum(iVec4 * wVec4);
+                sum += iVec4 * wVec4;
                 
                 vectorIndex = unrolledIndex3 + VSize.Short;
             }
-            output.AA(offset + i) = sum;
+            output.AA(offset + i) = Vector.Sum(sum);
             weightStride += inputSize;
         }
     }
@@ -68,7 +68,7 @@ public static class NN
         int weightStride = 0;
 
         for (int i = 0; i < outputSize; i++) {
-            int sum = 0;
+            Vector<int> sum = Vector<int>.Zero;
             int vectorIndex = 0;
             for (int j = 0; j < loopSize; j++) {
                 int unrolledIndex = vectorIndex + VSize.Short;
@@ -77,23 +77,23 @@ public static class NN
                 
                 Vector<short> iVec = input.NewVector(vectorIndex);
                 Vector<short> wVec = weight.NewVector(weightStride + vectorIndex);
-                sum += Vector.Sum(VMethod.MultiplyAddAdjacent(iVec, wVec));
+                sum += VMethod.MultiplyAddAdjacent(iVec, wVec);
                 
                 Vector<short> iVec2 = input.NewVector(unrolledIndex);
                 Vector<short> wVec2 = weight.NewVector(weightStride + unrolledIndex);
-                sum += Vector.Sum(VMethod.MultiplyAddAdjacent(iVec2, wVec2));
+                sum += VMethod.MultiplyAddAdjacent(iVec2, wVec2);
                 
                 Vector<short> iVec3 = input.NewVector(unrolledIndex2);
                 Vector<short> wVec3 = weight.NewVector(weightStride + unrolledIndex2);
-                sum += Vector.Sum(VMethod.MultiplyAddAdjacent(iVec3, wVec3));
+                sum += VMethod.MultiplyAddAdjacent(iVec3, wVec3);
                 
                 Vector<short> iVec4 = input.NewVector(unrolledIndex3);
                 Vector<short> wVec4 = weight.NewVector(weightStride + unrolledIndex3);
-                sum += Vector.Sum(VMethod.MultiplyAddAdjacent(iVec4, wVec4));
+                sum += VMethod.MultiplyAddAdjacent(iVec4, wVec4);
                 
                 vectorIndex = unrolledIndex3 + VSize.Short;
             }
-            output.AA(offset + i) = sum;
+            output.AA(offset + i) = Vector.Sum(sum);
             weightStride += inputSize;
         }
     }

@@ -40,6 +40,8 @@ public class MoveSearch
     private const int REVERSE_FUTILITY_I = 76;
     private const int REVERSE_FUTILITY_DEPTH_THRESHOLD = 7;
 
+    private const int FUTILITY_DEPTH_FACTOR = 150;
+
     private const int CHECK_EXTENSION = 1;
 
     private const float TIME_TO_DEPTH_THRESHOLD = 0.2f;
@@ -296,16 +298,16 @@ public class MoveSearch
         bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
         bool improving = false;
         
+        // We should use the evaluation from our transposition table if we had a hit.
+        // As that evaluation isn't truly static and may have been from a previous deep search.
+        int positionalEvaluation = transpositionHit ? 
+            transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
+            
+        // Also store the evaluation to later check if it improved.
+        PositionalEvaluationStore.AA(plyFromRoot) = positionalEvaluation;
+        
         // ReSharper disable once ConvertIfStatementToSwitchStatement
         if (!inCheck && !pvNode) {
-            // We should use the evaluation from our transposition table if we had a hit.
-            // As that evaluation isn't truly static and may have been from a previous deep search.
-            int positionalEvaluation = transpositionHit ? 
-                transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
-            
-            // Also store the evaluation to later check if it improved.
-            PositionalEvaluationStore.AA(plyFromRoot) = positionalEvaluation;
-            
             // Roughly estimate whether the deeper search improves the position or not.
             improving = plyFromRoot >= 2 && positionalEvaluation >= PositionalEvaluationStore.AA(plyFromRoot - 2);
 
@@ -456,6 +458,16 @@ public class MoveSearch
             bool quietMove = !board.All(oppositeColor)[move.To];
             quietMoveCounter += quietMove.ToByte();
 
+            #region Futility Pruning
+
+            if (i > 0 && quietMove && positionalEvaluation + depth * FUTILITY_DEPTH_FACTOR <= alpha) 
+                // If our move is a quiet and static evaluation of a position with a depth-relative margin is below
+                // our alpha, then the move won't really help us improve our position. And nor will any future move.
+                // Hence, it's futile to evaluate this position any further.
+                break;
+
+            #endregion
+
             #region Late Move Pruning
 
             if (lmp && bestEvaluation > NEG_INFINITY && quietMoveCounter > lmpQuietThreshold) 
@@ -489,13 +501,22 @@ public class MoveSearch
                     // If we're past the move count and depth threshold where we can usually safely apply LMR and we
                     // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
 
-                    // Determine what the reduced depth will be depending on the current depth and number of moves
-                    // played.
-                    // Formula: depth - max(depth * ln(i), 1)
-                    int reducedDepth = depth - ReductionDepthTable[depth, i];
-                
-                    // Evaluate position by searching deeper and negating the result. An evaluation that's good for
-                    // our opponent will obviously be bad for us.
+                    // Logarithmic reduction: ln(depth) * ln(i) / 2 - 0.2
+                    int r = ReductionDepthTable[depth, i];
+                    
+                    // Reduce more on non-PV nodes.
+                    if (!pvNode) r++;
+                    
+                    // Reduce if not improving.
+                    if (!improving) r++;
+                    
+                    // Determine the reduced depth. Ensure it's >= 1 as we want to avoid dropping into QSearch.
+                    int reducedDepth = Math.Max(depth - r, 1);
+
+                    // Evaluate the position by searching at a reduced depth. The idea is that these moves will likely
+                    // not improve alpha, and thus not trigger researches. Therefore, one will be able to get away with
+                    // reduced depth searches with reasonable safety. Result is negated as an evaluation that's good
+                    // for our opponent will be bad for us.
                     evaluation = -AbSearch(board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha);
                 
                     // In the case that LMR fails, our evaluation will be greater than alpha which will force a
