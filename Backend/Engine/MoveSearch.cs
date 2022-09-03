@@ -196,7 +196,7 @@ public class MoveSearch
         // At depth 0 (or less in the case of reductions etc.), since we may be having a capture train, we should
         // jump into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us
         // out instantly.
-        if (depth <= 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
+        if (depth <= 0) return QSearch<Node>(board, plyFromRoot, 15, alpha, beta);
 
         #endregion
         
@@ -335,7 +335,7 @@ public class MoveSearch
                 // less than alpha, then the opponent will be able to find at least one move that improves their
                 // position.
                 // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
-                return QSearch(board, plyFromRoot, 15, alpha, beta);
+                return QSearch<NonPvNode>(board, plyFromRoot, 15, alpha, beta);
             
             #endregion
             
@@ -587,7 +587,7 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int QSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
+    private int QSearch<Node>(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta) where Node : NodeType
     {
         #region Out of Time
 
@@ -672,7 +672,7 @@ public class MoveSearch
         
             // Evaluate position by searching deeper and negating the result. An evaluation that's good for
             // our opponent will obviously be bad for us.
-            int evaluation = -QSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+            int evaluation = -QSearch<Node>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 
             // Undo the move.
             board.UndoMove(ref rv);
