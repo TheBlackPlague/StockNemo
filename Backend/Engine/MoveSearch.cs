@@ -144,7 +144,7 @@ public class MoveSearch
             
             // Get our best evaluation so far so we can decide whether we need to do a research or not.
             // Researches are reasonably fast thanks to transposition tables.
-            int bestEvaluation = AbSearch<RootNode>(board, 0, depth, alpha, beta);
+            int bestEvaluation = AbSearch<PvNode>(board, 0, depth, alpha, beta);
 
             #region Modify Window
 
@@ -185,19 +185,19 @@ public class MoveSearch
 
         #region Pv Table Length Initialization
 
-        PvTable.InitializeLength(plyFromRoot);
+        if (typeof(Node) == typeof(PvNode)) {
+            PvTable.InitializeLength(plyFromRoot);
+        }
 
         #endregion
         
         #region QSearch Jump
-
-        if (typeof(Node) != typeof(RootNode)) {
-            // At depth 0 (or less in the case of reductions etc.), since we may be having a capture train, we should
-            // jump into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us
-            // out instantly. Search starts with at least depth 1, so this cannot happen at root node.
-            if (depth <= 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
-        }
         
+        // At depth 0 (or less in the case of reductions etc.), since we may be having a capture train, we should
+        // jump into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us
+        // out instantly.
+        if (depth <= 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
+
         #endregion
         
         bool rootNode = plyFromRoot == 0;
@@ -205,7 +205,7 @@ public class MoveSearch
 
         #region Mate Pruning & Piece-Count Draw-Checks
 
-        if (typeof(Node) != typeof(RootNode)) {
+        if (notRootNode) {
             // We had a three-fold repetition, so return earlier.
             if (board.IsRepetition()) return 0;
             
@@ -233,8 +233,6 @@ public class MoveSearch
         }
 
         #endregion
-
-        bool pvNode = beta - alpha > 1;
 
         #region Transposition Table Lookup
 
@@ -343,7 +341,7 @@ public class MoveSearch
             
             #region Null Move Pruning
         
-            if (typeof(Node) != typeof(RootNode) && depth > NULL_MOVE_DEPTH) {
+            if (notRootNode && depth > NULL_MOVE_DEPTH) {
                 // For null move pruning, we give the turn to the opponent and let them make the move.
                 RevertNullMove rv = board.NullMove();
                 
@@ -408,19 +406,21 @@ public class MoveSearch
             // with the new evaluation. We should also take into account that it was our best move so far.
             bestEvaluation = evaluation;
             bestMoveSoFar = move;
+
+            if (typeof(Node) == typeof(PvNode)) {
+                // Insert move into PV Table.
+                PvTable.Insert(plyFromRoot, ref move);
             
-            // Insert move into PV Table.
-            PvTable.Insert(plyFromRoot, ref move);
+                // Copy moves from lesser ply to current ply PV Line.
+                int nextPly = plyFromRoot + 1;
+                while (PvTable.PlyInitialized(plyFromRoot, nextPly)) {
+                    PvTable.Copy(plyFromRoot, nextPly);
+                    nextPly++;
+                }
             
-            // Copy moves from lesser ply to current ply PV Line.
-            int nextPly = plyFromRoot + 1;
-            while (PvTable.PlyInitialized(plyFromRoot, nextPly)) {
-                PvTable.Copy(plyFromRoot, nextPly);
-                nextPly++;
+                // Update our PV Length.
+                PvTable.UpdateLength(plyFromRoot);
             }
-            
-            // Update our PV Length.
-            PvTable.UpdateLength(plyFromRoot);
 
             if (evaluation <= alpha) return true;
 
@@ -447,7 +447,7 @@ public class MoveSearch
         int i = 0;
         int quietMoveCounter = 0;
         int lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
-        bool lmp = !inCheck && depth <= LMP_DEPTH_THRESHOLD;
+        bool lmp = notRootNode && !inCheck && depth <= LMP_DEPTH_THRESHOLD;
         bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
@@ -492,7 +492,7 @@ public class MoveSearch
                 // If we haven't searched any moves, we should do a full depth search without any reductions.
                 // Without a full depth search beforehand, there's no way to guarantee principle variation search being
                 // safe.
-                evaluation = -AbSearch<PvNode>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+                evaluation = -AbSearch<Node>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
             else {
                 // Otherwise, to speed up search, we should try applying certain reductions to see if we can speed up
                 // the search. Moreover, even if those reductions are still unsafe, we can still save time by trying
@@ -568,8 +568,7 @@ public class MoveSearch
                 break;
             }
 
-            if (typeof(Node) == typeof(RootNode)) 
-                SearchEffort[move.From, move.To] = TotalNodeSearchCount - previousNodeCount;
+            if (rootNode) SearchEffort[move.From, move.To] = TotalNodeSearchCount - previousNodeCount;
             
             i++;
         }
