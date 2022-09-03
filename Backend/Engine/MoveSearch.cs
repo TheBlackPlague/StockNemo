@@ -5,6 +5,7 @@ using System.Text;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 
 namespace Backend.Engine;
 
@@ -143,7 +144,7 @@ public class MoveSearch
             
             // Get our best evaluation so far so we can decide whether we need to do a research or not.
             // Researches are reasonably fast thanks to transposition tables.
-            int bestEvaluation = AbSearch(board, 0, depth, alpha, beta);
+            int bestEvaluation = AbSearch<RootNode>(board, 0, depth, alpha, beta);
 
             #region Modify Window
 
@@ -171,7 +172,7 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private int AbSearch(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta)
+    private int AbSearch<Node>(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta) where Node : NodeType
     {
         #region Out of Time
 
@@ -190,10 +191,12 @@ public class MoveSearch
         
         #region QSearch Jump
 
-        // At depth 0 (or less in the case of reductions etc.), since we may be having a capture train, we should jump
-        // into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us out
-        // instantly.
-        if (depth <= 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
+        if (typeof(Node) != typeof(RootNode)) {
+            // At depth 0 (or less in the case of reductions etc.), since we may be having a capture train, we should
+            // jump into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us
+            // out instantly. Search starts with at least depth 1, so this cannot happen at root node.
+            if (depth <= 0) return QSearch(board, plyFromRoot, 15, alpha, beta);
+        }
         
         #endregion
         
@@ -202,7 +205,7 @@ public class MoveSearch
 
         #region Mate Pruning & Piece-Count Draw-Checks
 
-        if (notRootNode) {
+        if (typeof(Node) != typeof(RootNode)) {
             // We had a three-fold repetition, so return earlier.
             if (board.IsRepetition()) return 0;
             
@@ -246,7 +249,7 @@ public class MoveSearch
             transpositionMove = storedEntry.BestMove;
             transpositionHit = true;
 
-            if (storedEntry.Depth >= depth && notRootNode && !pvNode) {
+            if (typeof(Node) == typeof(NonPvNode) && storedEntry.Depth >= depth) {
                 // If it came from a higher depth search than our current depth, it means the results are definitely
                 // more trustworthy than the ones we could achieve at this depth.
                 switch (storedEntry.Type) {
@@ -307,7 +310,7 @@ public class MoveSearch
         PositionalEvaluationStore.AA(plyFromRoot) = positionalEvaluation;
         
         // ReSharper disable once ConvertIfStatementToSwitchStatement
-        if (!inCheck && !pvNode) {
+        if (typeof(Node) != typeof(PvNode) && !inCheck) {
             // Roughly estimate whether the deeper search improves the position or not.
             improving = plyFromRoot >= 2 && positionalEvaluation >= PositionalEvaluationStore.AA(plyFromRoot - 2);
 
@@ -340,7 +343,7 @@ public class MoveSearch
             
             #region Null Move Pruning
         
-            if (notRootNode && depth > NULL_MOVE_DEPTH) {
+            if (typeof(Node) != typeof(RootNode) && depth > NULL_MOVE_DEPTH) {
                 // For null move pruning, we give the turn to the opponent and let them make the move.
                 RevertNullMove rv = board.NullMove();
                 
@@ -348,12 +351,12 @@ public class MoveSearch
                 int reducedDepth = depth - NULL_MOVE_REDUCTION - 
                                    (depth / NULL_MOVE_SCALING_FACTOR - NULL_MOVE_SCALING_CORRECTION);
                 
-                // Then we evaluate position by searching at a reduced depth using same characteristics as normal search.
-                // The idea is that if there are cutoffs, most will be found using this reduced search and we can cutoff
-                // this branch earlier.
+                // Then we evaluate position by searching at a reduced depth using same characteristics as normal
+                // search. The idea is that if there are cutoffs, most will be found using this reduced search and we
+                // can cutoff this branch earlier.
                 // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
                 // QSearch).
-                int evaluation = -AbSearch(board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
+                int evaluation = -AbSearch<NonPvNode>(board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
                 // Undo the null move so we can get back to original state of the board.
                 board.UndoNullMove(rv);
         
@@ -444,7 +447,7 @@ public class MoveSearch
         int i = 0;
         int quietMoveCounter = 0;
         int lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
-        bool lmp = notRootNode && !inCheck && !pvNode && depth <= LMP_DEPTH_THRESHOLD;
+        bool lmp = !inCheck && depth <= LMP_DEPTH_THRESHOLD;
         bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
@@ -470,7 +473,8 @@ public class MoveSearch
 
             #region Late Move Pruning
 
-            if (lmp && bestEvaluation > NEG_INFINITY && quietMoveCounter > lmpQuietThreshold) 
+            if (typeof(Node) == typeof(NonPvNode) && lmp && bestEvaluation > NEG_INFINITY && 
+                quietMoveCounter > lmpQuietThreshold) 
                 // If we are past a certain threshold and we have searched the required quiet moves for this depth for
                 // pruning to be relatively safe, we can avoid searching any more moves since the likely best move
                 // will have been determined by now.
@@ -488,7 +492,7 @@ public class MoveSearch
                 // If we haven't searched any moves, we should do a full depth search without any reductions.
                 // Without a full depth search beforehand, there's no way to guarantee principle variation search being
                 // safe.
-                evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+                evaluation = -AbSearch<PvNode>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
             else {
                 // Otherwise, to speed up search, we should try applying certain reductions to see if we can speed up
                 // the search. Moreover, even if those reductions are still unsafe, we can still save time by trying
@@ -505,7 +509,7 @@ public class MoveSearch
                     int r = ReductionDepthTable[depth, i];
                     
                     // Reduce more on non-PV nodes.
-                    if (!pvNode) r++;
+                    if (typeof(Node) != typeof(PvNode)) r++;
                     
                     // Reduce if not improving.
                     if (!improving) r++;
@@ -517,7 +521,8 @@ public class MoveSearch
                     // not improve alpha, and thus not trigger researches. Therefore, one will be able to get away with
                     // reduced depth searches with reasonable safety. Result is negated as an evaluation that's good
                     // for our opponent will be bad for us.
-                    evaluation = -AbSearch(board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha);
+                    evaluation = 
+                        -AbSearch<NonPvNode>(board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha);
                 
                     // In the case that LMR fails, our evaluation will be greater than alpha which will force a
                     // principle variation research. However, in the case we couldn't apply LMR (due to safety reasons,
@@ -530,17 +535,17 @@ public class MoveSearch
                 #region Principle Variation Search
             
                 if (evaluation > alpha) {
-                    // If we couldn't do LMR because it was unsafe or if LMR failed, then we should try researching on
-                    // the principle variation window. If this is a research, it'll be nearly no impact thanks to
-                    // transposition tables.
-                    evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha);
+                    // If we couldn't attempt LMR because it was unsafe or if LMR failed, we should try a null-window
+                    // search at a normal progressive depth. If this is a research, it'll likely be fast enough to have
+                    // no impact due to transposition tables.
+                    evaluation = -AbSearch<NonPvNode>(board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha);
 
                     if (evaluation > alpha && evaluation < beta)
                         // If our evaluation was good enough to change our alpha but not our beta, it means we're on a
                         // principle variation node. Essentially: beta - alpha > 1.
                         // This means this is our best move from the search, and it isn't too good to be deemed
                         // an unlikely path. Thus, we should evaluate it clearly using a full-window research.
-                        evaluation = -AbSearch(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+                        evaluation = -AbSearch<PvNode>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 }
             
                 #endregion
@@ -563,7 +568,8 @@ public class MoveSearch
                 break;
             }
 
-            if (rootNode) SearchEffort[move.From, move.To] = TotalNodeSearchCount - previousNodeCount;
+            if (typeof(Node) == typeof(RootNode)) 
+                SearchEffort[move.From, move.To] = TotalNodeSearchCount - previousNodeCount;
             
             i++;
         }
