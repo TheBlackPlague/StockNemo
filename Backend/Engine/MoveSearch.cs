@@ -50,6 +50,8 @@ public class MoveSearch
     public int TableCutoffCount { get; private set; }
     public int TotalNodeSearchCount { get; private set; }
 
+    private int SelectiveDepth;
+
     private static readonly LogarithmicReductionDepthTable ReductionDepthTable = new();
 
     private readonly HistoryTable HistoryTable = new();
@@ -188,6 +190,12 @@ public class MoveSearch
         if (typeof(Node) == typeof(PvNode)) {
             PvTable.InitializeLength(plyFromRoot);
         }
+
+        #endregion
+
+        #region Selective Depth Change
+
+        if (typeof(Node) == typeof(PvNode)) SelectiveDepth = Math.Max(SelectiveDepth, plyFromRoot);
 
         #endregion
         
@@ -598,6 +606,12 @@ public class MoveSearch
 
         #endregion
         
+        #region Selective Depth Change
+
+        if (typeof(Node) == typeof(PvNode)) SelectiveDepth = Math.Max(SelectiveDepth, plyFromRoot);
+
+        #endregion
+        
         #region Early Evaluation
         
         int earlyEval = Evaluation.RelativeEvaluation(board);
@@ -691,7 +705,7 @@ public class MoveSearch
     private void DepthSearchLog(int depth, int evaluation, Stopwatch stopwatch)
     {
         Console.Write(
-            "info depth " + depth + " score cp " + evaluation + " nodes " + 
+            "info depth " + depth + " seldepth " + SelectiveDepth + " score cp " + evaluation + " nodes " + 
             TotalNodeSearchCount + " nps " + (int)(TotalNodeSearchCount / ((float)stopwatch.ElapsedMilliseconds / 1000)) 
             + " pv " + PvLine() + '\n'
         );
