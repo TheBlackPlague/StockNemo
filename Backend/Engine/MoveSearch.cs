@@ -195,7 +195,7 @@ public class MoveSearch
 
         #region Selective Depth Change
 
-        SelectiveDepth = Math.Max(SelectiveDepth, plyFromRoot);
+        if (typeof(Node) == typeof(PvNode)) SelectiveDepth = Math.Max(SelectiveDepth, plyFromRoot);
 
         #endregion
         
@@ -608,7 +608,7 @@ public class MoveSearch
         
         #region Selective Depth Change
 
-        SelectiveDepth = Math.Max(SelectiveDepth, plyFromRoot);
+        if (typeof(Node) == typeof(PvNode)) SelectiveDepth = Math.Max(SelectiveDepth, plyFromRoot);
 
         #endregion
         
