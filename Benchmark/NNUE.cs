@@ -1,5 +1,6 @@
 ﻿using Backend;
 using Backend.Data.Enum;
+using Backend.Data.Template;
 using Backend.Engine.NNUE.Architecture.Basic;
 using BenchmarkDotNet.Attributes;
 
@@ -25,8 +26,8 @@ public class NNUE
     [Benchmark]
     public void Eua()
     {
-        BasicNNUE.EfficientlyUpdateAccumulator(Piece.Pawn, PieceColor.White, Square.E2, false);
-        BasicNNUE.EfficientlyUpdateAccumulator(Piece.Pawn, PieceColor.White, Square.E4);
+        BasicNNUE.EfficientlyUpdateAccumulator<Deactivate>(Piece.Pawn, PieceColor.White, Square.E2);
+        BasicNNUE.EfficientlyUpdateAccumulator<Activate>(Piece.Pawn, PieceColor.White, Square.E4);
     }
 
     [Benchmark]

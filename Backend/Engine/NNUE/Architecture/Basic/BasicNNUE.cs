@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 using Backend.Engine.NNUE.Vectorization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -100,7 +101,8 @@ public class BasicNNUE
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void EfficientlyUpdateAccumulator(Piece piece, PieceColor color, Square sq, bool on = true)
+    public void EfficientlyUpdateAccumulator<Operation>(Piece piece, PieceColor color, Square sq)
+        where Operation : AccumulatorOperation
     {
         const int colorStride = 64 * 6;
         const int pieceStride = 64;
@@ -113,7 +115,7 @@ public class BasicNNUE
 
         BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
 
-        if (on) {
+        if (typeof(Operation) == typeof(Activate)) {
             WhitePOV.AA(whiteIndex) = 1;
             BlackPOV.AA(blackIndex) = 1;
             NN.AddToAll(accumulator.A, FlippedFeatureWeight, whiteIndex * HIDDEN);
