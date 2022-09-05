@@ -611,6 +611,25 @@ public class MoveSearch
         if (typeof(Node) == typeof(PvNode)) SelectiveDepth = Math.Max(SelectiveDepth, plyFromRoot);
 
         #endregion
+
+        #region Transposition Table Lookup
+
+        if (typeof(Node) == typeof(NonPvNode)) {
+            ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
+            if (storedEntry.Type != MoveTranspositionTableEntryType.Invalid && 
+                storedEntry.ZobristHash == board.ZobristHash) {
+                // Depending on the type of entry and our alpha and beta, we can return earlier.
+                if (storedEntry.Type == MoveTranspositionTableEntryType.Exact ||
+                    storedEntry.Type == MoveTranspositionTableEntryType.BetaCutoff &&
+                    storedEntry.BestMove.Evaluation >= beta ||
+                    storedEntry.Type == MoveTranspositionTableEntryType.AlphaUnchanged &&
+                    storedEntry.BestMove.Evaluation <= alpha) {
+                    return storedEntry.BestMove.Evaluation;
+                }
+            }
+        }
+
+        #endregion
         
         #region Early Evaluation
         
