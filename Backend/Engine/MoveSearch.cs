@@ -666,21 +666,27 @@ public class MoveSearch
         #region Fail-soft Alpha Beta Negamax
         
         int bestEvaluation = earlyEval;
+        OrderedMoveEntry bestMoveSoFar = new(Square.Na, Square.Na, Promotion.None);
+        MoveTranspositionTableEntryType transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged;
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool HandleEvaluation(int evaluation)
+        bool HandleEvaluation(int evaluation, ref OrderedMoveEntry move)
         {
             if (evaluation <= bestEvaluation) return true;
             
             // If our evaluation was better than our current best evaluation, we should update our evaluation
-            // with the new evaluation.
+            // with the new evaluation. We should also take into account that it was our best move so far.
             bestEvaluation = evaluation;
+            bestMoveSoFar = move;
 
             if (evaluation <= alpha) return true;
 
             // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
             // replace our alpha with our evaluation.
             alpha = evaluation;
+            
+            // Our alpha changed, so it is no longer an unchanged alpha entry.
+            transpositionTableEntryType = MoveTranspositionTableEntryType.Exact;
             
             // If the evaluation was better than beta, it means the position was too good. Thus, there
             // is a good chance that the opponent will avoid this path. Hence, there is currently no
@@ -710,11 +716,23 @@ public class MoveSearch
             // Undo the move.
             board.UndoMove(ref rv);
 
-            if (!HandleEvaluation(evaluation)) break;
+            if (!HandleEvaluation(evaluation, ref move)) {
+                // We had a beta cutoff, hence it's a beta cutoff entry.
+                transpositionTableEntryType = MoveTranspositionTableEntryType.BetaCutoff;
+                break;
+            }
             
             i++;
         }
         
+        #endregion
+        
+        #region Transposition Table Insertion
+        
+        SearchedMove bestMove = new(ref bestMoveSoFar, bestEvaluation);
+        MoveTranspositionTableEntry entry = new(board.ZobristHash, transpositionTableEntryType, bestMove, 0);
+        Table.InsertEntry(board.ZobristHash, ref entry);
+
         #endregion
         
         return bestEvaluation;
