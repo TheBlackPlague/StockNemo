@@ -705,9 +705,10 @@ public class MoveSearch
             // Calculate approximation of SEE.
             int see = SEE.Approximate(board, ref move);
             
-            // If SEE + positional evaluation margin is greater than beta, then this capture is far too good, and hence
+            // If SEE + the positional evaluation is greater than beta, then this capture is far too good, and hence
             // causes a beta cutoff.
-            if (see + earlyEval > beta) return beta;
+            int seeEval = see + earlyEval;
+            if (seeEval > beta) return seeEval;
             
             #endregion
             
