@@ -469,20 +469,6 @@ public class MoveSearch
             bool quietMove = !board.All(oppositeColor)[move.To];
             quietMoveCounter += quietMove.ToByte();
 
-            #region SEE Pruning
-
-            if (!quietMove) {
-                // Calculate approximation of SEE.
-                int see = SEE.Approximate(board, ref move);
-            
-                // If SEE + the positional evaluation is greater than beta, then this capture is far too good, and hence
-                // causes a beta cutoff.
-                int seeEval = see + positionalEvaluation;
-                if (seeEval > beta) return seeEval;
-            }
-            
-            #endregion
-
             #region Futility Pruning
 
             if (i > 0 && quietMove && positionalEvaluation + depth * FUTILITY_DEPTH_FACTOR <= alpha) 
