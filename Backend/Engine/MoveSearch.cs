@@ -471,7 +471,7 @@ public class MoveSearch
 
             #region SEE Pruning
 
-            if (!quietMove) {
+            if (i > 0 && !quietMove) {
                 // Calculate approximation of SEE.
                 int see = SEE.Approximate(board, ref move);
             
