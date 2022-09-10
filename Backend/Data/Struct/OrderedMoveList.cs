@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
-using Backend.Engine;
 
 namespace Backend.Data.Struct;
 
@@ -33,7 +32,7 @@ public readonly ref struct OrderedMoveList
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int ScoreMove(
         Piece pieceToMove,
-        EngineBoard board, 
+        Board board, 
         ref OrderedMoveEntry move,
         SearchedMove tableMove
         )
@@ -56,8 +55,7 @@ public readonly ref struct OrderedMoveList
         // The idea behind it is to give highest priority to captures that are capturing most valuable pieces
         // with least valuable pieces.
         Piece to = board.At(move.To).Item1;
-        if (to != Piece.Empty) return MvvLva(board.At(move.From).Item1, to) * 10000 + 
-                                      SEE.Approximate(board, ref move);
+        if (to != Piece.Empty) return MvvLva(board.At(move.From).Item1, to) * 10000;
 
         // If the move is a quiet move (not capture / promotion), then we should check if it is a killer move or history
         // move.
@@ -90,7 +88,7 @@ public readonly ref struct OrderedMoveList
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public int NormalMoveGeneration(EngineBoard board, SearchedMove transpositionMove)
+    public int NormalMoveGeneration(Board board, SearchedMove transpositionMove)
     {
         PieceColor oppositeColor = board.ColorToMove.OppositeColor();
 
@@ -193,7 +191,7 @@ public readonly ref struct OrderedMoveList
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public int QSearchMoveGeneration(EngineBoard board, SearchedMove transpositionMove)
+    public int QSearchMoveGeneration(Board board, SearchedMove transpositionMove)
     {
         PieceColor oppositeColor = board.ColorToMove.OppositeColor();
         // If we only want capture moves, we should also define our opposite board.
