@@ -697,9 +697,22 @@ public class MoveSearch
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
             moveList.SortNext(i, moveCount);
-                
-            // Make the move.
+            
             OrderedMoveEntry move = moveList[i];
+
+            #region SEE Pruning
+            
+            // Calculate approximation of SEE.
+            int see = SEE.Approximate(board, ref move);
+            
+            // If SEE + the positional evaluation is greater than beta, then this capture is far too good, and hence
+            // causes a beta cutoff.
+            int seeEval = see + earlyEval;
+            if (seeEval > beta) return seeEval;
+            
+            #endregion
+            
+            // Make the move.
             RevertMove rv = board.MoveNNUE(ref move);
             TotalNodeSearchCount++;
         
