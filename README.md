@@ -41,7 +41,7 @@
 <a href="https://lichess.org/@/StockNemo">
 <img
         alt="Lichess"
-        src="https://img.shields.io/badge/Play%20on%20LICHESS-v5.3.0.0-green?logo=lichess&style=for-the-badge"
+        src="https://img.shields.io/badge/Play%20on%20LICHESS-v5.4.0.0-green?logo=lichess&style=for-the-badge"
 >
 </a>
 </p>
@@ -140,6 +140,7 @@
         * Alpha Update
       * Deep Capture Only Search
       * Fail-soft Alpha Beta Pruning
+        * Static Exchange Evaluation (SEE) Pruning
 * **Utility:**
   * PERFT (Speeds upto: **168.3B NPS**)
     * PERFT-Divide Output
