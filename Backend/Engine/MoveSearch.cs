@@ -59,7 +59,7 @@ public class MoveSearch
     private readonly MoveSearchEffortTable SearchEffort = new();
     private readonly PrincipleVariationTable PvTable = new();
 
-    private readonly int[] PositionalEvaluationStore = new int[128];
+    private readonly MoveSearchStack MoveSearchStack = new();
 
     private readonly EngineBoard Board;
     private readonly TimeControl TimeControl;
@@ -313,12 +313,13 @@ public class MoveSearch
             transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
             
         // Also store the evaluation to later check if it improved.
-        PositionalEvaluationStore.AA(plyFromRoot) = positionalEvaluation;
+        MoveSearchStack[plyFromRoot].PositionalEvaluation = positionalEvaluation;
         
         // ReSharper disable once ConvertIfStatementToSwitchStatement
         if (typeof(Node) != typeof(PvNode) && !inCheck) {
             // Roughly estimate whether the deeper search improves the position or not.
-            improving = plyFromRoot >= 2 && positionalEvaluation >= PositionalEvaluationStore.AA(plyFromRoot - 2);
+            improving = plyFromRoot >= 2 && 
+                        positionalEvaluation >= MoveSearchStack[plyFromRoot - 2].PositionalEvaluation;
 
             #region Reverse Futility Pruning
 
