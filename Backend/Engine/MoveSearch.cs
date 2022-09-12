@@ -41,6 +41,9 @@ public class MoveSearch
     private const int REVERSE_FUTILITY_I = 76;
     private const int REVERSE_FUTILITY_DEPTH_THRESHOLD = 7;
 
+    private const int IIR_DEPTH_THRESHOLD = 3;
+    private const int IIR_DEPTH_REDUCTION = 1;
+
     private const int FUTILITY_DEPTH_FACTOR = 150;
 
     private const int CHECK_EXTENSION = 1;
@@ -382,6 +385,13 @@ public class MoveSearch
 
             #endregion
         }
+        
+        #region IIR
+
+        // Reduce depth if there are no transposition hits and we're at a high enough depth to do it safely.
+        if (depth > IIR_DEPTH_THRESHOLD && !transpositionHit) depth -= IIR_DEPTH_REDUCTION;
+
+        #endregion
 
         #region Move List Creation
 
