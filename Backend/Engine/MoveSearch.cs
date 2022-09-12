@@ -376,11 +376,11 @@ public class MoveSearch
             #region IIR
 
             // Reduce depth if there are no transposition hits and we're at a high enough depth to do it safely.
-            depth -= (depth >= 4 && !transpositionHit).ToByte();
+            if (depth >= 4 && !transpositionHit) depth--;
             
             // If the node is a PV Node, we can further reduce the depth if there is no transposition hit. There should
             // always ideally be one for PV Nodes.
-            if (typeof(Node) == typeof(PvNode)) depth -= (!transpositionHit).ToByte();
+            // if (typeof(Node) == typeof(PvNode) && !transpositionHit) depth--;
 
             #endregion
         } else if (inCheck) {
