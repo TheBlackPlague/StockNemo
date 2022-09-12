@@ -617,16 +617,18 @@ public class MoveSearch
 
         if (typeof(Node) == typeof(NonPvNode)) {
             ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
-            if (storedEntry.Type != MoveTranspositionTableEntryType.Invalid && 
-                storedEntry.ZobristHash == board.ZobristHash) {
-                // Depending on the type of entry and our alpha and beta, we can return earlier.
-                if (storedEntry.Type == MoveTranspositionTableEntryType.Exact ||
-                    storedEntry.Type == MoveTranspositionTableEntryType.BetaCutoff &&
-                    storedEntry.BestMove.Evaluation >= beta ||
-                    storedEntry.Type == MoveTranspositionTableEntryType.AlphaUnchanged &&
-                    storedEntry.BestMove.Evaluation <= alpha) {
-                    return storedEntry.BestMove.Evaluation;
-                }
+            if (storedEntry.ZobristHash == board.ZobristHash &&
+                (storedEntry.Type == MoveTranspositionTableEntryType.Exact ||
+                storedEntry.Type == MoveTranspositionTableEntryType.BetaCutoff &&
+                storedEntry.BestMove.Evaluation >= beta ||
+                storedEntry.Type == MoveTranspositionTableEntryType.AlphaUnchanged &&
+                storedEntry.BestMove.Evaluation <= alpha)) {
+                // If our entry is valid for our position, and it's one of the following caseS:
+                // - Exact
+                // - Beta Cutoff with transposition evaluation >= beta
+                // - Alpha Unchanged with transposition evaluation <= alpha
+                // we can return early.
+                return storedEntry.BestMove.Evaluation;
             }
         }
 
