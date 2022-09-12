@@ -53,12 +53,6 @@ public unsafe class MoveTranspositionTable
         int index = (int)zobristHash & HashFilter;
         ref MoveTranspositionTableEntry oldEntry = ref Internal.AA(index);
 
-        if (oldEntry.Type == MoveTranspositionTableEntryType.Invalid) {
-            // If the previous entry wasn't valid (there was no previous entry), replace it with the new entry. 
-            Internal.AA(index) = entry;
-            return;
-        }
-
         // If the old entry is higher than the new entry by a depth more than the threshold, than avoid replacing it.
         if (entry.Type == MoveTranspositionTableEntryType.Exact || entry.ZobristHash != oldEntry.ZobristHash || 
             entry.Depth > oldEntry.Depth - REPLACEMENT_DEPTH_THRESHOLD)
