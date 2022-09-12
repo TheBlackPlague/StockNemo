@@ -372,13 +372,6 @@ public class MoveSearch
             }
 
             #endregion
-
-            #region IIR
-
-            // Reduce depth if there are no transposition hits and we're at a high enough depth to do it safely.
-            if (depth >= 4 && !transpositionHit) depth--;
-
-            #endregion
         } else if (inCheck) {
             #region Check Extension
 
@@ -389,6 +382,13 @@ public class MoveSearch
 
             #endregion
         }
+        
+        #region IIR
+
+        // Reduce depth if there are no transposition hits and we're at a high enough depth to do it safely.
+        if (depth >= 4 && !transpositionHit) depth--;
+
+        #endregion
 
         #region Move List Creation
 
