@@ -56,8 +56,11 @@ public unsafe class MoveTranspositionTable
         // Replace Scheme:
         // - ENTRY_TYPE == EXACT
         // - OLD_ENTRY_HASH != NEW_ENTRY_HASH
+        // - OLD_ENTRY_TYPE == ALPHA_UNCHANGED && ENTRY_TYPE == BETA_CUTOFF
         // - ENTRY_DEPTH > OLD_ENTRY_DEPTH - REPLACEMENT_THRESHOLD
         if (entry.Type == MoveTranspositionTableEntryType.Exact || entry.ZobristHash != oldEntry.ZobristHash || 
+            oldEntry.Type == MoveTranspositionTableEntryType.AlphaUnchanged && 
+            entry.Type == MoveTranspositionTableEntryType.BetaCutoff ||
             entry.Depth > oldEntry.Depth - REPLACEMENT_DEPTH_THRESHOLD)
             Internal.AA(index) = entry;
     }
