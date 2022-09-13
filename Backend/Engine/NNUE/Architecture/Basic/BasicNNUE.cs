@@ -37,7 +37,9 @@ public class BasicNNUE
 
     private readonly BasicAccumulator<short>[] Accumulators = new BasicAccumulator<short>[80];
 
+#if DEBUG
     private readonly short[] Flatten = new short[HIDDEN * 2];
+#endif
 
     private readonly int[] Output = new int[OUTPUT];
     
@@ -158,6 +160,7 @@ public class BasicNNUE
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int Evaluate(PieceColor colorToMove)
     {
+#if DEBUG
         int firstOffset = 0;
         int secondOffset = 256;
 
@@ -165,13 +168,27 @@ public class BasicNNUE
             firstOffset = 256;
             secondOffset = 0;
         }
+#endif
         
         BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
+
+#if RELEASE
+        if (colorToMove == PieceColor.White) {
+            NN.ClippedReLUFlattenAndForward(accumulator.A, accumulator.B, FeatureBias, OutWeight, Output, 
+                CR_MIN, CR_MAX, HIDDEN);
+        } else {
+            NN.ClippedReLUFlattenAndForward(accumulator.B, accumulator.A, FeatureBias, OutWeight, Output, 
+                CR_MIN, CR_MAX, HIDDEN);
+        }
+#endif
         
+#if DEBUG
         NN.ClippedReLU(accumulator.A, FeatureBias, Flatten, CR_MIN, CR_MAX, firstOffset);
         NN.ClippedReLU(accumulator.B, FeatureBias, Flatten, CR_MIN, CR_MAX, secondOffset);
         
         NN.Forward(Flatten, OutWeight, Output);
+#endif
+        
         return (Output.AA(0) + OutBias.AA(0)) * SCALE / QAB;
     }
 
