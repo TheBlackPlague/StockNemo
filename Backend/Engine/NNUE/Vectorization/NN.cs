@@ -171,6 +171,62 @@ public static class NN
             vectorIndex = unrolledIndex3 + VSize.Short;
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void AddToAll(short[] inputA, short[] inputB, short[] delta, int offsetA, int offsetB)
+    {
+        int size = inputA.Length;
+        int loopSize = size / VSize.Short / UNROLL;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            int unrolledIndex = vectorIndex + VSize.Short;
+            int unrolledIndex2 = unrolledIndex + VSize.Short;
+            int unrolledIndex3 = unrolledIndex2 + VSize.Short;
+            
+            Vector<short> iAVec = inputA.NewVector(vectorIndex);
+            Vector<short> dAVec = delta.NewVector(offsetA + vectorIndex);
+            Vector<short> rAVec = iAVec + dAVec;
+            rAVec.ToArray(inputA, vectorIndex);
+            
+            Vector<short> iAVec2 = inputA.NewVector(unrolledIndex);
+            Vector<short> dAVec2 = delta.NewVector(offsetA + unrolledIndex);
+            Vector<short> rAVec2 = iAVec2 + dAVec2;
+            rAVec2.ToArray(inputA, unrolledIndex);
+            
+            Vector<short> iAVec3 = inputA.NewVector(unrolledIndex2);
+            Vector<short> dAVec3 = delta.NewVector(offsetA + unrolledIndex2);
+            Vector<short> rAVec3 = iAVec3 + dAVec3;
+            rAVec3.ToArray(inputA, unrolledIndex2);
+            
+            Vector<short> iAVec4 = inputA.NewVector(unrolledIndex3);
+            Vector<short> dAVec4 = delta.NewVector(offsetA + unrolledIndex3);
+            Vector<short> rAVec4 = iAVec4 + dAVec4;
+            rAVec4.ToArray(inputA, unrolledIndex3);
+            
+            Vector<short> iBVec = inputB.NewVector(vectorIndex);
+            Vector<short> dBVec = delta.NewVector(offsetB + vectorIndex);
+            Vector<short> rBVec = iBVec + dBVec;
+            rBVec.ToArray(inputB, vectorIndex);
+            
+            Vector<short> iBVec2 = inputB.NewVector(unrolledIndex);
+            Vector<short> dBVec2 = delta.NewVector(offsetB + unrolledIndex);
+            Vector<short> rBVec2 = iBVec2 + dBVec2;
+            rBVec2.ToArray(inputB, unrolledIndex);
+            
+            Vector<short> iBVec3 = inputB.NewVector(unrolledIndex2);
+            Vector<short> dBVec3 = delta.NewVector(offsetB + unrolledIndex2);
+            Vector<short> rBVec3 = iBVec3 + dBVec3;
+            rBVec3.ToArray(inputB, unrolledIndex2);
+            
+            Vector<short> iBVec4 = inputB.NewVector(unrolledIndex3);
+            Vector<short> dBVec4 = delta.NewVector(offsetB + unrolledIndex3);
+            Vector<short> rBVec4 = iBVec4 + dBVec4;
+            rBVec4.ToArray(inputB, unrolledIndex3);
+
+            vectorIndex = unrolledIndex3 + VSize.Short;
+        }
+    }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SubtractFromAll(short[] input, short[] delta, int offset)
@@ -202,6 +258,102 @@ public static class NN
             Vector<short> iVec4 = input.NewVector(unrolledIndex3);
             Vector<short> dVec4 = delta.NewVector(offset + unrolledIndex3);
             Vector<short> rVec4 = iVec4 - dVec4;
+            rVec4.ToArray(input, unrolledIndex3);
+
+            vectorIndex = unrolledIndex3 + VSize.Short;
+        }
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SubtractFromAll(short[] inputA, short[] inputB, short[] delta, int offsetA, int offsetB)
+    {
+        int size = inputA.Length;
+        int loopSize = size / VSize.Short / UNROLL;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            int unrolledIndex = vectorIndex + VSize.Short;
+            int unrolledIndex2 = unrolledIndex + VSize.Short;
+            int unrolledIndex3 = unrolledIndex2 + VSize.Short;
+            
+            Vector<short> iAVec = inputA.NewVector(vectorIndex);
+            Vector<short> dAVec = delta.NewVector(offsetA + vectorIndex);
+            Vector<short> rAVec = iAVec - dAVec;
+            rAVec.ToArray(inputA, vectorIndex);
+            
+            Vector<short> iAVec2 = inputA.NewVector(unrolledIndex);
+            Vector<short> dAVec2 = delta.NewVector(offsetA + unrolledIndex);
+            Vector<short> rAVec2 = iAVec2 - dAVec2;
+            rAVec2.ToArray(inputA, unrolledIndex);
+            
+            Vector<short> iAVec3 = inputA.NewVector(unrolledIndex2);
+            Vector<short> dAVec3 = delta.NewVector(offsetA + unrolledIndex2);
+            Vector<short> rAVec3 = iAVec3 - dAVec3;
+            rAVec3.ToArray(inputA, unrolledIndex2);
+            
+            Vector<short> iAVec4 = inputA.NewVector(unrolledIndex3);
+            Vector<short> dAVec4 = delta.NewVector(offsetA + unrolledIndex3);
+            Vector<short> rAVec4 = iAVec4 - dAVec4;
+            rAVec4.ToArray(inputA, unrolledIndex3);
+            
+            Vector<short> iBVec = inputB.NewVector(vectorIndex);
+            Vector<short> dBVec = delta.NewVector(offsetB + vectorIndex);
+            Vector<short> rBVec = iBVec - dBVec;
+            rBVec.ToArray(inputB, vectorIndex);
+            
+            Vector<short> iBVec2 = inputB.NewVector(unrolledIndex);
+            Vector<short> dBVec2 = delta.NewVector(offsetB + unrolledIndex);
+            Vector<short> rBVec2 = iBVec2 - dBVec2;
+            rBVec2.ToArray(inputB, unrolledIndex);
+            
+            Vector<short> iBVec3 = inputB.NewVector(unrolledIndex2);
+            Vector<short> dBVec3 = delta.NewVector(offsetB + unrolledIndex2);
+            Vector<short> rBVec3 = iBVec3 - dBVec3;
+            rBVec3.ToArray(inputB, unrolledIndex2);
+            
+            Vector<short> iBVec4 = inputB.NewVector(unrolledIndex3);
+            Vector<short> dBVec4 = delta.NewVector(offsetB + unrolledIndex3);
+            Vector<short> rBVec4 = iBVec4 - dBVec4;
+            rBVec4.ToArray(inputB, unrolledIndex3);
+
+            vectorIndex = unrolledIndex3 + VSize.Short;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SubtractAndAddToAll(short[] input, short[] delta, int offsetS, int offsetA)
+    {
+        int size = input.Length;
+        int loopSize = size / VSize.Short / UNROLL;
+
+        int vectorIndex = 0;
+        for (int i = 0; i < loopSize; i++) {
+            int unrolledIndex = vectorIndex + VSize.Short;
+            int unrolledIndex2 = unrolledIndex + VSize.Short;
+            int unrolledIndex3 = unrolledIndex2 + VSize.Short;
+
+            Vector<short> iVec = input.NewVector(vectorIndex);
+            Vector<short> dSVec = delta.NewVector(offsetS + vectorIndex);
+            Vector<short> dAVec = delta.NewVector(offsetA + vectorIndex);
+            Vector<short> rVec = iVec - dSVec + dAVec;
+            rVec.ToArray(input, vectorIndex);
+            
+            Vector<short> iVec2 = input.NewVector(unrolledIndex);
+            Vector<short> dSVec2 = delta.NewVector(offsetS + unrolledIndex);
+            Vector<short> dAVec2 = delta.NewVector(offsetA + unrolledIndex);
+            Vector<short> rVec2 = iVec2 - dSVec2 + dAVec2;
+            rVec2.ToArray(input, unrolledIndex);
+            
+            Vector<short> iVec3 = input.NewVector(unrolledIndex2);
+            Vector<short> dSVec3 = delta.NewVector(offsetS + unrolledIndex2);
+            Vector<short> dAVec3 = delta.NewVector(offsetA + unrolledIndex2);
+            Vector<short> rVec3 = iVec3 - dSVec3 + dAVec3;
+            rVec3.ToArray(input, unrolledIndex2);
+            
+            Vector<short> iVec4 = input.NewVector(unrolledIndex3);
+            Vector<short> dSVec4 = delta.NewVector(offsetS + unrolledIndex3);
+            Vector<short> dAVec4 = delta.NewVector(offsetA + unrolledIndex3);
+            Vector<short> rVec4 = iVec4 - dSVec4 + dAVec4;
             rVec4.ToArray(input, unrolledIndex3);
 
             vectorIndex = unrolledIndex3 + VSize.Short;
