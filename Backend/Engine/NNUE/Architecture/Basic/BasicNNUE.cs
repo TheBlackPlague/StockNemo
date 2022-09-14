@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
 using Backend.Data.Template;
@@ -26,6 +27,8 @@ public class BasicNNUE
     private const int QB = 64;
     private const int QAB = QA * QB;
 
+    private const int ACCUMULATOR_STACK_SIZE = 128;
+
     private readonly short[] FeatureWeight = new short[INPUT * HIDDEN];
     private readonly short[] FlippedFeatureWeight = new short[INPUT * HIDDEN];
     private readonly short[] FeatureBias = new short[HIDDEN];
@@ -35,11 +38,10 @@ public class BasicNNUE
     private readonly short[] WhitePOV = new short[INPUT];
     private readonly short[] BlackPOV = new short[INPUT];
 
-    private readonly BasicAccumulator<short>[] Accumulators = new BasicAccumulator<short>[80];
-
-#if DEBUG
+    private readonly BasicAccumulator<short>[] Accumulators = new BasicAccumulator<short>[ACCUMULATOR_STACK_SIZE];
+    
+    // ReSharper disable once UnusedMember.Local
     private readonly short[] Flatten = new short[HIDDEN * 2];
-#endif
 
     private readonly int[] Output = new int[OUTPUT];
     
