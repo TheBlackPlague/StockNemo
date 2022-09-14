@@ -12,7 +12,7 @@ public unsafe class MoveTranspositionTable
 {
 
     private const int MB_TO_B = 1_048_576;
-    
+
     private const int REPLACEMENT_DEPTH_THRESHOLD = 3;
 
     private readonly int HashFilter;
@@ -25,7 +25,7 @@ public unsafe class MoveTranspositionTable
     {
         HashFilter = 0x0;
 
-        for (int i = 0x1; byteSize >= (i + 1) * sizeof(MoveTranspositionTableEntry); i = (i << 1) | 0x1) {
+        for (int i = 0x1; byteSize >= (i + 1) * sizeof(MoveTranspositionTableEntry); i = i << 1 | 0x1) {
             HashFilter = i;
         }
 
@@ -52,18 +52,16 @@ public unsafe class MoveTranspositionTable
     {
         int index = (int)zobristHash & HashFilter;
         ref MoveTranspositionTableEntry oldEntry = ref Internal.AA(index);
-        
-        if (oldEntry.Type == MoveTranspositionTableEntryType.Invalid) {
-            // If the previous entry wasn't valid (there was no previous entry), replace it with the new entry. 
+
+        // Replace Scheme:
+        // - ENTRY_TYPE == EXACT
+        // - OLD_ENTRY_HASH != NEW_ENTRY_HASH
+        // - ENTRY_DEPTH > OLD_ENTRY_DEPTH - REPLACEMENT_THRESHOLD
+        if (entry.Type == MoveTranspositionTableEntryType.Exact || entry.ZobristHash != oldEntry.ZobristHash || 
+            entry.Depth > oldEntry.Depth - REPLACEMENT_DEPTH_THRESHOLD)
             Internal.AA(index) = entry;
-            return;
-        }
-        
-        // If the old entry is higher than the new entry by a depth more than the threshold, than avoid replacing it.
-        if (oldEntry.Depth - REPLACEMENT_DEPTH_THRESHOLD > entry.Depth) return;
-        Internal.AA(index) = entry;
     }
 
     public void FreeMemory() => Internal = null;
-
+    
 }

@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 using Backend.Engine.NNUE.Vectorization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -25,6 +27,8 @@ public class BasicNNUE
     private const int QB = 64;
     private const int QAB = QA * QB;
 
+    private const int ACCUMULATOR_STACK_SIZE = 128;
+
     private readonly short[] FeatureWeight = new short[INPUT * HIDDEN];
     private readonly short[] FlippedFeatureWeight = new short[INPUT * HIDDEN];
     private readonly short[] FeatureBias = new short[HIDDEN];
@@ -34,8 +38,9 @@ public class BasicNNUE
     private readonly short[] WhitePOV = new short[INPUT];
     private readonly short[] BlackPOV = new short[INPUT];
 
-    private readonly BasicAccumulator<short>[] Accumulators = new BasicAccumulator<short>[80];
-
+    private readonly BasicAccumulator<short>[] Accumulators = new BasicAccumulator<short>[ACCUMULATOR_STACK_SIZE];
+    
+    // ReSharper disable once UnusedMember.Local
     private readonly short[] Flatten = new short[HIDDEN * 2];
 
     private readonly int[] Output = new int[OUTPUT];
@@ -100,7 +105,35 @@ public class BasicNNUE
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void EfficientlyUpdateAccumulator(Piece piece, PieceColor color, Square sq, bool on = true)
+    public void EfficientlyUpdateAccumulator(Piece piece, PieceColor color, Square from, Square to)
+    {
+        const int colorStride = 64 * 6;
+        const int pieceStride = 64;
+
+        Piece nnPiece = NN.PieceToNN(piece);
+        int opPieceStride = (int)nnPiece * pieceStride;
+
+        int whiteIndexFrom = (int)color * colorStride + opPieceStride + (int)from;
+        int blackIndexFrom = (int)color.OppositeColor() * colorStride + opPieceStride + ((int)from ^ 56);
+        int whiteIndexTo = (int)color * colorStride + opPieceStride + (int)to;
+        int blackIndexTo = (int)color.OppositeColor() * colorStride + opPieceStride + ((int)to ^ 56);
+
+        BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
+
+        WhitePOV.AA(whiteIndexFrom) = 0;
+        BlackPOV.AA(blackIndexFrom) = 0;
+        WhitePOV.AA(whiteIndexTo) = 1;
+        BlackPOV.AA(blackIndexTo) = 1;
+        
+        NN.SubtractAndAddToAll(accumulator.A, FlippedFeatureWeight, 
+            whiteIndexFrom * HIDDEN, whiteIndexTo * HIDDEN);
+        NN.SubtractAndAddToAll(accumulator.B, FlippedFeatureWeight, 
+            blackIndexFrom * HIDDEN, blackIndexTo * HIDDEN);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void EfficientlyUpdateAccumulator<Operation>(Piece piece, PieceColor color, Square sq)
+        where Operation : AccumulatorOperation
     {
         const int colorStride = 64 * 6;
         const int pieceStride = 64;
@@ -113,22 +146,23 @@ public class BasicNNUE
 
         BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
 
-        if (on) {
+        if (typeof(Operation) == typeof(Activate)) {
             WhitePOV.AA(whiteIndex) = 1;
             BlackPOV.AA(blackIndex) = 1;
-            NN.AddToAll(accumulator.A, FlippedFeatureWeight, whiteIndex * HIDDEN);
-            NN.AddToAll(accumulator.B, FlippedFeatureWeight, blackIndex * HIDDEN);
+            NN.AddToAll(accumulator.A, accumulator.B, FlippedFeatureWeight, 
+                whiteIndex * HIDDEN, blackIndex * HIDDEN);
         } else {
             WhitePOV.AA(whiteIndex) = 0;
             BlackPOV.AA(blackIndex) = 0;
-            NN.SubtractFromAll(accumulator.A, FlippedFeatureWeight, whiteIndex * HIDDEN);
-            NN.SubtractFromAll(accumulator.B, FlippedFeatureWeight, blackIndex * HIDDEN);
+            NN.SubtractFromAll(accumulator.A, accumulator.B, FlippedFeatureWeight, 
+                whiteIndex * HIDDEN, blackIndex * HIDDEN);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int Evaluate(PieceColor colorToMove)
     {
+#if DEBUG
         int firstOffset = 0;
         int secondOffset = 256;
 
@@ -136,13 +170,27 @@ public class BasicNNUE
             firstOffset = 256;
             secondOffset = 0;
         }
+#endif
         
         BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
+
+#if RELEASE
+        if (colorToMove == PieceColor.White) {
+            NN.ClippedReLUFlattenAndForward(accumulator.A, accumulator.B, FeatureBias, OutWeight, Output, 
+                CR_MIN, CR_MAX, HIDDEN);
+        } else {
+            NN.ClippedReLUFlattenAndForward(accumulator.B, accumulator.A, FeatureBias, OutWeight, Output, 
+                CR_MIN, CR_MAX, HIDDEN);
+        }
+#endif
         
+#if DEBUG
         NN.ClippedReLU(accumulator.A, FeatureBias, Flatten, CR_MIN, CR_MAX, firstOffset);
         NN.ClippedReLU(accumulator.B, FeatureBias, Flatten, CR_MIN, CR_MAX, secondOffset);
         
         NN.Forward(Flatten, OutWeight, Output);
+#endif
+        
         return (Output.AA(0) + OutBias.AA(0)) * SCALE / QAB;
     }
 

@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 using Backend.Engine;
 
 namespace Backend;
@@ -88,7 +89,7 @@ public class Board
             rv.CapturedPiece = pieceT;
             rv.CapturedColor = colorT;
             
-            Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceT, colorT, to, false);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate>(pieceT, colorT, to);
         }
 
         if (EnPassantTarget == to && pieceF == Piece.Pawn) {
@@ -97,7 +98,7 @@ public class Board
             PieceColor oppositeColor = colorF.OppositeColor();
             Map.Empty(Piece.Pawn, oppositeColor, epPieceSq);
             
-            Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Pawn, oppositeColor, epPieceSq, false);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate>(Piece.Pawn, oppositeColor, epPieceSq);
 
             // Set it in revert move.
             rv.EnPassant = true;
@@ -119,14 +120,13 @@ public class Board
         // Make the move.
         Map.Move(pieceF, colorF, pieceT, colorT, from, to);
         
-        Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, from, false);
-        Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, to);
+        Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, from, to);
 
         if (promotion != Promotion.None) {
             Map.Empty(pieceF, colorF, to);
             Map.InsertPiece(to, (Piece)promotion, colorF);
-            Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, to, false);
-            Evaluation.NNUE.EfficientlyUpdateAccumulator((Piece)promotion, colorF, to);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate>(pieceF, colorF, to);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator<Activate>((Piece)promotion, colorF, to);
             rv.Promotion = true;
         }
 
@@ -208,8 +208,7 @@ public class Board
                         rv.SecondaryFrom, rv.SecondaryTo
                     );
                     
-                    Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, colorF, rv.SecondaryFrom, false);
-                    Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, colorF, rv.SecondaryTo);
+                    Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, colorF, rv.SecondaryFrom, rv.SecondaryTo);
                 }
 
                 break;
