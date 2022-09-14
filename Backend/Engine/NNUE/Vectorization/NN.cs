@@ -59,6 +59,8 @@ public static class NN
         }
     }
     
+#if DEBUG
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Forward(short[] input, short[] weight, int[] output, int offset = 0)
     {
@@ -97,6 +99,8 @@ public static class NN
             weightStride += inputSize;
         }
     }
+
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClippedReLUFlattenAndForward(short[] inputA, short[] inputB, short[] bias, short[] weight, 
@@ -161,7 +165,9 @@ public static class NN
             weightStride += inputSize;
         }
     }
-    
+
+#if DEBUG
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClippedReLU(short[] input, short[] bias, short[] output, short min, short max, int offset = 0)
     {
@@ -199,6 +205,8 @@ public static class NN
             vectorIndex = unrolledIndex3 + VSize.Short;
         }
     }
+
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void AddToAll(short[] inputA, short[] inputB, short[] delta, int offsetA, int offsetB)
