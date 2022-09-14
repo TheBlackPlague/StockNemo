@@ -120,8 +120,7 @@ public class Board
         // Make the move.
         Map.Move(pieceF, colorF, pieceT, colorT, from, to);
         
-        Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate>(pieceF, colorF, from);
-        Evaluation.NNUE.EfficientlyUpdateAccumulator<Activate>(pieceF, colorF, to);
+        Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, from, to);
 
         if (promotion != Promotion.None) {
             Map.Empty(pieceF, colorF, to);
@@ -209,8 +208,7 @@ public class Board
                         rv.SecondaryFrom, rv.SecondaryTo
                     );
                     
-                    Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate>(Piece.Rook, colorF, rv.SecondaryFrom);
-                    Evaluation.NNUE.EfficientlyUpdateAccumulator<Activate>(Piece.Rook, colorF, rv.SecondaryTo);
+                    Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, colorF, rv.SecondaryFrom, rv.SecondaryTo);
                 }
 
                 break;

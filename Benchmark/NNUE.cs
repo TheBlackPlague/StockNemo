@@ -24,7 +24,13 @@ public class NNUE
     }
 
     [Benchmark]
-    public void Eua()
+    public void EuaNormal()
+    {
+        BasicNNUE.EfficientlyUpdateAccumulator(Piece.Pawn, PieceColor.White, Square.E2, Square.E4);
+    }
+
+    [Benchmark]
+    public void EuaGeneric()
     {
         BasicNNUE.EfficientlyUpdateAccumulator<Deactivate>(Piece.Pawn, PieceColor.White, Square.E2);
         BasicNNUE.EfficientlyUpdateAccumulator<Activate>(Piece.Pawn, PieceColor.White, Square.E4);
