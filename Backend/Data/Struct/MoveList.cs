@@ -581,7 +581,7 @@ public ref struct MoveList
         Square move = kingMovesIterator.Current;
         Board.RemovePiece(Piece.King, color, From);
         while (kingMovesIterator.MoveNext()) {
-            if (UnderAttack(Board, move, oppositeColor)) kingMoves[move] = false;
+            if (UnderAttack(Board, move, oppositeColor)) kingMoves.False(move);
             
             // Next square iteration.
             move = kingMovesIterator.Current;

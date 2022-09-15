@@ -118,7 +118,7 @@ public struct BitBoard
     public static implicit operator BitBoard(Square sq)
     {
         BitBoard a = Default;
-        a[sq] = true;
+        a.True(sq);
         return a;
     }
 
@@ -168,35 +168,31 @@ public struct BitBoard
     public bool this[Square sq]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get
-        {
-            byte value = (byte)(Internal >> (int)sq & 1UL);
-            return Unsafe.As<byte, bool>(ref value);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set
-        {
-            if (value) Internal |= 1UL << (int)sq;
-            else Internal &= ~(1UL << (int)sq);
-        }
+        get => (Internal & 1UL << (int)sq) != 0UL;
     }
 
     public bool this[int i]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get
-        {
-            byte value = (byte)(Internal >> i & 1UL);
-            return Unsafe.As<byte, bool>(ref value);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set
-        {
-            if (value) Internal |= 1UL << i;
-            else Internal &= ~(1UL << i);
-        }
+        get => (Internal & 1UL << i) != 0UL;
     }
         
+    #endregion
+
+    #region Bit-Setters
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void False(Square sq) => Internal &= ~(1UL << (int)sq);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void False(int i) => Internal &= ~(1UL << i);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void True(Square sq) => Internal |= 1UL << (int)sq;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void True(int i) => Internal |= 1UL << i;
+
     #endregion
 
     public BitBoardIterator GetEnumerator()

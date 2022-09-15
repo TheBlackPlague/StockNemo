@@ -64,54 +64,54 @@ public struct BitBoardMap
                 if (char.IsUpper(p)) {
                     switch (p) {
                         case 'P':
-                            Bb[(int)PieceColor.White][(int)Piece.Pawn][v * 8 + h] = true;
+                            Bb[(int)PieceColor.White][(int)Piece.Pawn].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x0;
                             break;
                         case 'R':
-                            Bb[(int)PieceColor.White][(int)Piece.Rook][v * 8 + h] = true;
+                            Bb[(int)PieceColor.White][(int)Piece.Rook].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x1;
                             break;
                         case 'N':
-                            Bb[(int)PieceColor.White][(int)Piece.Knight][v * 8 + h] = true;
+                            Bb[(int)PieceColor.White][(int)Piece.Knight].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x2;
                             break;
                         case 'B':
-                            Bb[(int)PieceColor.White][(int)Piece.Bishop][v * 8 + h] = true;
+                            Bb[(int)PieceColor.White][(int)Piece.Bishop].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x3;
                             break;
                         case 'Q':
-                            Bb[(int)PieceColor.White][(int)Piece.Queen][v * 8 + h] = true;
+                            Bb[(int)PieceColor.White][(int)Piece.Queen].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x4;
                             break;
                         case 'K':
-                            Bb[(int)PieceColor.White][(int)Piece.King][v * 8 + h] = true;
+                            Bb[(int)PieceColor.White][(int)Piece.King].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x5;
                             break;
                     }
                 } else {
                     switch (p) {
                         case 'p':
-                            Bb[(int)PieceColor.Black][(int)Piece.Pawn][v * 8 + h] = true;
+                            Bb[(int)PieceColor.Black][(int)Piece.Pawn].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x10;
                             break;
                         case 'r':
-                            Bb[(int)PieceColor.Black][(int)Piece.Rook][v * 8 + h] = true;
+                            Bb[(int)PieceColor.Black][(int)Piece.Rook].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x11;
                             break;
                         case 'n':
-                            Bb[(int)PieceColor.Black][(int)Piece.Knight][v * 8 + h] = true;
+                            Bb[(int)PieceColor.Black][(int)Piece.Knight].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x12;
                             break;
                         case 'b':
-                            Bb[(int)PieceColor.Black][(int)Piece.Bishop][v * 8 + h] = true;
+                            Bb[(int)PieceColor.Black][(int)Piece.Bishop].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x13;
                             break;
                         case 'q':
-                            Bb[(int)PieceColor.Black][(int)Piece.Queen][v * 8 + h] = true;
+                            Bb[(int)PieceColor.Black][(int)Piece.Queen].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x14;
                             break;
                         case 'k':
-                            Bb[(int)PieceColor.Black][(int)Piece.King][v * 8 + h] = true;
+                            Bb[(int)PieceColor.Black][(int)Piece.King].True(v * 8 + h);
                             PiecesAndColors[v * 8 + h] = 0x15;
                             break;
                     }
@@ -225,15 +225,15 @@ public struct BitBoardMap
     {
         if (pT != Piece.Empty) {
             // If moving to piece isn't empty, then we capture.
-            Bb.DJAA((int)cT, (int)pT)[to] = false;
+            Bb.DJAA((int)cT, (int)pT).False(to);
                 
             // Remove from color bitboards.
             if (cT == PieceColor.White) {
-                White[to] = false;
+                White.False(to);
                 MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pT, (Square)((int)to ^ 56), Phase.Early];
                 MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pT, (Square)((int)to ^ 56), Phase.Late];
             } else {
-                Black[to] = false;
+                Black.False(to);
                 MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pT, to, Phase.Early];
                 MaterialDevelopmentEvaluationLate += Evaluation.MDT[pT, to, Phase.Late];
             }
@@ -245,10 +245,10 @@ public struct BitBoardMap
         ref BitBoard edit = ref Bb.DJAA((int)cF, (int)pF);
         
         // We remove from original square.
-        edit[from] = false;
+        edit.False(from);
 
         // Set at next square.
-        edit[to] = true;
+        edit.True(to);
 
         // Make sure to update the pieces and colors.
         PiecesAndColors.AA((int)to) = PiecesAndColors.AA((int)from);
@@ -256,8 +256,8 @@ public struct BitBoardMap
 
         // Update color bitboards.
         if (cF == PieceColor.White) {
-            White[from] = false;
-            White[to] = true;
+            White.False(from);
+            White.True(to);
             
             MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pF, (Square)((int)from ^ 56), Phase.Early];
             MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pF, (Square)((int)from ^ 56), Phase.Late];
@@ -265,8 +265,8 @@ public struct BitBoardMap
             MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pF, (Square)((int)to ^ 56), Phase.Early];
             MaterialDevelopmentEvaluationLate += Evaluation.MDT[pF, (Square)((int)to ^ 56), Phase.Late];
         } else {
-            Black[from] = false;
-            Black[to] = true;
+            Black.False(from);
+            Black.True(to);
             
             MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pF, from, Phase.Early];
             MaterialDevelopmentEvaluationLate += Evaluation.MDT[pF, from, Phase.Late];
@@ -291,19 +291,19 @@ public struct BitBoardMap
     public void Empty(Piece piece, PieceColor color, Square sq)
     {
         // Remove from square.
-        Bb.DJAA((int)color, (int)piece)[sq] = false;
+        Bb.DJAA((int)color, (int)piece).False(sq);
             
         // Set empty in pieces and colors.
         PiecesAndColors.AA((int)sq) = 0x26;
 
         // Remove from color bitboards.
         if (color == PieceColor.White) {
-            White[sq] = false;
+            White.False(sq);
             
             MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Early];
             MaterialDevelopmentEvaluationLate -= Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Late];
         } else {
-            Black[sq] = false;
+            Black.False(sq);
             
             MaterialDevelopmentEvaluationEarly += Evaluation.MDT[piece, sq, Phase.Early];
             MaterialDevelopmentEvaluationLate += Evaluation.MDT[piece, sq, Phase.Late];
@@ -317,16 +317,16 @@ public struct BitBoardMap
     public void InsertPiece(Square sq, Piece piece, PieceColor color)
     {
         // Insert the piece at square.
-        Bb.DJAA((int)color, (int)piece)[sq] = true;
+        Bb.DJAA((int)color, (int)piece).True(sq);
             
         // Insert into color bitboards.
         if (color == PieceColor.White) {
-            White[sq] = true;
+            White.True(sq);
             
             MaterialDevelopmentEvaluationEarly += Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Early];
             MaterialDevelopmentEvaluationLate += Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Late];
         } else {
-            Black[sq] = true;
+            Black.True(sq);
             
             MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[piece, sq, Phase.Early];
             MaterialDevelopmentEvaluationLate -= Evaluation.MDT[piece, sq, Phase.Late];
