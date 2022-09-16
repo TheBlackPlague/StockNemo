@@ -10,7 +10,7 @@ public static class VMethod
 {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector<T> NewVector<T>(this T[] values, int index = 0) where T : struct
+    public static Vector<T> LoadVector<T>(this T[] values, int index = 0) where T : struct
     {
         return Unsafe.ReadUnaligned<Vector<T>>(ref Unsafe.As<T, byte>(ref values.AA(index)));
     }
