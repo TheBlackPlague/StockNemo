@@ -1,11 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 using Backend.Data.Move;
+using Backend.Data.Template;
 using Backend.Exception;
 
 namespace Backend.Data.Struct;
 
-public ref struct MoveList
+public ref struct MoveList<MovingColor> where MovingColor : Color
 {
 
     private const ulong WHITE_KING_CASTLE = 0x60;
@@ -23,14 +24,15 @@ public ref struct MoveList
     public bool Promotion { get; private set; }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public static bool UnderAttack(Board board, Square sq, PieceColor by)
+    public static bool UnderAttack<AttackingColor>(Board board, Square sq) where AttackingColor : Color
     {
         int s = (int)sq;
+        PieceColor by = PieceColorUtil.Color<AttackingColor>();
             
         // First, we check if the square is being attacked by pawns.
         // To do this, we generate a reverse attack mask, letting our square act as a pawn and seeing if opposing
         // pawns exist on the squares in the mask. If so, our square can be attacked by pawns.
-        BitBoard pawnAttack = by == PieceColor.White ? 
+        BitBoard pawnAttack = typeof(AttackingColor) == typeof(White) ? 
             AttackTable.BlackPawnAttacks.AA(s) : AttackTable.WhitePawnAttacks.AA(s);
         if (pawnAttack & board.All(Piece.Pawn, by)) return true;
             
@@ -41,7 +43,7 @@ public ref struct MoveList
             
         // Next, we check if the square is being attacked by sliding pieces.
         // To do this, first we need to find all occupied squares (by our and opposing pieces).
-        BitBoard occupied = ~board.All(PieceColor.None);
+        BitBoard occupied = board.All();
             
         // We should check queen along with rook/bishop as queen moves are (rook moves | bishop moves).
         BitBoard queen = board.All(Piece.Queen, by);
@@ -65,14 +67,15 @@ public ref struct MoveList
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public static (BitBoard, bool) CheckBitBoard(Board board, Square sq, PieceColor by)
+    public static (BitBoard, bool) CheckBitBoard<CheckingColor>(Board board, Square sq) where CheckingColor : Color
     {
         int count = 0;
         BitBoard checks = BitBoard.Default;
         int s = (int)sq;
+        PieceColor by = PieceColorUtil.OppositeColor<CheckingColor>();
         
         // First we generate a pawn check.
-        BitBoard pawnAttack = by == PieceColor.White ? 
+        BitBoard pawnAttack = typeof(CheckingColor) == typeof(White) ? 
             AttackTable.BlackPawnAttacks.AA(s) : AttackTable.WhitePawnAttacks.AA(s);
         BitBoard pawnCheck = pawnAttack & board.All(Piece.Pawn, by);
         
@@ -80,7 +83,7 @@ public ref struct MoveList
         BitBoard knightCheck = AttackTable.KnightMoves.AA(s) & board.All(Piece.Knight, by);
         
         // For sliding pieces, we use a BitBoard of all pieces.
-        BitBoard occupied = ~board.All(PieceColor.None);
+        BitBoard occupied = board.All();
 
         // We will reference the queen along with rooks and bishops for the checks.
         BitBoard queen = board.All(Piece.Queen, by);
@@ -131,13 +134,16 @@ public ref struct MoveList
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public static (BitBoard, BitBoard) PinBitBoards(Board board, Square sq, PieceColor us, PieceColor by)
+    public static (BitBoard, BitBoard) PinBitBoards<PinningColor>(Board board, Square sq) 
+        where PinningColor : Color
     {
         int s = (int)sq;
+        PieceColor us = PieceColorUtil.Color<MovingColor>();
+        PieceColor by = PieceColorUtil.Color<PinningColor>();
         
         // Unlike for all other boards and checks, we don't use a fully occupied board. We want our paths to go through
         // our pieces so we only consider board occupied by opposing.
-        BitBoard byBoard = board.All(by);
+        BitBoard byBoard = board.All<PinningColor>();
 
         // We will reference the queen along with rooks and bishops for the checks.
         BitBoard queen = board.All(Piece.Queen, by);
@@ -161,7 +167,7 @@ public ref struct MoveList
             int rqS = (int)rqSq;
             BitBoard possiblePin = UtilityTable.Between.AA(s)[rqS] | rqSq;
 
-            if ((possiblePin & board.All(us)).Count == 1) horizontalVerticalPin |= possiblePin;
+            if ((possiblePin & board.All<MovingColor>()).Count == 1) horizontalVerticalPin |= possiblePin;
             
             // Next square iteration.
             rqSq = rookQueenIterator.Current;
@@ -175,7 +181,7 @@ public ref struct MoveList
             int bqS = (int)bqSq;
             BitBoard possiblePin = UtilityTable.Between.AA(s)[bqS] | bqSq;
 
-            if ((possiblePin & board.All(us)).Count == 1) diagonalPin |= possiblePin;
+            if ((possiblePin & board.All<MovingColor>()).Count == 1) diagonalPin |= possiblePin;
             
             // Next square iteration.
             bqSq = bishopQueenIterator.Current;
@@ -185,19 +191,31 @@ public ref struct MoveList
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static MoveList WithoutProvidedPins(Board board, Square from)
+    public static MoveList<MovingColor> WithoutProvidedPins(Board board, Square from)
     {
-        (Piece piece, PieceColor color) = board.At(from);
-        PieceColor oppositeColor = color.OppositeColor();
+        Piece piece = board.PieceOnly(from);
+        PieceColor color = PieceColorUtil.Color<MovingColor>();
         
         Square kingSq = board.KingLoc(color);
-        (BitBoard horizontalVertical, BitBoard diagonal) = PinBitBoards(board, kingSq, color, oppositeColor);
-        (BitBoard checks, bool doubleChecked) = CheckBitBoard(board, kingSq, oppositeColor);
-        return new MoveList(board, from, piece, color, ref horizontalVertical, ref diagonal, ref checks, doubleChecked);
+        BitBoard horizontalVertical;
+        BitBoard diagonal;
+        BitBoard checks;
+        bool doubleChecked;
+        
+        if (typeof(MovingColor) == typeof(White)) {
+            (horizontalVertical, diagonal) = PinBitBoards<Black>(board, kingSq);
+            (checks, doubleChecked) = CheckBitBoard<Black>(board, kingSq);
+        } else {
+            (horizontalVertical, diagonal) = PinBitBoards<White>(board, kingSq);
+            (checks, doubleChecked) = CheckBitBoard<White>(board, kingSq);
+        }
+        
+        return new MoveList<MovingColor>(board, from, piece, 
+            ref horizontalVertical, ref diagonal, ref checks, doubleChecked);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public MoveList(Board board, Square from, Piece piece, PieceColor color, ref BitBoard horizontalVertical, 
+    public MoveList(Board board, Square from, Piece piece, ref BitBoard horizontalVertical, 
         ref BitBoard diagonal, ref BitBoard checks, bool doubleChecked)
     {
         Board = board;
@@ -215,22 +233,22 @@ public ref struct MoveList
         // Generate Legal Moves
         switch (piece) {
             case Piece.Pawn:
-                LegalPawnMoveSet(color);
+                LegalPawnMoveSet();
                 break;
             case Piece.Rook:
-                LegalRookMoveSet(color);
+                LegalRookMoveSet();
                 break;
             case Piece.Knight:
-                LegalKnightMoveSet(color);
+                LegalKnightMoveSet();
                 break;
             case Piece.Bishop:
-                LegalBishopMoveSet(color);
+                LegalBishopMoveSet();
                 break;
             case Piece.Queen:
-                LegalQueenMoveSet(color);
+                LegalQueenMoveSet();
                 break;
             case Piece.King:
-                LegalKingMoveSet(color);
+                LegalKingMoveSet();
                 break;
             case Piece.Empty:
             default:
@@ -242,7 +260,7 @@ public ref struct MoveList
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public MoveList(Board board, Square from, Piece piece, PieceColor color, ref BitBoard horizontalVertical, 
+    public MoveList(Board board, Square from, Piece piece, ref BitBoard horizontalVertical, 
         ref BitBoard diagonal, ref BitBoard checks)
     {
         Board = board;
@@ -256,22 +274,22 @@ public ref struct MoveList
         // Generate Legal Moves
         switch (piece) {
             case Piece.Pawn:
-                LegalPawnMoveSet(color);
+                LegalPawnMoveSet();
                 break;
             case Piece.Rook:
-                LegalRookMoveSet(color);
+                LegalRookMoveSet();
                 break;
             case Piece.Knight:
-                LegalKnightMoveSet(color);
+                LegalKnightMoveSet();
                 break;
             case Piece.Bishop:
-                LegalBishopMoveSet(color);
+                LegalBishopMoveSet();
                 break;
             case Piece.Queen:
-                LegalQueenMoveSet(color);
+                LegalQueenMoveSet();
                 break;
             case Piece.King:
-                LegalKingMoveSet(color);
+                LegalKingMoveSet();
                 break;
             case Piece.Empty:
             default:
@@ -295,7 +313,7 @@ public ref struct MoveList
         C = checks;
     }
 
-    public MoveList(Board board, PieceColor color)
+    public MoveList(Board board)
     {
         Board = board;
         Moves = BitBoard.Default;
@@ -305,23 +323,23 @@ public ref struct MoveList
         D = BitBoard.Default;
         C = BitBoard.Default;
 
-        BitBoard colored = board.All(color);
+        BitBoard colored = board.All<MovingColor>();
         foreach (Square sq in colored) {
-            MoveList moveList = WithoutProvidedPins(board, sq);
+            MoveList<MovingColor> moveList = WithoutProvidedPins(board, sq);
             Moves |= moveList.Moves;
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void LegalPawnMoveSetCapture(PieceColor color)
+    public void LegalPawnMoveSetCapture()
     {
         if (Hv[From]) {
             // If pawn is horizontally pinned, then we have no moves.
             return;
         }
         
-        PieceColor oppositeColor = color.OppositeColor();
-        BitBoard opposite = Board.All(oppositeColor);
+        PieceColor oppositeColor = PieceColorUtil.OppositeColor<MovingColor>();
+        BitBoard opposite = typeof(MovingColor) == typeof(White) ? Board.All<Black>() : Board.All<White>();
         Square epPieceSq = Square.Na;
         
         #region Promotion Flag
@@ -330,8 +348,11 @@ public ref struct MoveList
         // It is important to set it earlier rather than later, because if there is a diagonal pin capture
         // leading to a promotion, we must make sure to record that as 4 moves.
         // FEN: 2q5/1Pp5/K2p4/7r/6Pk/8/8/1R6 w - -
-        Promotion = color == PieceColor.White && From is > Square.H6 and < Square.A8 || 
-                    color == PieceColor.Black && From is > Square.H1 and < Square.A3;
+        if (typeof(MovingColor) == typeof(White)) {
+            Promotion = From is > Square.H6 and < Square.A8;
+        } else if (typeof(MovingColor) == typeof(Black)) {
+            Promotion = From is > Square.H1 and < Square.A3;
+        }
 
         #endregion
         
@@ -341,13 +362,12 @@ public ref struct MoveList
         if (Board.EnPassantTarget != Square.Na) {
             // If EP exists, then we need to check if a piece exists on square that's under attack from Ep, not
             // where we move to.
-            epPieceSq = color == PieceColor.White ? 
-                Board.EnPassantTarget - 8 : Board.EnPassantTarget + 8;
+            epPieceSq = typeof(MovingColor) == typeof(White) ? Board.EnPassantTarget - 8 : Board.EnPassantTarget + 8;
             bool epTargetPieceExists = Board.All(Piece.Pawn, oppositeColor)[epPieceSq];
                 
             // We need to check if a piece of ours exists to actually execute the EP.
             // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
-            BitBoard reverseCorner = color == PieceColor.White
+            BitBoard reverseCorner = typeof(MovingColor) == typeof(White)
                 ? AttackTable.BlackPawnAttacks[(int)Board.EnPassantTarget]
                 : AttackTable.WhitePawnAttacks[(int)Board.EnPassantTarget];
                 
@@ -358,7 +378,7 @@ public ref struct MoveList
         }
         
         // Attack Moves.
-        BitBoard attack = color == PieceColor.White ? 
+        BitBoard attack = typeof(MovingColor) == typeof(White) ? 
             AttackTable.WhitePawnAttacks.AA((int)From) : AttackTable.BlackPawnAttacks.AA((int)From);
 
         // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
@@ -383,19 +403,25 @@ public ref struct MoveList
             // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
             // if our king is under attacked.
             
-            Board.RemovePiece(Piece.Pawn, color, From);
-            Board.RemovePiece(Piece.Pawn, oppositeColor, epPieceSq);
-            Board.InsertPiece(Board.EnPassantTarget, Piece.Pawn, color);
-            
-            Square kingSq = Board.KingLoc(color);
+            Board.RemovePiece<MovingColor>(Piece.Pawn, From);
+            if (typeof(MovingColor) == typeof(White)) Board.RemovePiece<Black>(Piece.Pawn, epPieceSq);
+            else Board.RemovePiece<White>(Piece.Pawn, epPieceSq);
+            Board.InsertPiece<MovingColor>(Board.EnPassantTarget, Piece.Pawn);
+
+            Square kingSq = Board.KingLoc(PieceColorUtil.Color<MovingColor>());
             
             // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
             // caused a discovered pin. Thus, we must remove it from our legal moves.
-            if (UnderAttack(Board, kingSq, oppositeColor)) Moves &= ~(1UL << (int)Board.EnPassantTarget);
+            if (typeof(MovingColor) == typeof(White)) {
+                if (UnderAttack<Black>(Board, kingSq)) Moves &= ~(1UL << (int)Board.EnPassantTarget);
+            } else {
+                if (UnderAttack<White>(Board, kingSq)) Moves &= ~(1UL << (int)Board.EnPassantTarget);
+            }
             
-            Board.InsertPiece(From, Piece.Pawn, color);
-            Board.InsertPiece(epPieceSq, Piece.Pawn, oppositeColor);
-            Board.RemovePiece(Piece.Pawn, color, Board.EnPassantTarget);
+            Board.InsertPiece<MovingColor>(From, Piece.Pawn);
+            if (typeof(MovingColor) == typeof(White)) Board.InsertPiece<Black>(epPieceSq, Piece.Pawn);
+            else Board.InsertPiece<White>(epPieceSq, Piece.Pawn);
+            Board.RemovePiece<MovingColor>(Piece.Pawn, Board.EnPassantTarget);
 
             // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
             if (Moves[Board.EnPassantTarget] && !C[epPieceSq]) Moves &= ~(1UL << (int)Board.EnPassantTarget);
@@ -405,11 +431,11 @@ public ref struct MoveList
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void LegalPawnMoveSet(PieceColor color)
+    private void LegalPawnMoveSet()
     {
-        PieceColor oppositeColor = color.OppositeColor();
+        PieceColor oppositeColor = PieceColorUtil.OppositeColor<MovingColor>();
         BitBoard from = From;
-        BitBoard opposite = Board.All(oppositeColor);
+        BitBoard opposite = typeof(MovingColor) == typeof(White) ? Board.All<Black>() : Board.All<White>();
         Square epPieceSq = Square.Na;
 
         #region Promotion Flag
@@ -418,8 +444,11 @@ public ref struct MoveList
         // It is important to set it earlier rather than later, because if there is a diagonal pin capture
         // leading to a promotion, we must make sure to record that as 4 moves.
         // FEN: 2q5/1Pp5/K2p4/7r/6Pk/8/8/1R6 w - -
-        Promotion = color == PieceColor.White && From is > Square.H6 and < Square.A8 || 
-                    color == PieceColor.Black && From is > Square.H1 and < Square.A3;
+        if (typeof(MovingColor) == typeof(White)) {
+            Promotion = From is > Square.H6 and < Square.A8;
+        } else if (typeof(MovingColor) == typeof(Black)) {
+            Promotion = From is > Square.H1 and < Square.A3;
+        }
 
         #endregion
 
@@ -429,13 +458,12 @@ public ref struct MoveList
         if (Board.EnPassantTarget != Square.Na) {
             // If EP exists, then we need to check if a piece exists on square that's under attack from Ep, not
             // where we move to.
-            epPieceSq = color == PieceColor.White ? 
-                Board.EnPassantTarget - 8 : Board.EnPassantTarget + 8;
+            epPieceSq = typeof(MovingColor) == typeof(White) ? Board.EnPassantTarget - 8 : Board.EnPassantTarget + 8;
             bool epTargetPieceExists = Board.All(Piece.Pawn, oppositeColor)[epPieceSq];
                 
             // We need to check if a piece of ours exists to actually execute the EP.
             // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
-            BitBoard reverseCorner = color == PieceColor.White
+            BitBoard reverseCorner = typeof(MovingColor) == typeof(White)
                 ? AttackTable.BlackPawnAttacks[(int)Board.EnPassantTarget]
                 : AttackTable.WhitePawnAttacks[(int)Board.EnPassantTarget];
                 
@@ -446,7 +474,7 @@ public ref struct MoveList
         }
         
         // Attack Moves.
-        BitBoard attack = color == PieceColor.White ? 
+        BitBoard attack = typeof(MovingColor) == typeof(White) ? 
             AttackTable.WhitePawnAttacks.AA((int)From) : AttackTable.BlackPawnAttacks.AA((int)From);
 
         // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
@@ -466,17 +494,17 @@ public ref struct MoveList
         BitBoard pushes = BitBoard.Default;
 
         // Push pawn once.
-        pushes |= (color == PieceColor.White ? from << 8 : from >> 8) & Board.All(PieceColor.None);
+        pushes |= (typeof(MovingColor) == typeof(White) ? from << 8 : from >> 8) & Board.All<None>();
             
         if (From is > Square.H1 and < Square.A3 or > Square.H6 and < Square.A8 && pushes) {
             // If we are on the starting pawn position & the first pawn push was successful.
             // Push once more.
-            pushes |= color == PieceColor.White ? from << 16 : from >> 16;
+            pushes |= typeof(MovingColor) == typeof(White) ? from << 16 : from >> 16;
         }
 
         // Make sure our pushes are not stepping on to enemy pieces.
         // These are normal moves, not attack moves so we can't capture.
-        pushes &= ~opposite & ~Board.All(color);
+        pushes &= ~opposite & ~Board.All<MovingColor>();
         
         Moves |= pushes & C;
 
@@ -499,19 +527,25 @@ public ref struct MoveList
             // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
             // if our king is under attacked.
             
-            Board.RemovePiece(Piece.Pawn, color, From);
-            Board.RemovePiece(Piece.Pawn, oppositeColor, epPieceSq);
-            Board.InsertPiece(Board.EnPassantTarget, Piece.Pawn, color);
-            
-            Square kingSq = Board.KingLoc(color);
+            Board.RemovePiece<MovingColor>(Piece.Pawn, From);
+            if (typeof(MovingColor) == typeof(White)) Board.RemovePiece<Black>(Piece.Pawn, epPieceSq);
+            else Board.RemovePiece<White>(Piece.Pawn, epPieceSq);
+            Board.InsertPiece<MovingColor>(Board.EnPassantTarget, Piece.Pawn);
+
+            Square kingSq = Board.KingLoc(PieceColorUtil.Color<MovingColor>());
             
             // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
             // caused a discovered pin. Thus, we must remove it from our legal moves.
-            if (UnderAttack(Board, kingSq, oppositeColor)) Moves &= ~(1UL << (int)Board.EnPassantTarget);
+            if (typeof(MovingColor) == typeof(White)) {
+                if (UnderAttack<Black>(Board, kingSq)) Moves &= ~(1UL << (int)Board.EnPassantTarget);
+            } else {
+                if (UnderAttack<White>(Board, kingSq)) Moves &= ~(1UL << (int)Board.EnPassantTarget);
+            }
             
-            Board.InsertPiece(From, Piece.Pawn, color);
-            Board.InsertPiece(epPieceSq, Piece.Pawn, oppositeColor);
-            Board.RemovePiece(Piece.Pawn, color, Board.EnPassantTarget);
+            Board.InsertPiece<MovingColor>(From, Piece.Pawn);
+            if (typeof(MovingColor) == typeof(White)) Board.InsertPiece<Black>(epPieceSq, Piece.Pawn);
+            else Board.InsertPiece<White>(epPieceSq, Piece.Pawn);
+            Board.RemovePiece<MovingColor>(Piece.Pawn, Board.EnPassantTarget);
 
             // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
             if (Moves[Board.EnPassantTarget] && !C[epPieceSq]) Moves &= ~(1UL << (int)Board.EnPassantTarget);
@@ -521,72 +555,75 @@ public ref struct MoveList
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void LegalRookMoveSet(PieceColor color)
+    private void LegalRookMoveSet()
     {
         // If rook is diagonally pinned, it has no moves.
         if (D[From]) return;
         
         // Calculate pseudo-legal moves within check board.
-        int mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, ~Board.All(PieceColor.None), From);
-        Moves |= AttackTable.SlidingMoves.AA(mIndex) & ~Board.All(color) & C;
+        int mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, Board.All(), From);
+        Moves |= AttackTable.SlidingMoves.AA(mIndex) & ~Board.All<MovingColor>() & C;
 
         // If rook is horizontally or vertically pinned, it can only move within the pin.
         if (Hv[From]) Moves &= Hv;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void LegalKnightMoveSet(PieceColor color)
+    private void LegalKnightMoveSet()
     {
         if (Hv[From] || D[From]) return;
 
-        Moves |= AttackTable.KnightMoves.AA((int)From) & ~Board.All(color) & C;
+        Moves |= AttackTable.KnightMoves.AA((int)From) & ~Board.All<MovingColor>() & C;
     }
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void LegalBishopMoveSet(PieceColor color)
+    private void LegalBishopMoveSet()
     {
         // If bishop is horizontally or vertically pinned, it has no moves.
         if (Hv[From]) return;
 
         // Calculate pseudo-legal moves within check board.
-        int mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, ~Board.All(PieceColor.None), From);
-        Moves |= AttackTable.SlidingMoves.AA(mIndex) & ~Board.All(color) & C;
+        int mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, Board.All(), From);
+        Moves |= AttackTable.SlidingMoves.AA(mIndex) & ~Board.All<MovingColor>() & C;
 
         // If bishop is diagonally pinned, it can only move within the pin.
         if (D[From]) Moves &= D;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void LegalQueenMoveSet(PieceColor color)
+    private void LegalQueenMoveSet()
     {
         // We can generate queen moves by combining rook and bishop moves.
-        LegalRookMoveSet(color);
-        LegalBishopMoveSet(color);
+        LegalRookMoveSet();
+        LegalBishopMoveSet();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void LegalKingMoveSet(PieceColor color)
+    private void LegalKingMoveSet()
     {
         #region Normal
 
         BitBoard kingMoves = AttackTable.KingMoves.AA((int)From);
-        kingMoves &= ~Board.All(color);
+        kingMoves &= ~Board.All<MovingColor>();
         
         // If we have no king moves, we can return earlier and avoiding having to check if the moves are legal
         // or not by removing the king.
         if (!kingMoves) return;
 
-        PieceColor oppositeColor = color.OppositeColor();
         BitBoardIterator kingMovesIterator = kingMoves.GetEnumerator();
         Square move = kingMovesIterator.Current;
-        Board.RemovePiece(Piece.King, color, From);
+        Board.RemovePiece<MovingColor>(Piece.King, From);
         while (kingMovesIterator.MoveNext()) {
-            if (UnderAttack(Board, move, oppositeColor)) kingMoves[move] = false;
+            if (typeof(MovingColor) == typeof(White)) {
+                if (UnderAttack<Black>(Board, move)) kingMoves[move] = false;
+            } else {
+                if (UnderAttack<White>(Board, move)) kingMoves[move] = false;
+            }
             
             // Next square iteration.
             move = kingMovesIterator.Current;
         }
-        Board.InsertPiece(From, Piece.King, color);
+        Board.InsertPiece<MovingColor>(From, Piece.King);
 
         Moves |= kingMoves;
 
@@ -595,34 +632,46 @@ public ref struct MoveList
         #region Castling
 
         // If enemy is attacking our king, we cannot castle.
-        if (UnderAttack(Board, From, oppositeColor)) return;
+        if (typeof(MovingColor) == typeof(White)) {
+            if (UnderAttack<Black>(Board, From)) return;
+        } else {
+            if (UnderAttack<White>(Board, From)) return;
+        }
             
         // Get castling rights.
-        (byte q, byte k) = Board.CastlingRight(color);
+        (byte q, byte k) = Board.CastlingRight<MovingColor>();
             
         // Make sure castling close-path isn't under attack.
-        if (q != 0x0 && kingMoves[From - 1] && !UnderAttack(Board, From - 2, oppositeColor)) {
-            // Generate path of castle queen-side.
-            BitBoard path = color == PieceColor.White ? WHITE_QUEEN_CASTLE : BLACK_QUEEN_CASTLE;
+        if (q != 0x0 && kingMoves[From - 1]) {
+            bool underAttack = typeof(MovingColor) == typeof(White) ? 
+                UnderAttack<Black>(Board, From - 2) :
+                UnderAttack<White>(Board, From - 2);
+            
+            if (!underAttack) {
+                BitBoard path = typeof(MovingColor) == typeof(White) ? WHITE_QUEEN_CASTLE : BLACK_QUEEN_CASTLE;
                 
-            // If path is empty, we can castle.
-            BitBoard all = ~Board.All(PieceColor.None);
-            if ((path & all) == BitBoard.Default) {
-                Moves |= From - 2;
+                // If path is empty, we can castle.
+                BitBoard all = Board.All();
+                if ((path & all) == BitBoard.Default) {
+                    Moves |= From - 2;
+                }
             }
         }
 
-        // ReSharper disable once InvertIf
-        // Make sure castling close-path isn't under attack.
-        if (k != 0x0 && kingMoves[From + 1] && !UnderAttack(Board, From + 2, oppositeColor)) {
-            // Generate path of castle king-side.
-            BitBoard path = color == PieceColor.White ? WHITE_KING_CASTLE : BLACK_KING_CASTLE;
+        if (k != 0x0 && kingMoves[From + 1]) {
+            bool underAttack = typeof(MovingColor) == typeof(White) ? 
+                UnderAttack<Black>(Board, From + 2) :
+                UnderAttack<White>(Board, From + 2);
+
+            if (!underAttack) {
+                BitBoard path = typeof(MovingColor) == typeof(White) ? WHITE_KING_CASTLE : BLACK_KING_CASTLE;
                 
-            // If path is empty, we can castle.
-            BitBoard all = ~Board.All(PieceColor.None);
-            // ReSharper disable once InvertIf
-            if ((path & all) == BitBoard.Default) {
-                Moves |= From + 2;
+                // If path is empty, we can castle.
+                BitBoard all = Board.All();
+                // ReSharper disable once InvertIf
+                if ((path & all) == BitBoard.Default) {
+                    Moves |= From + 2;
+                }
             }
         }
             

@@ -5,7 +5,9 @@ using System.IO;
 using System.Threading.Tasks;
 using Backend;
 using Backend.Data;
+using Backend.Data.Enum;
 using Backend.Data.Move;
+using Backend.Data.Template;
 using Terminal.Interactive;
 using Terminal.Uci;
 
@@ -27,7 +29,7 @@ internal static class Program
         Zobrist.Setup();
         
         // Run JIT.
-        Perft.MoveGeneration(Board.Default(), 5, false);
+        Perft.MoveGeneration<White>(Board.Default(), 5, false);
 
         string command = Environment.CommandLine;
 
@@ -79,11 +81,15 @@ internal static class Program
         if (Table != null) {
             Table.HitCount = 0;
             watch.Start();
-            result = Perft.MoveGeneration(board, depth, Table);
+            result = board.ColorToMove == PieceColor.White ? 
+                Perft.MoveGeneration<White>(board, depth, Table) : 
+                Perft.MoveGeneration<Black>(board, depth, Table);
             watch.Stop();
         } else {
             watch.Start();
-            result = Perft.MoveGeneration(board, depth);
+            result = board.ColorToMove == PieceColor.White ? 
+                Perft.MoveGeneration<White>(board, depth) : 
+                Perft.MoveGeneration<Black>(board, depth);
             watch.Stop();
         }
             

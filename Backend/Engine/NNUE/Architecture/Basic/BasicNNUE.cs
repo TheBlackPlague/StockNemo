@@ -105,10 +105,13 @@ public class BasicNNUE
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void EfficientlyUpdateAccumulator(Piece piece, PieceColor color, Square from, Square to)
+    public void EfficientlyUpdateAccumulator<ColorToUpdate>(Piece piece, Square from, Square to) 
+        where ColorToUpdate : Color
     {
         const int colorStride = 64 * 6;
         const int pieceStride = 64;
+
+        PieceColor color = PieceColorUtil.Color<ColorToUpdate>();
 
         Piece nnPiece = NN.PieceToNN(piece);
         int opPieceStride = (int)nnPiece * pieceStride;
@@ -132,11 +135,13 @@ public class BasicNNUE
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void EfficientlyUpdateAccumulator<Operation>(Piece piece, PieceColor color, Square sq)
-        where Operation : AccumulatorOperation
+    public void EfficientlyUpdateAccumulator<Operation, ColorToUpdate>(Piece piece, Square sq)
+        where Operation : AccumulatorOperation where ColorToUpdate : Color
     {
         const int colorStride = 64 * 6;
         const int pieceStride = 64;
+        
+        PieceColor color = PieceColorUtil.Color<ColorToUpdate>();
 
         Piece nnPiece = NN.PieceToNN(piece);
         int opPieceStride = (int)nnPiece * pieceStride;
@@ -160,13 +165,13 @@ public class BasicNNUE
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public int Evaluate(PieceColor colorToMove)
+    public int Evaluate<ColorToMove>() where ColorToMove : Color
     {
 #if DEBUG
         int firstOffset = 0;
         int secondOffset = 256;
 
-        if (colorToMove == PieceColor.Black) {
+        if (typeof(ColorToMove) == typeof(Black)) {
             firstOffset = 256;
             secondOffset = 0;
         }
@@ -175,7 +180,7 @@ public class BasicNNUE
         BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
 
 #if RELEASE
-        if (colorToMove == PieceColor.White) {
+        if (typeof(ColorToMove) == typeof(White)) {
             NN.ClippedReLUFlattenAndForward(accumulator.A, accumulator.B, FeatureBias, OutWeight, Output, 
                 CR_MIN, CR_MAX, HIDDEN);
         } else {

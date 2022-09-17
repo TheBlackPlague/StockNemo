@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
+using Backend.Data.Template;
 
 namespace Backend.Data.Struct;
 
-public readonly ref struct OrderedMoveList
+public readonly ref struct OrderedMoveList<ColorToMove> where ColorToMove : Color
 {
 
     // Technically, there do exist positions where we'd have 218 legal moves.
@@ -90,12 +91,18 @@ public readonly ref struct OrderedMoveList
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int NormalMoveGeneration(Board board, SearchedMove transpositionMove)
     {
-        PieceColor oppositeColor = board.ColorToMove.OppositeColor();
-
         // Generate pins and check bitboards.
         Square kingSq = board.KingLoc(board.ColorToMove);
-        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, board.ColorToMove, oppositeColor);
-        (BitBoard checks, bool doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor);
+        BitBoard hv, d, checks;
+        bool doubleChecked;
+
+        if (typeof(ColorToMove) == typeof(White)) {
+            (hv, d) = MoveList<White>.PinBitBoards<Black>(board, kingSq);
+            (checks, doubleChecked) = MoveList<White>.CheckBitBoard<Black>(board, kingSq);
+        } else {
+            (hv, d) = MoveList<Black>.PinBitBoards<White>(board, kingSq);
+            (checks, doubleChecked) = MoveList<Black>.CheckBitBoard<White>(board, kingSq);
+        }
 
         // Define the list.
         int i = 0;
@@ -109,8 +116,8 @@ public readonly ref struct OrderedMoveList
             fromIterator = board.All(Piece.Pawn, board.ColorToMove).GetEnumerator();
             from = fromIterator.Current;
             while (fromIterator.MoveNext()) {
-                MoveList moveList = new(
-                    board, from, Piece.Pawn, board.ColorToMove, 
+                MoveList<ColorToMove> moveList = new(
+                    board, from, Piece.Pawn, 
                     ref hv, ref d, ref checks
                 );
                 BitBoardIterator moves = moveList.Moves.GetEnumerator();
@@ -143,8 +150,8 @@ public readonly ref struct OrderedMoveList
                 fromIterator = board.All((Piece)piece, board.ColorToMove).GetEnumerator();
                 from = fromIterator.Current;
                 while (fromIterator.MoveNext()) {
-                    MoveList moveList = new(
-                        board, from, (Piece)piece, board.ColorToMove, 
+                    MoveList<ColorToMove> moveList = new(
+                        board, from, (Piece)piece, 
                         ref hv, ref d, ref checks
                     );
                     BitBoardIterator moves = moveList.Moves.GetEnumerator();
@@ -169,8 +176,8 @@ public readonly ref struct OrderedMoveList
         fromIterator = board.All(Piece.King, board.ColorToMove).GetEnumerator();
         from = fromIterator.Current;
         while (fromIterator.MoveNext()) {
-            MoveList moveList = new(
-                board, from, Piece.King, board.ColorToMove, 
+            MoveList<ColorToMove> moveList = new(
+                board, from, Piece.King, 
                 ref hv, ref d, ref checks
             );
             BitBoardIterator moves = moveList.Moves.GetEnumerator();
@@ -193,14 +200,21 @@ public readonly ref struct OrderedMoveList
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int QSearchMoveGeneration(Board board, SearchedMove transpositionMove)
     {
-        PieceColor oppositeColor = board.ColorToMove.OppositeColor();
         // If we only want capture moves, we should also define our opposite board.
-        BitBoard opposite = board.All(oppositeColor);
+        BitBoard opposite = typeof(ColorToMove) == typeof(White) ? board.All<Black>() : board.All<White>();
 
         // Generate pins and check bitboards.
         Square kingSq = board.KingLoc(board.ColorToMove);
-        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, board.ColorToMove, oppositeColor);
-        (BitBoard checks, bool doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor);
+        BitBoard hv, d, checks;
+        bool doubleChecked;
+
+        if (typeof(ColorToMove) == typeof(White)) {
+            (hv, d) = MoveList<White>.PinBitBoards<Black>(board, kingSq);
+            (checks, doubleChecked) = MoveList<White>.CheckBitBoard<Black>(board, kingSq);
+        } else {
+            (hv, d) = MoveList<Black>.PinBitBoards<White>(board, kingSq);
+            (checks, doubleChecked) = MoveList<Black>.CheckBitBoard<White>(board, kingSq);
+        }
 
         // Define the list.
         int i = 0;
@@ -214,8 +228,8 @@ public readonly ref struct OrderedMoveList
             fromIterator = board.All(Piece.Pawn, board.ColorToMove).GetEnumerator();
             from = fromIterator.Current;
             while (fromIterator.MoveNext()) {
-                MoveList moveList = new(board, from, ref hv, ref d, ref checks);
-                moveList.LegalPawnMoveSetCapture(board.ColorToMove);
+                MoveList<ColorToMove> moveList = new(board, from, ref hv, ref d, ref checks);
+                moveList.LegalPawnMoveSetCapture();
                 BitBoardIterator moves = moveList.Moves.GetEnumerator();
                 // MoveList moveList = new(
                 //     board, from, Piece.Pawn, board.ColorToMove, 
@@ -251,8 +265,8 @@ public readonly ref struct OrderedMoveList
                 fromIterator = board.All((Piece)piece, board.ColorToMove).GetEnumerator();
                 from = fromIterator.Current;
                 while (fromIterator.MoveNext()) {
-                    MoveList moveList = new(
-                        board, from, (Piece)piece, board.ColorToMove, 
+                    MoveList<ColorToMove> moveList = new(
+                        board, from, (Piece)piece, 
                         ref hv, ref d, ref checks
                     );
                     BitBoardIterator moves = (moveList.Moves & opposite).GetEnumerator();
@@ -277,8 +291,8 @@ public readonly ref struct OrderedMoveList
         fromIterator = board.All(Piece.King, board.ColorToMove).GetEnumerator();
         from = fromIterator.Current;
         while (fromIterator.MoveNext()) {
-            MoveList moveList = new(
-                board, from, Piece.King, board.ColorToMove, 
+            MoveList<ColorToMove> moveList = new(
+                board, from, Piece.King, 
                 ref hv, ref d, ref checks
             );
             BitBoardIterator moves = (moveList.Moves & opposite).GetEnumerator();

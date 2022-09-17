@@ -14,14 +14,11 @@ public ref struct RevertMove
     public byte BlackQCastle;
     public Square EnPassantTarget;
 
-    public PieceColor ColorToMove;
-
     public bool Promotion;
     public bool EnPassant;
     public Square From;
     public Square To;
     public Piece CapturedPiece;
-    public PieceColor CapturedColor;
 
     public Square SecondaryFrom;
     public Square SecondaryTo;
@@ -41,12 +38,10 @@ public ref struct RevertMove
             BlackKCastle = map.BlackKCastle,
             BlackQCastle = map.BlackQCastle,
             EnPassantTarget = map.EnPassantTarget,
-            ColorToMove = map.ColorToMove,
             Promotion = false,
             SecondaryFrom = Square.Na,
             SecondaryTo = Square.Na,
-            CapturedPiece = Piece.Empty,
-            CapturedColor = PieceColor.None
+            CapturedPiece = Piece.Empty
         };
     }
 

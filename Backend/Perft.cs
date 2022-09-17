@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 
 namespace Backend;
 
@@ -38,63 +39,68 @@ public class Perft
         Console.WriteLine(Board.ToString());
             
         // Involve JIT.
-        MoveGeneration(Board, 4, divide: false);
+        MoveGeneration<White>(Board, 4, divide: false);
     }
         
     public (ulong, ulong) Depth1()
     {
-        return (D1, MoveGeneration(Board, 1));
+        return (D1, MoveGeneration<White>(Board, 1));
     }
         
     public (ulong, ulong) Depth2()
     {
-        return (D2, MoveGeneration(Board, 2));
+        return (D2, MoveGeneration<White>(Board, 2));
     }
 
     public (ulong, ulong) Depth3()
     {
-        return (D3, MoveGeneration(Board, 3));
+        return (D3, MoveGeneration<White>(Board, 3));
     }
 
     public (ulong, ulong) Depth4()
     {
-        return (D4, MoveGeneration(Board, 4));
+        return (D4, MoveGeneration<White>(Board, 4));
     }
         
     public (ulong, ulong) Depth5()
     {
-        return (D5, MoveGeneration(Board, 5));
+        return (D5, MoveGeneration<White>(Board, 5));
     }
         
     public (ulong, ulong) Depth6()
     {
-        return (D6, MoveGeneration(Board, 6));
+        return (D6, MoveGeneration<White>(Board, 6));
     }
         
     public (ulong, ulong) Depth7()
     {
-        return (D7, MoveGeneration(Board, 7));
+        return (D7, MoveGeneration<White>(Board, 7));
     }
         
-    public static ulong MoveGeneration(
+    public static ulong MoveGeneration<ColorToMove>(
         Board board, 
         int depth, 
         bool divide = true
-    )
+    ) where ColorToMove : Color
     {
         // Store the count in a uint64.
         ulong count = 0;
 
-        // Figure out color and opposite color from the one set in the board.
-        PieceColor oppositeColor = board.ColorToMove.OppositeColor();
-
         // Get all squares occupied by our color.
-        BitBoard colored = board.All(board.ColorToMove);
+        BitBoard colored = board.All<ColorToMove>();
         
         // Generate pins and check bitboards.
         Square kingSq = board.KingLoc(board.ColorToMove);
-        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, board.ColorToMove, oppositeColor);
-        (BitBoard checks, bool doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor);
+        BitBoard hv, d, checks;
+        bool doubleChecked;
+
+        if (typeof(ColorToMove) == typeof(White)) {
+            (hv, d) = MoveList<White>.PinBitBoards<Black>(board, kingSq);
+            (checks, doubleChecked) = MoveList<White>.CheckBitBoard<Black>(board, kingSq);
+        } else {
+            (hv, d) = MoveList<Black>.PinBitBoards<White>(board, kingSq);
+            (checks, doubleChecked) = MoveList<Black>.CheckBitBoard<White>(board, kingSq);
+        }
         
         if (depth < 5) {
             // If depth is less than 5 (1 - 4), we should do PERFT synchronously as it's fast enough that the cost
@@ -105,9 +111,9 @@ public class Perft
                 // If depth is 1, then we don't need to do any further recursion and can just do +1 to the count.
                 while (coloredIterator.MoveNext()) {
                     // Generate all pseudo-legal moves for our square iteration.
-                    (Piece piece, PieceColor pieceColor) = board.At(from);
-                    MoveList moveList = new(
-                        board, from, piece, pieceColor, 
+                    Piece piece = board.PieceOnly(from);
+                    MoveList<ColorToMove> moveList = new(
+                        board, from, piece, 
                         ref hv, ref d, ref checks, doubleChecked
                     );
                     
@@ -133,9 +139,9 @@ public class Perft
                     
                 while (coloredIterator.MoveNext()) {
                     // Generate all pseudo-legal moves for our square iteration.
-                    (Piece piece, PieceColor pieceColor) = board.At(from);
-                    MoveList moveList = new(
-                        board, from, piece, pieceColor, 
+                    Piece piece = board.PieceOnly(from);
+                    MoveList<ColorToMove> moveList = new(
+                        board, from, piece, 
                         ref hv, ref d, ref checks, doubleChecked
                     );
                     BitBoardIterator moveListIterator = moveList.Moves.GetEnumerator();
@@ -144,7 +150,7 @@ public class Perft
                     while (moveListIterator.MoveNext()) {
                         // Make our move iteration for our square iteration. Save the revert move for reverting
                         // in future.
-                        RevertMove rv = board.Move(from, move);
+                        RevertMove rv = board.Move<ColorToMove>(from, move);
                             
                         // If our king is safe, that move is legal and we can calculate moves at lesser
                         // depth recursively, but we shouldn't divide at lesser depth.
@@ -153,14 +159,18 @@ public class Perft
                             // Undo original pawn move without promotion.
                             int i = 1;
                             while (i < 5) {
-                                board.UndoMove(ref rv);
-                                rv = board.Move(from, move, (Promotion)i);
-                                nextCount += MoveGeneration(board, nextDepth, false);
+                                board.UndoMove<ColorToMove>(ref rv);
+                                rv = board.Move<ColorToMove>(from, move, (Promotion)i);
+                                nextCount += typeof(ColorToMove) == typeof(White) ?
+                                    MoveGeneration<Black>(board, nextDepth, false) :
+                                    MoveGeneration<White>(board, nextDepth, false);
                                 i++;
                             }
 
                             // Don't undo the final move as it's done outside.
-                        } else nextCount = MoveGeneration(board, nextDepth, false);
+                        } else nextCount = typeof(ColorToMove) == typeof(White) ?
+                            MoveGeneration<Black>(board, nextDepth, false) :
+                            MoveGeneration<White>(board, nextDepth, false);
                                 
                         // Add the number of moves calculated at the lesser depth.
                         count += nextCount;
@@ -169,7 +179,7 @@ public class Perft
                         if (divide) LogNodeCount(from, move, nextCount);
                             
                         // Revert the move to get back to original state.
-                        board.UndoMove(ref rv);
+                        board.UndoMove<ColorToMove>(ref rv);
 
                         move = moveListIterator.Current;
                     }
@@ -187,9 +197,9 @@ public class Perft
                 Board next = board.Clone();
                 
                 // Generate all pseudo-legal moves for our square iteration.
-                (Piece piece, PieceColor pieceColor) = next.At(from);
-                MoveList moveList = new(
-                    next, from, piece, pieceColor, 
+                Piece piece = next.PieceOnly(from);
+                MoveList<ColorToMove> moveList = new(
+                    next, from, piece, 
                     ref hv, ref d, ref checks, doubleChecked
                 );
                 BitBoard moves = moveList.Moves;
@@ -205,7 +215,7 @@ public class Perft
                 while (iterator.MoveNext()) {
                     // Make our move iteration for our square iteration. Save the revert move for reverting
                     // in future.
-                    RevertMove rv = next.Move(from, move);
+                    RevertMove rv = next.Move<ColorToMove>(from, move);
                     
                     ulong nextCount = 0;
                         
@@ -213,14 +223,18 @@ public class Perft
                         // Undo original pawn move without promotion.
                         int i = 1;
                         while (i < 5) {
-                            next.UndoMove(ref rv);
-                            rv = next.Move(from, move, (Promotion)i);
-                            nextCount += MoveGeneration(next, nextDepth, false);
+                            next.UndoMove<ColorToMove>(ref rv);
+                            rv = next.Move<ColorToMove>(from, move, (Promotion)i);
+                            nextCount += typeof(ColorToMove) == typeof(White) ?
+                                MoveGeneration<Black>(next, nextDepth, false) :
+                                MoveGeneration<White>(next, nextDepth, false);
                             i++;
                         }
 
                         // Don't undo the final move as it's done outside.
-                    } else nextCount = MoveGeneration(next, nextDepth, false);
+                    } else nextCount = typeof(ColorToMove) == typeof(White) ?
+                        MoveGeneration<Black>(next, nextDepth, false) :
+                        MoveGeneration<White>(next, nextDepth, false);
                             
                     // Add the number of moves calculated at the lesser depth. Since we're going to be adding
                     // from multiple threads, it's possible that race-conditions occur. That's why we have to
@@ -231,7 +245,7 @@ public class Perft
                     if (divide) LogNodeCount(from, move, nextCount);
 
                     // Revert the move to get back to original state.
-                    next.UndoMove(ref rv);
+                    next.UndoMove<ColorToMove>(ref rv);
 
                     move = iterator.Current;
                 }
@@ -241,12 +255,12 @@ public class Perft
         return count;
     }
     
-    public static ulong MoveGeneration(
+    public static ulong MoveGeneration<ColorToMove>(
         Board board, 
         int depth, 
         PerftTranspositionTable transpositionTable,
         bool divide = true
-    )
+    ) where ColorToMove : Color
     {
         if (depth < 9) {
             // First check if there is a transposition table entry.
@@ -258,16 +272,21 @@ public class Perft
         // Store the count in a uint64.
         ulong count = 0;
 
-        // Figure out color and opposite color from the one set in the board.
-        PieceColor oppositeColor = board.ColorToMove.OppositeColor();
-
         // Get all squares occupied by our color.
-        BitBoard colored = board.All(board.ColorToMove);
+        BitBoard colored = board.All<ColorToMove>();
         
         // Generate pins and check bitboards.
         Square kingSq = board.KingLoc(board.ColorToMove);
-        (BitBoard hv, BitBoard d) = MoveList.PinBitBoards(board, kingSq, board.ColorToMove, oppositeColor);
-        (BitBoard checks, bool doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor);
+        BitBoard hv, d, checks;
+        bool doubleChecked;
+
+        if (typeof(ColorToMove) == typeof(White)) {
+            (hv, d) = MoveList<White>.PinBitBoards<Black>(board, kingSq);
+            (checks, doubleChecked) = MoveList<White>.CheckBitBoard<Black>(board, kingSq);
+        } else {
+            (hv, d) = MoveList<Black>.PinBitBoards<White>(board, kingSq);
+            (checks, doubleChecked) = MoveList<Black>.CheckBitBoard<White>(board, kingSq);
+        }
         
         if (depth < 5) {
             // If depth is less than 5 (1 - 4), we should do PERFT synchronously as it's fast enough that the cost
@@ -278,9 +297,9 @@ public class Perft
                 // If depth is 1, then we don't need to do any further recursion and can just do +1 to the count.
                 while (coloredIterator.MoveNext()) {
                     // Generate all pseudo-legal moves for our square iteration.
-                    (Piece piece, PieceColor pieceColor) = board.At(from);
-                    MoveList moveList = new(
-                        board, from, piece, pieceColor, 
+                    Piece piece = board.PieceOnly(from);
+                    MoveList<ColorToMove> moveList = new(
+                        board, from, piece, 
                         ref hv, ref d, ref checks, doubleChecked
                     );
                     
@@ -306,9 +325,9 @@ public class Perft
                     
                 while (coloredIterator.MoveNext()) {
                     // Generate all pseudo-legal moves for our square iteration.
-                    (Piece piece, PieceColor pieceColor) = board.At(from);
-                    MoveList moveList = new(
-                        board, from, piece, pieceColor, 
+                    Piece piece = board.PieceOnly(from);
+                    MoveList<ColorToMove> moveList = new(
+                        board, from, piece, 
                         ref hv, ref d, ref checks, doubleChecked
                     );
                     BitBoardIterator moveListIterator = moveList.Moves.GetEnumerator();
@@ -317,7 +336,7 @@ public class Perft
                     while (moveListIterator.MoveNext()) {
                         // Make our move iteration for our square iteration. Save the revert move for reverting
                         // in future.
-                        RevertMove rv = board.Move(from, move);
+                        RevertMove rv = board.Move<ColorToMove>(from, move);
                             
                         // If our king is safe, that move is legal and we can calculate moves at lesser
                         // depth recursively, but we shouldn't divide at lesser depth.
@@ -326,14 +345,18 @@ public class Perft
                             // Undo original pawn move without promotion.
                             int i = 1;
                             while (i < 5) {
-                                board.UndoMove(ref rv);
-                                rv = board.Move(from, move, (Promotion)i);
-                                nextCount += MoveGeneration(board, nextDepth, transpositionTable, false);
+                                board.UndoMove<ColorToMove>(ref rv);
+                                rv = board.Move<ColorToMove>(from, move, (Promotion)i);
+                                nextCount += typeof(ColorToMove) == typeof(White) ?
+                                    MoveGeneration<Black>(board, nextDepth, transpositionTable, false) :
+                                    MoveGeneration<White>(board, nextDepth, transpositionTable, false);
                                 i++;
                             }
 
                             // Don't undo the final move as it's done outside.
-                        } else nextCount = MoveGeneration(board, nextDepth, transpositionTable, false);
+                        } else nextCount = typeof(ColorToMove) == typeof(White) ?
+                            MoveGeneration<Black>(board, nextDepth, transpositionTable, false) :
+                            MoveGeneration<White>(board, nextDepth, transpositionTable, false);
                                 
                         // Add the number of moves calculated at the lesser depth.
                         count += nextCount;
@@ -342,7 +365,7 @@ public class Perft
                         if (divide) LogNodeCount(from, move, nextCount);
                             
                         // Revert the move to get back to original state.
-                        board.UndoMove(ref rv);
+                        board.UndoMove<ColorToMove>(ref rv);
 
                         move = moveListIterator.Current;
                     }
@@ -360,9 +383,9 @@ public class Perft
                 Board next = board.Clone();
                 
                 // Generate all pseudo-legal moves for our square iteration.
-                (Piece piece, PieceColor pieceColor) = next.At(from);
-                MoveList moveList = new(
-                    next, from, piece, pieceColor, 
+                Piece piece = next.PieceOnly(from);
+                MoveList<ColorToMove> moveList = new(
+                    next, from, piece, 
                     ref hv, ref d, ref checks, doubleChecked
                 );
                 BitBoard moves = moveList.Moves;
@@ -378,7 +401,7 @@ public class Perft
                 while (iterator.MoveNext()) {
                     // Make our move iteration for our square iteration. Save the revert move for reverting
                     // in future.
-                    RevertMove rv = next.Move(from, move);
+                    RevertMove rv = next.Move<ColorToMove>(from, move);
                     
                     ulong nextCount = 0;
                         
@@ -386,14 +409,18 @@ public class Perft
                         // Undo original pawn move without promotion.
                         int i = 1;
                         while (i < 5) {
-                            next.UndoMove(ref rv);
-                            rv = next.Move(from, move, (Promotion)i);
-                            nextCount += MoveGeneration(next, nextDepth, transpositionTable, false);
+                            next.UndoMove<ColorToMove>(ref rv);
+                            rv = next.Move<ColorToMove>(from, move, (Promotion)i);
+                            nextCount += typeof(ColorToMove) == typeof(White) ?
+                                MoveGeneration<Black>(next, nextDepth, transpositionTable, false) :
+                                MoveGeneration<White>(next, nextDepth, transpositionTable, false);
                             i++;
                         }
 
                         // Don't undo the final move as it's done outside.
-                    } else nextCount = MoveGeneration(next, nextDepth, transpositionTable, false);
+                    } else nextCount = typeof(ColorToMove) == typeof(White) ?
+                        MoveGeneration<Black>(next, nextDepth, transpositionTable, false) :
+                        MoveGeneration<White>(next, nextDepth, transpositionTable, false);
                             
                     // Add the number of moves calculated at the lesser depth. Since we're going to be adding
                     // from multiple threads, it's possible that race-conditions occur. That's why we have to
@@ -404,7 +431,7 @@ public class Perft
                     if (divide) LogNodeCount(from, move, nextCount);
 
                     // Revert the move to get back to original state.
-                    next.UndoMove(ref rv);
+                    next.UndoMove<ColorToMove>(ref rv);
 
                     move = iterator.Current;
                 }

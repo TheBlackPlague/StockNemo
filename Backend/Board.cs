@@ -48,17 +48,21 @@ public class Board
     #region Readonly Properties
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public (byte, byte) CastlingRight(PieceColor color) => color == PieceColor.White ? 
-        (Map.WhiteQCastle, Map.WhiteKCastle) : (Map.BlackQCastle, Map.BlackKCastle);
+    public (byte, byte) CastlingRight<CastlingColor>() where CastlingColor : Color => 
+        typeof(CastlingColor) == typeof(White) ? 
+            (Map.WhiteQCastle, Map.WhiteKCastle) : (Map.BlackQCastle, Map.BlackKCastle);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public (Piece, PieceColor) At(Square sq) => Map[sq];
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Piece PieceOnly(Square sq) => Map.PieceOnly(sq);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public BitBoard All() => Map[PieceColor.White] | Map[PieceColor.Black];
+    public BitBoard All() => Map.All<White>() | Map.All<Black>();
         
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public BitBoard All(PieceColor color) => Map[color];
+    public BitBoard All<ColorToFetch>() where ColorToFetch : Color => Map.All<ColorToFetch>();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public BitBoard All(Piece piece, PieceColor color) => Map[piece, color];
@@ -75,10 +79,11 @@ public class Board
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     // ReSharper disable once MemberCanBeProtected.Global
-    public RevertMove MoveNNUE(Square from, Square to, Promotion promotion = Promotion.None)
+    public RevertMove MoveNNUE<ColorToMove>(Square from, Square to, Promotion promotion = Promotion.None) 
+        where ColorToMove : Color
     {
-        (Piece pieceF, PieceColor colorF) = Map[from];
-        (Piece pieceT, PieceColor colorT) = Map[to];
+        Piece pieceF = PieceOnly(from);
+        Piece pieceT = PieceOnly(to);
 
         // Generate a revert move before the map has been altered.
         RevertMove rv = RevertMove.FromBitBoardMap(ref Map);
@@ -87,46 +92,47 @@ public class Board
             // If piece we're moving to isn't an empty one, we will be capturing.
             // Thus, we need to set it in revert move to ensure we can properly revert it.
             rv.CapturedPiece = pieceT;
-            rv.CapturedColor = colorT;
             
-            Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate>(pieceT, colorT, to);
+            if (typeof(ColorToMove) == typeof(White))
+                Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate, Black>(pieceT, to);
+            else Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate, White>(pieceT, to);
         }
 
         if (EnPassantTarget == to && pieceF == Piece.Pawn) {
             // If the attack is an EP attack, we must empty the piece affected by EP.
-            Square epPieceSq = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
-            PieceColor oppositeColor = colorF.OppositeColor();
-            Map.Empty(Piece.Pawn, oppositeColor, epPieceSq);
-            
-            Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate>(Piece.Pawn, oppositeColor, epPieceSq);
+            Square epPieceSq = typeof(ColorToMove) == typeof(White) ? EnPassantTarget - 8 : EnPassantTarget + 8;
+            if (typeof(ColorToMove) == typeof(White)) {
+                Map.Empty<Black>(Piece.Pawn, epPieceSq);
+                Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate, Black>(Piece.Pawn, epPieceSq);
+            } else {
+                Map.Empty<White>(Piece.Pawn, epPieceSq);
+                Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate, White>(Piece.Pawn, epPieceSq);
+            }
 
             // Set it in revert move.
             rv.EnPassant = true;
-                
-            // We only need to reference the color.
-            rv.CapturedColor = oppositeColor;
         }
 
         // Update Zobrist.
         if (EnPassantTarget != Square.Na) Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
         if (pieceF == Piece.Pawn && Math.Abs(to - from) == 16) {
             // If the pawn push is a 2-push, the square behind it will be EP target.
-            Map.EnPassantTarget = colorF == PieceColor.White ? from + 8 : from - 8;
+            Map.EnPassantTarget = typeof(ColorToMove) == typeof(White) ? from + 8 : from - 8;
             
             // Update Zobrist.
             Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
         } else Map.EnPassantTarget = Square.Na;
 
         // Make the move.
-        Map.Move(pieceF, colorF, pieceT, colorT, from, to);
+        Map.Move<ColorToMove>(pieceF, pieceT, from, to);
         
-        Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, from, to);
+        Evaluation.NNUE.EfficientlyUpdateAccumulator<ColorToMove>(pieceF, from, to);
 
         if (promotion != Promotion.None) {
-            Map.Empty(pieceF, colorF, to);
-            Map.InsertPiece(to, (Piece)promotion, colorF);
-            Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate>(pieceF, colorF, to);
-            Evaluation.NNUE.EfficientlyUpdateAccumulator<Activate>((Piece)promotion, colorF, to);
+            Map.Empty<ColorToMove>(pieceF, to);
+            Map.InsertPiece<ColorToMove>(to, (Piece)promotion);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate, ColorToMove>(pieceF, to);
+            Evaluation.NNUE.EfficientlyUpdateAccumulator<Activate, ColorToMove>((Piece)promotion, to);
             rv.Promotion = true;
         }
 
@@ -144,50 +150,35 @@ public class Board
         switch (pieceF) {
             // If our rook moved, we must update castling rights.
             case Piece.Rook:
-                switch (colorF) {
-                    case PieceColor.White:
-                        switch ((int)from % 8) {
-                            case 0:
-                                Map.WhiteQCastle = 0x0;
-                                break;
-                            case 7:
-                                Map.WhiteKCastle = 0x0;
-                                break;
-                        }
-
-                        break;
-                    case PieceColor.Black:
-                        switch ((int)from % 8) {
-                            case 0:
-                                Map.BlackQCastle = 0x0;
-                                break;
-                            case 7:
-                                Map.BlackKCastle = 0x0;
-                                break;
-                        }
-
-                        break;
-                    case PieceColor.None:
-                    default:
-                        throw new InvalidOperationException("Rook cannot have no color.");
+                if (typeof(ColorToMove) == typeof(White)) {
+                    switch ((int)from % 8) {
+                        case 0:
+                            Map.WhiteQCastle = 0x0;
+                            break;
+                        case 7:
+                            Map.WhiteKCastle = 0x0;
+                            break;
+                    }
+                } else {
+                    switch ((int)from % 8) {
+                        case 0:
+                            Map.BlackQCastle = 0x0;
+                            break;
+                        case 7:
+                            Map.BlackKCastle = 0x0;
+                            break;
+                    }
                 }
-
                 break;
                 
             // If our king moved, we also must update castling rights.
             case Piece.King:
-                switch (colorF) {
-                    case PieceColor.White:
-                        Map.WhiteKCastle = 0x0;
-                        Map.WhiteQCastle = 0x0;
-                        break;
-                    case PieceColor.Black:
-                        Map.BlackKCastle = 0x0;
-                        Map.BlackQCastle = 0x0;
-                        break;
-                    case PieceColor.None:
-                    default:
-                        throw new InvalidOperationException("King cannot have no color.");
+                if (typeof(ColorToMove) == typeof(White)) {
+                    Map.WhiteKCastle = 0x0;
+                    Map.WhiteQCastle = 0x0;
+                } else {
+                    Map.BlackKCastle = 0x0;
+                    Map.BlackQCastle = 0x0;
                 }
                     
                 int d = Math.Abs(to - from);
@@ -203,14 +194,11 @@ public class Board
                     }
                         
                     // Make the secondary move.
-                    Map.Move(
-                        Piece.Rook, colorF, Piece.Empty, PieceColor.None, 
-                        rv.SecondaryFrom, rv.SecondaryTo
-                    );
-                    
-                    Evaluation.NNUE.EfficientlyUpdateAccumulator(Piece.Rook, colorF, rv.SecondaryFrom, rv.SecondaryTo);
-                }
+                    Map.Move<ColorToMove>(Piece.Rook, Piece.Empty, rv.SecondaryFrom, rv.SecondaryTo);
 
+                    Evaluation.NNUE.EfficientlyUpdateAccumulator<ColorToMove>(Piece.Rook, 
+                        rv.SecondaryFrom, rv.SecondaryTo);
+                }
                 break;
             case Piece.Empty:
             case Piece.Pawn:
@@ -223,20 +211,14 @@ public class Board
             
         if (pieceT == Piece.Rook) {
             // If our rook was captured, we must also update castling rights so we don't castle with enemy piece.
-            switch (colorT) {
-                case PieceColor.White:
-                    // ReSharper disable once ConvertIfStatementToSwitchStatement
-                    if (to == Square.H1) Map.WhiteKCastle = 0x0;
-                    else if (to == Square.A1) Map.WhiteQCastle = 0x0;
-                    break;
-                case PieceColor.Black:
-                    // ReSharper disable once ConvertIfStatementToSwitchStatement
-                    if (to == Square.H8) Map.BlackKCastle = 0x0;
-                    else if (to == Square.A8) Map.BlackQCastle = 0x0;
-                    break;
-                case PieceColor.None:
-                default:
-                    throw new InvalidOperationException("Rook cannot have no color.");
+            if (typeof(ColorToMove) == typeof(Black)) {
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (to == Square.H1) Map.WhiteKCastle = 0x0;
+                else if (to == Square.A1) Map.WhiteQCastle = 0x0;
+            } else {
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (to == Square.H8) Map.BlackKCastle = 0x0;
+                else if (to == Square.A8) Map.BlackQCastle = 0x0;
             }
         }
         
@@ -248,7 +230,7 @@ public class Board
         );
 
         // Flip the turn.
-        Map.ColorToMove = Map.ColorToMove.OppositeColor();
+        Map.ColorToMove = PieceColorUtil.OppositeColor<ColorToMove>();
         
         // Update Zobrist.
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);
@@ -257,10 +239,11 @@ public class Board
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public RevertMove Move(Square from, Square to, Promotion promotion = Promotion.None)
+    public RevertMove Move<ColorToMove>(Square from, Square to, Promotion promotion = Promotion.None) 
+        where ColorToMove : Color
     {
-        (Piece pieceF, PieceColor colorF) = Map[from];
-        (Piece pieceT, PieceColor colorT) = Map[to];
+        Piece pieceF = PieceOnly(from);
+        Piece pieceT = PieceOnly(to);
 
         // Generate a revert move before the map has been altered.
         RevertMove rv = RevertMove.FromBitBoardMap(ref Map);
@@ -269,38 +252,34 @@ public class Board
             // If piece we're moving to isn't an empty one, we will be capturing.
             // Thus, we need to set it in revert move to ensure we can properly revert it.
             rv.CapturedPiece = pieceT;
-            rv.CapturedColor = colorT;
         }
 
         if (EnPassantTarget == to && pieceF == Piece.Pawn) {
             // If the attack is an EP attack, we must empty the piece affected by EP.
-            Square epPieceSq = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
-            PieceColor oppositeColor = colorF.OppositeColor();
-            Map.Empty(Piece.Pawn, oppositeColor, epPieceSq);
+            Square epPieceSq = typeof(ColorToMove) == typeof(White) ? EnPassantTarget - 8 : EnPassantTarget + 8;
+            if (typeof(ColorToMove) == typeof(White)) Map.Empty<Black>(Piece.Pawn, epPieceSq);
+            else Map.Empty<White>(Piece.Pawn, epPieceSq);
 
             // Set it in revert move.
             rv.EnPassant = true;
-                
-            // We only need to reference the color.
-            rv.CapturedColor = oppositeColor;
         }
 
         // Update Zobrist.
         if (EnPassantTarget != Square.Na) Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
         if (pieceF == Piece.Pawn && Math.Abs(to - from) == 16) {
             // If the pawn push is a 2-push, the square behind it will be EP target.
-            Map.EnPassantTarget = colorF == PieceColor.White ? from + 8 : from - 8;
+            Map.EnPassantTarget = typeof(ColorToMove) == typeof(White) ? from + 8 : from - 8;
             
             // Update Zobrist.
             Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
         } else Map.EnPassantTarget = Square.Na;
 
         // Make the move.
-        Map.Move(pieceF, colorF, pieceT, colorT, from, to);
+        Map.Move<ColorToMove>(pieceF, pieceT, from, to);
 
         if (promotion != Promotion.None) {
-            Map.Empty(pieceF, colorF, to);
-            Map.InsertPiece(to, (Piece)promotion, colorF);
+            Map.Empty<ColorToMove>(pieceF, to);
+            Map.InsertPiece<ColorToMove>(to, (Piece)promotion);
             rv.Promotion = true;
         }
 
@@ -318,50 +297,35 @@ public class Board
         switch (pieceF) {
             // If our rook moved, we must update castling rights.
             case Piece.Rook:
-                switch (colorF) {
-                    case PieceColor.White:
-                        switch ((int)from % 8) {
-                            case 0:
-                                Map.WhiteQCastle = 0x0;
-                                break;
-                            case 7:
-                                Map.WhiteKCastle = 0x0;
-                                break;
-                        }
-
-                        break;
-                    case PieceColor.Black:
-                        switch ((int)from % 8) {
-                            case 0:
-                                Map.BlackQCastle = 0x0;
-                                break;
-                            case 7:
-                                Map.BlackKCastle = 0x0;
-                                break;
-                        }
-
-                        break;
-                    case PieceColor.None:
-                    default:
-                        throw new InvalidOperationException("Rook cannot have no color.");
+                if (typeof(ColorToMove) == typeof(White)) {
+                    switch ((int)from % 8) {
+                        case 0:
+                            Map.WhiteQCastle = 0x0;
+                            break;
+                        case 7:
+                            Map.WhiteKCastle = 0x0;
+                            break;
+                    }
+                } else {
+                    switch ((int)from % 8) {
+                        case 0:
+                            Map.BlackQCastle = 0x0;
+                            break;
+                        case 7:
+                            Map.BlackKCastle = 0x0;
+                            break;
+                    }
                 }
-
                 break;
                 
             // If our king moved, we also must update castling rights.
             case Piece.King:
-                switch (colorF) {
-                    case PieceColor.White:
-                        Map.WhiteKCastle = 0x0;
-                        Map.WhiteQCastle = 0x0;
-                        break;
-                    case PieceColor.Black:
-                        Map.BlackKCastle = 0x0;
-                        Map.BlackQCastle = 0x0;
-                        break;
-                    case PieceColor.None:
-                    default:
-                        throw new InvalidOperationException("King cannot have no color.");
+                if (typeof(ColorToMove) == typeof(White)) {
+                    Map.WhiteKCastle = 0x0;
+                    Map.WhiteQCastle = 0x0;
+                } else {
+                    Map.BlackKCastle = 0x0;
+                    Map.BlackQCastle = 0x0;
                 }
                     
                 int d = Math.Abs(to - from);
@@ -377,12 +341,8 @@ public class Board
                     }
                         
                     // Make the secondary move.
-                    Map.Move(
-                        Piece.Rook, colorF, Piece.Empty, PieceColor.None, 
-                        rv.SecondaryFrom, rv.SecondaryTo
-                    );
+                    Map.Move<ColorToMove>(Piece.Rook, Piece.Empty, rv.SecondaryFrom, rv.SecondaryTo);
                 }
-
                 break;
             case Piece.Empty:
             case Piece.Pawn:
@@ -395,20 +355,14 @@ public class Board
             
         if (pieceT == Piece.Rook) {
             // If our rook was captured, we must also update castling rights so we don't castle with enemy piece.
-            switch (colorT) {
-                case PieceColor.White:
-                    // ReSharper disable once ConvertIfStatementToSwitchStatement
-                    if (to == Square.H1) Map.WhiteKCastle = 0x0;
-                    else if (to == Square.A1) Map.WhiteQCastle = 0x0;
-                    break;
-                case PieceColor.Black:
-                    // ReSharper disable once ConvertIfStatementToSwitchStatement
-                    if (to == Square.H8) Map.BlackKCastle = 0x0;
-                    else if (to == Square.A8) Map.BlackQCastle = 0x0;
-                    break;
-                case PieceColor.None:
-                default:
-                    throw new InvalidOperationException("Rook cannot have no color.");
+            if (typeof(ColorToMove) == typeof(Black)) {
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (to == Square.H1) Map.WhiteKCastle = 0x0;
+                else if (to == Square.A1) Map.WhiteQCastle = 0x0;
+            } else {
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (to == Square.H8) Map.BlackKCastle = 0x0;
+                else if (to == Square.A8) Map.BlackQCastle = 0x0;
             }
         }
         
@@ -420,7 +374,7 @@ public class Board
         );
 
         // Flip the turn.
-        Map.ColorToMove = Map.ColorToMove.OppositeColor();
+        Map.ColorToMove = PieceColorUtil.OppositeColor<ColorToMove>();
         
         // Update Zobrist.
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);
@@ -429,7 +383,7 @@ public class Board
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void UndoMove(ref RevertMove rv)
+    public void UndoMove<ColorMoved>(ref RevertMove rv) where ColorMoved : Color
     {
         // Remove castling rights from hash to allow easy update.
         Zobrist.HashCastlingRights(
@@ -461,37 +415,39 @@ public class Board
             Zobrist.HashEp(ref Map.ZobristHash, Map.EnPassantTarget);
 
         // Revert to previous turn.
-        Map.ColorToMove = rv.ColorToMove;
+        Map.ColorToMove = PieceColorUtil.Color<ColorMoved>();;
         Zobrist.FlipTurnInHash(ref Map.ZobristHash);
 
         if (rv.Promotion) {
-            (Piece piece, PieceColor color) = Map[rv.To];
-            Map.Empty(piece, color, rv.To);
-            Map.InsertPiece(rv.To, Piece.Pawn, color);
+            Piece piece = PieceOnly(rv.To);
+            Map.Empty<ColorMoved>(piece, rv.To);
+            Map.InsertPiece<ColorMoved>(rv.To, Piece.Pawn);
         }
-        
-        (Piece pF, PieceColor cF) = Map[rv.To];
-        (Piece pT, PieceColor cT) = Map[rv.From];
+
+        Piece pF = PieceOnly(rv.To);
+        const Piece pT = Piece.Empty;
 
         // Undo the move by moving the piece back.
-        Map.Move(pF, cF, pT, cT, rv.To, rv.From);
+        Map.Move<ColorMoved>(pF, pT, rv.To, rv.From);
             
         if (rv.EnPassant) {
             // If it was an EP attack, we must insert a pawn at the affected square.
-            Square insertion = rv.CapturedColor == PieceColor.White ? rv.To + 8 : rv.To - 8;
-            Map.InsertPiece(insertion, Piece.Pawn, rv.CapturedColor);
+            Square insertion = typeof(ColorMoved) == typeof(Black) ? rv.To + 8 : rv.To - 8;
+            if (typeof(ColorMoved) == typeof(White)) Map.InsertPiece<Black>(insertion, Piece.Pawn);
+            else Map.InsertPiece<White>(insertion, Piece.Pawn);
             return;
         }
 
         if (rv.CapturedPiece != Piece.Empty) {
             // If a capture happened, we must insert the piece at the relevant square.
-            Map.InsertPiece(rv.To, rv.CapturedPiece, rv.CapturedColor);
+            if (typeof(ColorMoved) == typeof(White)) Map.InsertPiece<Black>(rv.To, rv.CapturedPiece);
+            else Map.InsertPiece<White>(rv.To, rv.CapturedPiece);
             return;
         }
 
         // If there was a secondary move (castling), revert the secondary move.
         // ReSharper disable once InvertIf
-        if (rv.SecondaryFrom != Square.Na) Map.Move(rv.SecondaryTo, rv.SecondaryFrom);
+        if (rv.SecondaryFrom != Square.Na) Map.Move<ColorMoved>(rv.SecondaryTo, rv.SecondaryFrom);
     }
         
     #endregion
@@ -499,10 +455,12 @@ public class Board
     #region Insert/Remove
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void InsertPiece(Square sq, Piece piece, PieceColor color) => Map.InsertPiece(sq, piece, color);
+    public void InsertPiece<ColorToInsert>(Square sq, Piece piece) where ColorToInsert : Color => 
+        Map.InsertPiece<ColorToInsert>(sq, piece);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void RemovePiece(Piece piece, PieceColor color, Square sq) => Map.Empty(piece, color, sq);
+    public void RemovePiece<ColorToRemove>(Piece piece, Square sq) where ColorToRemove : Color => 
+        Map.Empty<ColorToRemove>(piece, sq);
 
     #endregion
 

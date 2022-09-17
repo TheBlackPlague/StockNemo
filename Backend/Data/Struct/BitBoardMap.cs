@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
+using Backend.Data.Template;
 using Backend.Engine;
 
 namespace Backend.Data.Struct;
@@ -185,19 +186,11 @@ public struct BitBoardMap
         }
     }
 
-    public readonly BitBoard this[PieceColor color]
+    public readonly BitBoard All<ColorToFetch>() where ColorToFetch : Color
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get
-        {
-            return color switch
-            {
-                PieceColor.White => White,
-                PieceColor.Black => Black,
-                PieceColor.None => ~(White | Black),
-                _ => throw new InvalidOperationException("Must provide a valid PieceColor.")
-            };
-        }
+        if (typeof(ColorToFetch) == typeof(White)) return White;
+        if (typeof(ColorToFetch) == typeof(Black)) return Black;
+        return ~(White | Black);
     }
 
     public readonly BitBoard this[Piece piece, PieceColor color]
@@ -213,22 +206,25 @@ public struct BitBoardMap
     public PieceColor ColorOnly(Square sq) => (PieceColor)(PiecesAndColors.AA((int)sq) >> 4);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Move(Square from, Square to)
+    public void Move<ColorToMove>(Square from, Square to) where ColorToMove : Color
     {
-        (Piece pF, PieceColor cF) = this[from];
-        (Piece pT, PieceColor cT) = this[to];
-        Move(pF, cF, pT, cT, from, to);
+        Piece pF = PieceOnly(from);
+        Piece pT = PieceOnly(to);
+        Move<ColorToMove>(pF, pT, from, to);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Move(Piece pF, PieceColor cF, Piece pT, PieceColor cT, Square from, Square to)
+    public void Move<ColorToMove>(Piece pF, Piece pT, Square from, Square to) where ColorToMove : Color
     {
+        PieceColor cF = PieceColorUtil.Color<ColorToMove>();
+        PieceColor cT = PieceColorUtil.OppositeColor<ColorToMove>();
+        
         if (pT != Piece.Empty) {
             // If moving to piece isn't empty, then we capture.
             Bb.DJAA((int)cT, (int)pT)[to] = false;
                 
             // Remove from color bitboards.
-            if (cT == PieceColor.White) {
+            if (typeof(ColorToMove) == typeof(Black)) {
                 White[to] = false;
                 MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pT, (Square)((int)to ^ 56), Phase.Early];
                 MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pT, (Square)((int)to ^ 56), Phase.Late];
@@ -255,7 +251,7 @@ public struct BitBoardMap
         PiecesAndColors.AA((int)from) = 0x26;
 
         // Update color bitboards.
-        if (cF == PieceColor.White) {
+        if (typeof(ColorToMove) == typeof(White)) {
             White[from] = false;
             White[to] = true;
             
@@ -281,15 +277,17 @@ public struct BitBoardMap
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Empty(Square sq)
+    public void Empty<ColorToEmpty>(Square sq) where ColorToEmpty : Color
     {
-        (Piece piece, PieceColor color) = this[sq];
-        Empty(piece, color, sq);
+        Piece piece = PieceOnly(sq);
+        Empty<ColorToEmpty>(piece, sq);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Empty(Piece piece, PieceColor color, Square sq)
+    public void Empty<ColorToEmpty>(Piece piece, Square sq) where ColorToEmpty : Color
     {
+        PieceColor color = PieceColorUtil.Color<ColorToEmpty>();
+        
         // Remove from square.
         Bb.DJAA((int)color, (int)piece)[sq] = false;
             
@@ -297,7 +295,7 @@ public struct BitBoardMap
         PiecesAndColors.AA((int)sq) = 0x26;
 
         // Remove from color bitboards.
-        if (color == PieceColor.White) {
+        if (typeof(ColorToEmpty) == typeof(White)) {
             White[sq] = false;
             
             MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Early];
@@ -314,13 +312,15 @@ public struct BitBoardMap
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void InsertPiece(Square sq, Piece piece, PieceColor color)
+    public void InsertPiece<ColorToInsert>(Square sq, Piece piece) where ColorToInsert : Color
     {
+        PieceColor color = PieceColorUtil.Color<ColorToInsert>();
+        
         // Insert the piece at square.
         Bb.DJAA((int)color, (int)piece)[sq] = true;
             
         // Insert into color bitboards.
-        if (color == PieceColor.White) {
+        if (typeof(ColorToInsert) == typeof(White)) {
             White[sq] = true;
             
             MaterialDevelopmentEvaluationEarly += Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Early];
@@ -333,7 +333,7 @@ public struct BitBoardMap
         }
             
         // Set piece in pieces and colors.
-        int offset = color == PieceColor.White ? 0x0 : 0x10;
+        int offset = typeof(ColorToInsert) == typeof(White) ? 0x0 : 0x10;
         PiecesAndColors.AA((int)sq) = (byte)((int)piece | offset);
         
         // Update Zobrist.

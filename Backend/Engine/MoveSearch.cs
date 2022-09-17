@@ -87,7 +87,10 @@ public class MoveSearch
             Stopwatch stopwatch = Stopwatch.StartNew();
             bool timePreviouslyUpdated = false;
             while (!TimeControl.Finished() && depth <= selectedDepth) {
-                evaluation = AspirationSearch(Board, depth, evaluation, ref bestMove);
+                evaluation = Board.ColorToMove == PieceColor.White ? 
+                    AspirationSearch<White>(Board, depth, evaluation, ref bestMove) : 
+                    AspirationSearch<Black>(Board, depth, evaluation, ref bestMove);
+                
                 bestMove = PvTable.Get(0);
 
                 // Try counting nodes to see if we can exit the search early.
@@ -108,7 +111,8 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int AspirationSearch(EngineBoard board, int depth, int previousEvaluation, ref OrderedMoveEntry bestMove)
+    private int AspirationSearch<ColorToMove>(EngineBoard board, int depth, int previousEvaluation, 
+        ref OrderedMoveEntry bestMove) where ColorToMove : Color
     {
         // Set base window size.
         int alpha = NEG_INFINITY;
@@ -149,7 +153,7 @@ public class MoveSearch
             
             // Get our best evaluation so far so we can decide whether we need to do a research or not.
             // Researches are reasonably fast thanks to transposition tables.
-            int bestEvaluation = AbSearch<PvNode>(board, 0, depth, alpha, beta);
+            int bestEvaluation = AbSearch<PvNode, ColorToMove>(board, 0, depth, alpha, beta);
 
             #region Modify Window
 
@@ -177,7 +181,8 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private int AbSearch<Node>(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta) where Node : NodeType
+    private int AbSearch<Node, ColorToMove>(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta) 
+        where Node : NodeType where ColorToMove : Color
     {
         #region Out of Time
 
@@ -207,7 +212,7 @@ public class MoveSearch
         // At depth 0 (or less in the case of reductions etc.), since we may be having a capture train, we should
         // jump into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us
         // out instantly.
-        if (depth <= 0) return QSearch<Node>(board, plyFromRoot, 15, alpha, beta);
+        if (depth <= 0) return QSearch<Node, ColorToMove>(board, plyFromRoot, 15, alpha, beta);
 
         #endregion
         
@@ -305,15 +310,16 @@ public class MoveSearch
         int nextPlyFromRoot = plyFromRoot + 1;
 
         // Determine whether we should prune moves.
-        PieceColor oppositeColor = board.ColorToMove.OppositeColor();
         Square kingSq = board.KingLoc(board.ColorToMove);
-        bool inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor);
+        bool inCheck = typeof(ColorToMove) == typeof(White) ? 
+            MoveList<White>.UnderAttack<Black>(board, kingSq) :
+            MoveList<Black>.UnderAttack<White>(board, kingSq);
         bool improving = false;
         
         // We should use the evaluation from our transposition table if we had a hit.
         // As that evaluation isn't truly static and may have been from a previous deep search.
         int positionalEvaluation = transpositionHit ? 
-            transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
+            transpositionMove.Evaluation : Evaluation.RelativeEvaluation<ColorToMove>();
             
         // Also store the evaluation to later check if it improved.
         MoveSearchStack[plyFromRoot].PositionalEvaluation = positionalEvaluation;
@@ -347,7 +353,7 @@ public class MoveSearch
                 // less than alpha, then the opponent will be able to find at least one move that improves their
                 // position.
                 // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
-                return QSearch<NonPvNode>(board, plyFromRoot, 15, alpha, beta);
+                return QSearch<NonPvNode, ColorToMove>(board, plyFromRoot, 15, alpha, beta);
             
             #endregion
             
@@ -355,7 +361,7 @@ public class MoveSearch
         
             if (notRootNode && depth > NULL_MOVE_DEPTH) {
                 // For null move pruning, we give the turn to the opponent and let them make the move.
-                RevertNullMove rv = board.NullMove();
+                RevertNullMove rv = board.NullMove<ColorToMove>();
                 
                 // Reduced depth for null move pruning.
                 int reducedDepth = depth - NULL_MOVE_REDUCTION - 
@@ -366,9 +372,11 @@ public class MoveSearch
                 // can cutoff this branch earlier.
                 // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
                 // QSearch).
-                int evaluation = -AbSearch<NonPvNode>(board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
+                int evaluation = typeof(ColorToMove) == typeof(White) ? 
+                    -AbSearch<NonPvNode, Black>(board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1) : 
+                    -AbSearch<NonPvNode, White>(board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
                 // Undo the null move so we can get back to original state of the board.
-                board.UndoNullMove(rv);
+                board.UndoNullMove<ColorToMove>(rv);
         
                 // In the case our evaluation was better than our beta, we achieved a cutoff here. 
                 if (evaluation >= beta) return beta;
@@ -396,8 +404,8 @@ public class MoveSearch
         #region Move List Creation
 
         // Allocate memory on the stack to be used for our move-list.
-        Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable, HistoryTable);
+        Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList<ColorToMove>.SIZE];
+        OrderedMoveList<ColorToMove> moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable, HistoryTable);
         int moveCount = moveList.NormalMoveGeneration(board, transpositionMove);
         
         if (moveCount == 0) {
@@ -477,7 +485,7 @@ public class MoveSearch
             
             OrderedMoveEntry move = moveList[i];
 
-            bool quietMove = !board.All(oppositeColor)[move.To];
+            bool quietMove = !(typeof(ColorToMove) == typeof(White) ? board.All<Black>() : board.All<White>())[move.To];
             quietMoveCounter += quietMove.ToByte();
 
             #region Futility Pruning
@@ -502,7 +510,7 @@ public class MoveSearch
             #endregion
 
             // Make the move.
-            RevertMove rv = board.MoveNNUE(ref move);
+            RevertMove rv = board.MoveNNUE<ColorToMove>(ref move);
             TotalNodeSearchCount++;
             
             int evaluation;
@@ -511,7 +519,9 @@ public class MoveSearch
                 // If we haven't searched any moves, we should do a full depth search without any reductions.
                 // Without a full depth search beforehand, there's no way to guarantee principle variation search being
                 // safe.
-                evaluation = -AbSearch<Node>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+                evaluation = typeof(ColorToMove) == typeof(White) ? 
+                    -AbSearch<Node, Black>(board, nextPlyFromRoot, nextDepth, -beta, -alpha) : 
+                    -AbSearch<Node, White>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
             else {
                 // Otherwise, to speed up search, we should try applying certain reductions to see if we can speed up
                 // the search. Moreover, even if those reductions are still unsafe, we can still save time by trying
@@ -540,8 +550,9 @@ public class MoveSearch
                     // not improve alpha, and thus not trigger researches. Therefore, one will be able to get away with
                     // reduced depth searches with reasonable safety. Result is negated as an evaluation that's good
                     // for our opponent will be bad for us.
-                    evaluation = 
-                        -AbSearch<NonPvNode>(board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha);
+                    evaluation = typeof(ColorToMove) == typeof(White) ? 
+                        -AbSearch<NonPvNode, Black>(board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha) : 
+                        -AbSearch<NonPvNode, White>(board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha);
                 
                     // In the case that LMR fails, our evaluation will be greater than alpha which will force a
                     // principle variation research. However, in the case we couldn't apply LMR (due to safety reasons,
@@ -557,21 +568,24 @@ public class MoveSearch
                     // If we couldn't attempt LMR because it was unsafe or if LMR failed, we should try a null-window
                     // search at a normal progressive depth. If this is a research, it'll likely be fast enough to have
                     // no impact due to transposition tables.
-                    evaluation = -AbSearch<NonPvNode>(board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha);
-
+                    evaluation = typeof(ColorToMove) == typeof(White) ? 
+                        -AbSearch<NonPvNode, Black>(board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha) :
+                        -AbSearch<NonPvNode, White>(board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha);
                     if (evaluation > alpha && evaluation < beta)
                         // If our evaluation was good enough to change our alpha but not our beta, it means we're on a
                         // principle variation node. Essentially: beta - alpha > 1.
                         // This means this is our best move from the search, and it isn't too good to be deemed
                         // an unlikely path. Thus, we should evaluate it clearly using a full-window research.
-                        evaluation = -AbSearch<PvNode>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+                        evaluation = typeof(ColorToMove) == typeof(White) ?
+                            -AbSearch<PvNode, Black>(board, nextPlyFromRoot, nextDepth, -beta, -alpha) : 
+                            -AbSearch<PvNode, White>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 }
             
                 #endregion
             }
             
             // Undo the move.
-            board.UndoMove(ref rv);
+            board.UndoMove<ColorToMove>(ref rv);
 
             if (!HandleEvaluation(evaluation, ref move, quietMove)) {
                 if (quietMove && KillerMoveTable[0, plyFromRoot] != move) {
@@ -606,7 +620,8 @@ public class MoveSearch
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int QSearch<Node>(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta) where Node : NodeType
+    private int QSearch<Node, ColorToMove>(EngineBoard board, int plyFromRoot, int depth, int alpha, int beta) 
+        where Node : NodeType where ColorToMove : Color
     {
         #region Out of Time
 
@@ -646,7 +661,7 @@ public class MoveSearch
         
         #region Early Evaluation
         
-        int earlyEval = Evaluation.RelativeEvaluation(board);
+        int earlyEval = Evaluation.RelativeEvaluation<ColorToMove>();
         
         // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
         // as this position is overwhelmingly winning.
@@ -661,8 +676,8 @@ public class MoveSearch
         #region Move List Creation
 
         // Allocate memory on the stack to be used for our move-list.
-        Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-        OrderedMoveList moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable, HistoryTable);
+        Span<OrderedMoveEntry> moveSpan = stackalloc OrderedMoveEntry[OrderedMoveList<ColorToMove>.SIZE];
+        OrderedMoveList<ColorToMove> moveList = new(ref moveSpan, plyFromRoot, KillerMoveTable, HistoryTable);
         int moveCount = moveList.QSearchMoveGeneration(board, SearchedMove.Default);
         
         // if (moveCount == 0) {
@@ -726,15 +741,17 @@ public class MoveSearch
             #endregion
             
             // Make the move.
-            RevertMove rv = board.MoveNNUE(ref move);
+            RevertMove rv = board.MoveNNUE<ColorToMove>(ref move);
             TotalNodeSearchCount++;
         
             // Evaluate position by searching deeper and negating the result. An evaluation that's good for
             // our opponent will obviously be bad for us.
-            int evaluation = -QSearch<Node>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
+            int evaluation = typeof(ColorToMove) == typeof(White) ? 
+                -QSearch<Node, Black>(board, nextPlyFromRoot, nextDepth, -beta, -alpha) : 
+                -QSearch<Node, White>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 
             // Undo the move.
-            board.UndoMove(ref rv);
+            board.UndoMove<ColorToMove>(ref rv);
 
             if (!HandleEvaluation(evaluation)) break;
             

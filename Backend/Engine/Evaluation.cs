@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 using Backend.Engine.NNUE.Architecture.Basic;
 
 namespace Backend.Engine;
@@ -33,17 +34,16 @@ public static class Evaluation
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int RelativeEvaluation(Board board)
+    public static int RelativeEvaluation<ColorPerspective>() where ColorPerspective : Color
     {
-        return NNEvaluation(board);
+        return NNEvaluation<ColorPerspective>();
         // return NormalEvaluation(board) * (-2 * (int)board.ColorToMove + 1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int NNEvaluation(Board board)
+    private static int NNEvaluation<ColorPerspective>() where ColorPerspective : Color
     {
-        // NNUE.RefreshAccumulator(board);
-        return NNUE.Evaluate(board.ColorToMove);
+        return NNUE.Evaluate<ColorPerspective>();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

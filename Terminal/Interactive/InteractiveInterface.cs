@@ -1,7 +1,7 @@
 ﻿using System;
-using Backend;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 
 namespace Terminal.Interactive;
 
@@ -77,7 +77,10 @@ internal static class InteractiveInterface
                 from = Enum.Parse<Square>(input, true);
                 
                 // Verify the square.
-                if (!VerifyFromSquare(from)) continue;
+                bool verifyFromSq = Board.ColorToMove == PieceColor.White ? 
+                    VerifyFromSquare<White>(from) :
+                    VerifyFromSquare<Black>(from);
+                if (!verifyFromSq) continue;
                 
                 // We should highlight the moves to make move selection easy.
                 Board.HighlightMoves(from);
@@ -87,10 +90,16 @@ internal static class InteractiveInterface
                 
                 // Parse and verify square.
                 from = Enum.Parse<Square>(input[..2], true);
-                if (!VerifyFromSquare(from)) continue;
+                bool verifyFromSq = Board.ColorToMove == PieceColor.White ? 
+                    VerifyFromSquare<White>(from) :
+                    VerifyFromSquare<Black>(from);
+                if (!verifyFromSq) continue;
 
                 to = Enum.Parse<Square>(input[2..], true);
-                if (!VerifyToSquare(from, to)) goto EnterTo;
+                bool verifyToSq = Board.ColorToMove == PieceColor.White ? 
+                    VerifyToSquare<White>(from, to) :
+                    VerifyToSquare<Black>(from, to);
+                if (!verifyToSq) goto EnterTo;
                 goto SelectPromotion;
             } else {
                 Console.WriteLine("Invalid Input. Press any key to retry.");
@@ -106,7 +115,10 @@ internal static class InteractiveInterface
                 // User entered a two square.
                 to = Enum.Parse<Square>(input, true);
 
-                if (!VerifyToSquare(from, to)) goto EnterTo;
+                bool verifyToSq = Board.ColorToMove == PieceColor.White ? 
+                    VerifyToSquare<White>(from, to) :
+                    VerifyToSquare<Black>(from, to);
+                if (!verifyToSq) goto EnterTo;
             } else {
                 Console.WriteLine("Invalid Input. Press any key to retry.");
                 Console.ReadKey();
@@ -114,7 +126,10 @@ internal static class InteractiveInterface
             }
             
             SelectPromotion:
-            if (MoveList.WithoutProvidedPins(Board, from).Promotion) {
+            bool checkForPromotion = Board.ColorToMove == PieceColor.White ? 
+                MoveList<White>.WithoutProvidedPins(Board, from).Promotion : 
+                MoveList<Black>.WithoutProvidedPins(Board, from).Promotion;
+            if (checkForPromotion) {
                 // A promotion is possible.
                 Menu promotionMenu = new(
                     "Enter the promotion: ",
@@ -139,19 +154,29 @@ internal static class InteractiveInterface
             Board.GuiMove(from, to, promotion);
 
             // If opponent has no moves to make after our move, it's checkmate.
-            MoveList opposingMoveList = new(Board, Board.ColorToMove);
-            if (opposingMoveList.Count == 0) {
-                CheckMate = true;
-                continue;
-            }
-
             // If we're attacking opponent's king, then the opponent is under check.
-            PieceColor attackingColor = Board.ColorToMove.OppositeColor();
-            if (MoveList.UnderAttack(Board, Board.KingLoc(Board.ColorToMove), attackingColor)) Check = true;
+            
+            if (Board.ColorToMove == PieceColor.White) {
+                MoveList<White> opposingMoveList = new(Board);
+                if (opposingMoveList.Count == 0) {
+                    CheckMate = true;
+                    continue;
+                }
+
+                if (MoveList<White>.UnderAttack<Black>(Board, Board.KingLoc(Board.ColorToMove))) Check = true;
+            } else {
+                MoveList<Black> opposingMoveList = new(Board);
+                if (opposingMoveList.Count == 0) {
+                    CheckMate = true;
+                    continue;
+                }
+                
+                if (MoveList<Black>.UnderAttack<White>(Board, Board.KingLoc(Board.ColorToMove))) Check = true;
+            }
         }
     }
 
-    private static bool VerifyFromSquare(Square from)
+    private static bool VerifyFromSquare<ColorToMove>(Square from) where ColorToMove : Color
     {
         if (from == Square.Na) {
             Console.WriteLine("Invalid [FROM] square provided. Press any key to retry.");
@@ -161,7 +186,7 @@ internal static class InteractiveInterface
 
         // We should verify it's the square for correct color.
         // ReSharper disable once InvertIf
-        if (!Board.All(Board.ColorToMove)[from]) {
+        if (!Board.All<ColorToMove>()[from]) {
             Console.WriteLine("That square doesn't belong to " + Board.ColorToMove + ". \n" +
                               "Press any key to retry.");
             Console.ReadKey();
@@ -171,7 +196,7 @@ internal static class InteractiveInterface
         return true;
     }
 
-    private static bool VerifyToSquare(Square from, Square to)
+    private static bool VerifyToSquare<ColorToMove>(Square from, Square to) where ColorToMove : Color
     {
         if (to == Square.Na) {
             Console.WriteLine("Invalid [TO] square provided. Press any key to retry.");
@@ -183,7 +208,7 @@ internal static class InteractiveInterface
         }
         
         // We should verify if the move is legal.
-        MoveList moveList = MoveList.WithoutProvidedPins(Board, from);
+        MoveList<ColorToMove> moveList = MoveList<ColorToMove>.WithoutProvidedPins(Board, from);
         // ReSharper disable once InvertIf
         if (!moveList.Moves[to]) {
             Console.WriteLine("Illegal move provided. Press any key to retry.");

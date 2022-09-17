@@ -1,12 +1,14 @@
-﻿using System.Drawing;
+﻿using Backend;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 using Backend.Engine;
 using BetterConsoles.Core;
 using BetterConsoles.Tables;
 using BetterConsoles.Tables.Builders;
 using BetterConsoles.Tables.Configuration;
 using BetterConsoles.Tables.Models;
+using Color = System.Drawing.Color;
 
 namespace Terminal;
 
@@ -31,14 +33,16 @@ internal class DisplayBoard : EngineBoard
     
     public void HighlightMoves(Square from)
     {
-        MoveList moveList = MoveList.WithoutProvidedPins(this, from);
-        HighlightedMoves = moveList.Moves;
+        HighlightedMoves = ColorToMove == PieceColor.White ? 
+            MoveList<White>.WithoutProvidedPins(this, from).Moves :
+            MoveList<Black>.WithoutProvidedPins(this, from).Moves;
     }
     
     public string ToString(bool flip = false)
     {
-        int evaluation = Evaluation.RelativeEvaluation(this);
-        if (ColorToMove == PieceColor.Black) evaluation = -evaluation;
+        int evaluation = ColorToMove == PieceColor.White ? 
+            Evaluation.RelativeEvaluation<White>() : 
+            -Evaluation.RelativeEvaluation<Black>();
         
         string board = DrawBoardCli(flip).ToString().Trim(' ');
         string fen = "FEN: " + GenerateFen() + "\n";
