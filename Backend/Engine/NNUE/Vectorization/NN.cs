@@ -77,20 +77,20 @@ public static class NN
                 int unrolledIndex2 = unrolledIndex + VSize.Short;
                 int unrolledIndex3 = unrolledIndex2 + VSize.Short;
                 
-                Vector<short> iVec = input.NewVector(vectorIndex);
-                Vector<short> wVec = weight.NewVector(weightStride + vectorIndex);
+                Vector<short> iVec = input.LoadVector(vectorIndex);
+                Vector<short> wVec = weight.LoadVector(weightStride + vectorIndex);
                 sum += VMethod.MultiplyAddAdjacent(iVec, wVec);
                 
-                Vector<short> iVec2 = input.NewVector(unrolledIndex);
-                Vector<short> wVec2 = weight.NewVector(weightStride + unrolledIndex);
+                Vector<short> iVec2 = input.LoadVector(unrolledIndex);
+                Vector<short> wVec2 = weight.LoadVector(weightStride + unrolledIndex);
                 sum += VMethod.MultiplyAddAdjacent(iVec2, wVec2);
                 
-                Vector<short> iVec3 = input.NewVector(unrolledIndex2);
-                Vector<short> wVec3 = weight.NewVector(weightStride + unrolledIndex2);
+                Vector<short> iVec3 = input.LoadVector(unrolledIndex2);
+                Vector<short> wVec3 = weight.LoadVector(weightStride + unrolledIndex2);
                 sum += VMethod.MultiplyAddAdjacent(iVec3, wVec3);
                 
-                Vector<short> iVec4 = input.NewVector(unrolledIndex3);
-                Vector<short> wVec4 = weight.NewVector(weightStride + unrolledIndex3);
+                Vector<short> iVec4 = input.LoadVector(unrolledIndex3);
+                Vector<short> wVec4 = weight.LoadVector(weightStride + unrolledIndex3);
                 sum += VMethod.MultiplyAddAdjacent(iVec4, wVec4);
                 
                 vectorIndex = unrolledIndex3 + VSize.Short;
@@ -182,23 +182,23 @@ public static class NN
             int unrolledIndex2 = unrolledIndex + VSize.Short;
             int unrolledIndex3 = unrolledIndex2 + VSize.Short;
 
-            Vector<short> iVec = input.NewVector(vectorIndex);
-            Vector<short> bVec = bias.NewVector(vectorIndex);
+            Vector<short> iVec = input.LoadVector(vectorIndex);
+            Vector<short> bVec = bias.LoadVector(vectorIndex);
             Vector<short> clamped = (iVec + bVec).Clamp(ref minVec, ref maxVec);
             clamped.ToArray(output, offset + vectorIndex);
             
-            Vector<short> iVec2 = input.NewVector(unrolledIndex);
-            Vector<short> bVec2 = bias.NewVector(unrolledIndex);
+            Vector<short> iVec2 = input.LoadVector(unrolledIndex);
+            Vector<short> bVec2 = bias.LoadVector(unrolledIndex);
             Vector<short> clamped2 = (iVec2 + bVec2).Clamp(ref minVec, ref maxVec);
             clamped2.ToArray(output, offset + unrolledIndex);
             
-            Vector<short> iVec3 = input.NewVector(unrolledIndex2);
-            Vector<short> bVec3 = bias.NewVector(unrolledIndex2);
+            Vector<short> iVec3 = input.LoadVector(unrolledIndex2);
+            Vector<short> bVec3 = bias.LoadVector(unrolledIndex2);
             Vector<short> clamped3 = (iVec3 + bVec3).Clamp(ref minVec, ref maxVec);
             clamped3.ToArray(output, offset + unrolledIndex2);
             
-            Vector<short> iVec4 = input.NewVector(unrolledIndex3);
-            Vector<short> bVec4 = bias.NewVector(unrolledIndex3);
+            Vector<short> iVec4 = input.LoadVector(unrolledIndex3);
+            Vector<short> bVec4 = bias.LoadVector(unrolledIndex3);
             Vector<short> clamped4 = (iVec4 + bVec4).Clamp(ref minVec, ref maxVec);
             clamped4.ToArray(output, offset + unrolledIndex3);
             
