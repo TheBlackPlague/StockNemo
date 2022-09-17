@@ -16,7 +16,7 @@ public class RepetitionHistory
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveLast() => Index--;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int Count(ulong zobristHash)
     {
         int count = 0;

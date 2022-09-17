@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Backend.Data;
@@ -12,7 +13,7 @@ public static class Evaluation
 {
 
     private const string NNUE_FILE = "Backend.Engine.NNUE.Model.BasicNNUE";
-    private const string HASH = "9db597c5dd";
+    private const string HASH = "02a9cfe493";
 
     private const int BISHOP_PAIR_EARLY = 25;
     private const int BISHOP_PAIR_LATE = 50;
