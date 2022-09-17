@@ -44,12 +44,10 @@ public static class UniversalChessInterface
         Console.WriteLine("id name " + NAME);
         Console.WriteLine("id author " + AUTHOR);
         Console.WriteLine("option name Hash type spin default 16 min 4 max 512");
-        Console.WriteLine("option name RazoringEvaluationThreshold type spin default 150 min 30 max 300");
-        Console.WriteLine("option name LmpDepthThreshold type spin default 3 min 2 max 6");
-        Console.WriteLine("option name LmpQuietThresholdBase type spin default 3 min 1 max 5");
-        Console.WriteLine("option name LmrBase type spin default 0 min 0 max 3");
-        Console.WriteLine("option name LmrDepthThreshold type spin default 3 min 2 max 6");
-        Console.WriteLine("option name LmrFullSearchThreshold type spin default 4 min 1 max 7");
+        Console.WriteLine("option name IIRDepthThreshold type spin default 3 min 2 max 5");
+        Console.WriteLine("option name IIRDepthReduction type spin default 1 min 1 max 3");
+        Console.WriteLine("option name FutilityDepthFactor type spin default 150 min 100 max 200");
+        Console.WriteLine("option name RazoringEvaluationThreshold type spin default 150 min 100 max 200");
 
         // Let GUI know engine is ready in UCI mode.
         Console.WriteLine("uciok");
@@ -73,23 +71,17 @@ public static class UniversalChessInterface
                 TranspositionTable = MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb);
                 Busy = false;
                 break;
+            case "IIRDepthThreshold":
+                TunedParameters.IIRDepthThreshold = int.Parse(args[4]);
+                break;
+            case "IIRDepthReduction":
+                TunedParameters.IIRDepthReduction = int.Parse(args[4]);
+                break;
+            case "FutilityDepthFactor":
+                TunedParameters.FutilityDepthFactor = int.Parse(args[4]);
+                break;
             case "RazoringEvaluationThreshold":
                 TunedParameters.RazoringEvaluationThreshold = int.Parse(args[4]);
-                break;
-            case "LmpDepthThreshold":
-                TunedParameters.LmpDepthThreshold = int.Parse(args[4]);
-                break;
-            case "LmpQuietThresholdBase":
-                TunedParameters.LmpQuietThresholdBase = int.Parse(args[4]);
-                break;
-            case "LmrBase":
-                TunedParameters.LmrBase = int.Parse(args[4]);
-                break;
-            case "LmrDepthThreshold":
-                TunedParameters.LmrDepthThreshold = int.Parse(args[4]);
-                break;
-            case "LmrFullSearchThreshold":
-                TunedParameters.LmrFullSearchThreshold = int.Parse(args[4]);
                 break;
         }
     }

@@ -14,17 +14,15 @@
         }
     ],
     "parameter_ranges": {
-        "RazoringEvaluationThreshold": "Integer(30, 300)",
-        "LmpDepthThreshold": "Integer(2, 6)",
-        "LmpQuietThresholdBase": "Integer(1, 5)",
-        "LmrBase": "Integer(0, 3)",
-        "LmrDepthThreshold": "(2, 6)",
-        "LmrFullSearchThreshold": "(1, 7)"
+        "IIRDepthThreshold": "Integer(2, 5)",
+        "IIRDepthReduction": "Integer(1, 3)",
+        "FutilityDepthFactor": "Integer(100, 200)",
+        "RazoringEvaluationThreshold": "Integer(100, 200)"
     },
     "engine1_tc": "10+0.1",
     "engine2_tc": "10+0.1",
     "opening_file": "UHO_XXL_+0.90_+1.19.epd",
-    "rounds": 128,
+    "rounds": 256,
     "concurrency": 64,
     "adjudicate_draws": true,
     "draw_score": 10,
@@ -33,13 +31,13 @@
     "adjudicate_resign": true,
     "resign_score": 400,
     "resign_movecount": 4,
-    "result_every": 500,
-    "plot_every": 500,
+    "result_every": 5,
+    "plot_every": 5,
     "plot_path": "plots",
     "acq_function": "pvrs",
     "acq_function_samples": 0,
     "gp_burnin": 3,
     "gp_initial_burnin": 200,
-    "n_initial_points": 30,
+    "n_initial_points": 45,
     "random_seed": 836717
 }

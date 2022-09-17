@@ -389,7 +389,7 @@ public class MoveSearch
         #region IIR
 
         // Reduce depth if there are no transposition hits and we're at a high enough depth to do it safely.
-        if (depth > IIR_DEPTH_THRESHOLD && !transpositionHit) depth -= IIR_DEPTH_REDUCTION;
+        if (depth > TunedParameters.IIRDepthThreshold && !transpositionHit) depth -= TunedParameters.IIRDepthReduction;
 
         #endregion
 
@@ -465,9 +465,9 @@ public class MoveSearch
             
         int i = 0;
         int quietMoveCounter = 0;
-        int lmpQuietThreshold = TunedParameters.LmpQuietThresholdBase + depth * depth;
-        bool lmp = notRootNode && !inCheck && depth <= TunedParameters.LmpDepthThreshold;
-        bool lmr = depth >= TunedParameters.LmrDepthThreshold && !inCheck;
+        int lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
+        bool lmp = notRootNode && !inCheck && depth <= LMP_DEPTH_THRESHOLD;
+        bool lmr = depth >= LMR_DEPTH_THRESHOLD && !inCheck;
         while (i < moveCount) {
             // We should being the move that's likely to be the best move at this depth to the top. This ensures
             // that we are searching through the likely best moves first, allowing us to return early.
@@ -482,7 +482,7 @@ public class MoveSearch
 
             #region Futility Pruning
 
-            if (i > 0 && quietMove && positionalEvaluation + depth * FUTILITY_DEPTH_FACTOR <= alpha) 
+            if (i > 0 && quietMove && positionalEvaluation + depth * TunedParameters.FutilityDepthFactor <= alpha) 
                 // If our move is a quiet and static evaluation of a position with a depth-relative margin is below
                 // our alpha, then the move won't really help us improve our position. And nor will any future move.
                 // Hence, it's futile to evaluate this position any further.
@@ -520,7 +520,7 @@ public class MoveSearch
                 
                 #region Late Move Reduction
                 
-                if (i >= TunedParameters.LmrFullSearchThreshold && lmr) {
+                if (i >= LMR_FULL_SEARCH_THRESHOLD && lmr) {
                     // If we're past the move count and depth threshold where we can usually safely apply LMR and we
                     // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
 
