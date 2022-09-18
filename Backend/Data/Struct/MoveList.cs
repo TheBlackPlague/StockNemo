@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 using Backend.Data.Move;
+using Backend.Data.Template;
 using Backend.Exception;
 
 namespace Backend.Data.Struct;
@@ -383,9 +384,9 @@ public ref struct MoveList
             // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
             // if our king is under attacked.
             
-            Board.RemovePiece(Piece.Pawn, color, From);
-            Board.RemovePiece(Piece.Pawn, oppositeColor, epPieceSq);
-            Board.InsertPiece(Board.EnPassantTarget, Piece.Pawn, color);
+            Board.RemovePiece<Normal>(Piece.Pawn, color, From);
+            Board.RemovePiece<Normal>(Piece.Pawn, oppositeColor, epPieceSq);
+            Board.InsertPiece<Normal>(Piece.Pawn, color, Board.EnPassantTarget);
             
             Square kingSq = Board.KingLoc(color);
             
@@ -393,9 +394,9 @@ public ref struct MoveList
             // caused a discovered pin. Thus, we must remove it from our legal moves.
             if (UnderAttack(Board, kingSq, oppositeColor)) Moves &= ~(1UL << (int)Board.EnPassantTarget);
             
-            Board.InsertPiece(From, Piece.Pawn, color);
-            Board.InsertPiece(epPieceSq, Piece.Pawn, oppositeColor);
-            Board.RemovePiece(Piece.Pawn, color, Board.EnPassantTarget);
+            Board.InsertPiece<Normal>(Piece.Pawn, color, From);
+            Board.InsertPiece<Normal>(Piece.Pawn, oppositeColor, epPieceSq);
+            Board.RemovePiece<Normal>(Piece.Pawn, color, Board.EnPassantTarget);
 
             // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
             if (Moves[Board.EnPassantTarget] && !C[epPieceSq]) Moves &= ~(1UL << (int)Board.EnPassantTarget);
@@ -499,9 +500,9 @@ public ref struct MoveList
             // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
             // if our king is under attacked.
             
-            Board.RemovePiece(Piece.Pawn, color, From);
-            Board.RemovePiece(Piece.Pawn, oppositeColor, epPieceSq);
-            Board.InsertPiece(Board.EnPassantTarget, Piece.Pawn, color);
+            Board.RemovePiece<Normal>(Piece.Pawn, color, From);
+            Board.RemovePiece<Normal>(Piece.Pawn, oppositeColor, epPieceSq);
+            Board.InsertPiece<Normal>(Piece.Pawn, color, Board.EnPassantTarget);
             
             Square kingSq = Board.KingLoc(color);
             
@@ -509,9 +510,9 @@ public ref struct MoveList
             // caused a discovered pin. Thus, we must remove it from our legal moves.
             if (UnderAttack(Board, kingSq, oppositeColor)) Moves &= ~(1UL << (int)Board.EnPassantTarget);
             
-            Board.InsertPiece(From, Piece.Pawn, color);
-            Board.InsertPiece(epPieceSq, Piece.Pawn, oppositeColor);
-            Board.RemovePiece(Piece.Pawn, color, Board.EnPassantTarget);
+            Board.InsertPiece<Normal>(Piece.Pawn, color, From);
+            Board.InsertPiece<Normal>(Piece.Pawn, oppositeColor, epPieceSq);
+            Board.RemovePiece<Normal>(Piece.Pawn, color, Board.EnPassantTarget);
 
             // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
             if (Moves[Board.EnPassantTarget] && !C[epPieceSq]) Moves &= ~(1UL << (int)Board.EnPassantTarget);
@@ -579,14 +580,14 @@ public ref struct MoveList
         PieceColor oppositeColor = color.OppositeColor();
         BitBoardIterator kingMovesIterator = kingMoves.GetEnumerator();
         Square move = kingMovesIterator.Current;
-        Board.RemovePiece(Piece.King, color, From);
+        Board.RemovePiece<Normal>(Piece.King, color, From);
         while (kingMovesIterator.MoveNext()) {
             if (UnderAttack(Board, move, oppositeColor)) kingMoves[move] = false;
             
             // Next square iteration.
             move = kingMovesIterator.Current;
         }
-        Board.InsertPiece(From, Piece.King, color);
+        Board.InsertPiece<Normal>(Piece.King, color, From);
 
         Moves |= kingMoves;
 

@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 
 namespace Backend.Engine;
 
@@ -35,7 +36,7 @@ public class EngineBoard : Board
         if (promotion != Promotion.None && !moveList.Promotion) 
             throw new InvalidOperationException("Invalid move provided by GUI.");
         
-        MoveNNUE(from, to, promotion);
+        Move<NNUpdate>(from, to, promotion);
         History.Append(ZobristHash);
     }
 
@@ -66,19 +67,28 @@ public class EngineBoard : Board
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public RevertMove MoveNNUE(ref OrderedMoveEntry move)
+    public RevertMove Move<MoveType>(ref OrderedMoveEntry move) where MoveType : MoveUpdateType
     {
-        Evaluation.NNUE.PushAccumulator();
-        RevertMove rv = MoveNNUE(move.From, move.To, move.Promotion);
+        RevertMove rv;
+        if (typeof(MoveType) == typeof(NNUpdate)) {
+            Evaluation.NNUE.PushAccumulator();
+            rv = Move<NNUpdate>(move.From, move.To, move.Promotion);
+        } else {
+            rv = Move<ClassicalUpdate>(move.From, move.To, move.Promotion);
+        }
         History.Append(ZobristHash);
         return rv;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public new void UndoMove(ref RevertMove rv)
+    public new void UndoMove<MoveType>(ref RevertMove rv) where MoveType : MoveUpdateType
     {
-        base.UndoMove(ref rv);
-        Evaluation.NNUE.PullAccumulator();
+        if (typeof(MoveType) == typeof(NNUpdate)) {
+            base.UndoMove<NNUpdate>(ref rv);
+            Evaluation.NNUE.PullAccumulator();
+        } else {
+            base.UndoMove<ClassicalUpdate>(ref rv);
+        }
         History.RemoveLast();
     }
 

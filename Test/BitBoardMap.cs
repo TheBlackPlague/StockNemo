@@ -1,6 +1,7 @@
 ﻿using System;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 using NUnit.Framework;
 
 namespace Test;
@@ -43,7 +44,7 @@ public class BitBoardMap
     {
         Backend.Data.Struct.BitBoardMap useMap = Map.Copy();
             
-        useMap.Move(Square.A2, Square.A4);
+        useMap.Move<Normal>(Square.A2, Square.A4);
         Assert.AreEqual((Piece.Pawn, PieceColor.White), useMap[Square.A4]);
     }
         
@@ -52,7 +53,7 @@ public class BitBoardMap
     {
         Backend.Data.Struct.BitBoardMap useMap = Map.Copy();
             
-        useMap.Move(Square.A2, Square.A7);
+        useMap.Move<Normal>(Square.A2, Square.A7);
 
         bool success = (Piece.Pawn, PieceColor.White) == useMap[Square.A7] &&
                        useMap[Piece.Pawn, PieceColor.Black].Count == 7;
@@ -64,7 +65,7 @@ public class BitBoardMap
     {
         Backend.Data.Struct.BitBoardMap useMap = Map.Copy();
             
-        useMap.Empty(Square.A2);
+        useMap.Empty<Normal>(Square.A2);
         Assert.AreEqual((Piece.Empty, PieceColor.None), useMap[Square.A2]);
     }
         
@@ -73,7 +74,7 @@ public class BitBoardMap
     {
         Backend.Data.Struct.BitBoardMap useMap = Map;
             
-        useMap.Move(Square.B1, Square.A3);
+        useMap.Move<Normal>(Square.B1, Square.A3);
         Assert.AreEqual((Piece.Knight, PieceColor.White), useMap[Square.A3]);
     }
 
@@ -92,11 +93,11 @@ public class BitBoardMap
 
         int eval = useMap.MaterialDevelopmentEvaluationEarly;
         Console.WriteLine("Previous Eval: " + eval);
-        useMap.Move(Square.E2, Square.E4);
+        useMap.Move<ClassicalUpdate>(Square.E2, Square.E4);
         int newEval = useMap.MaterialDevelopmentEvaluationEarly;
         Console.WriteLine("New Eval: " + newEval);
         bool evalChanged = eval != newEval;
-        useMap.Move(Square.E4, Square.E2);
+        useMap.Move<ClassicalUpdate>(Square.E4, Square.E2);
         int prevEval = useMap.MaterialDevelopmentEvaluationEarly;
         Console.WriteLine("Reverted Eval: " + prevEval);
         bool evalReverted = eval == prevEval;
