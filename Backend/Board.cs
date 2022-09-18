@@ -97,7 +97,7 @@ public class Board
             // If the attack is an EP attack, we must empty the piece affected by EP.
             Square epPieceSq = colorF == PieceColor.White ? EnPassantTarget - 8 : EnPassantTarget + 8;
             PieceColor oppositeColor = colorF.OppositeColor();
-            Map.Empty(Piece.Pawn, oppositeColor, epPieceSq);
+            Map.Empty<MoveType>(Piece.Pawn, oppositeColor, epPieceSq);
             
             if (typeof(MoveType) == typeof(NNUpdate)) 
                 Evaluation.NNUE.EfficientlyUpdateAccumulator<Deactivate>(Piece.Pawn, oppositeColor, epPieceSq);
@@ -126,8 +126,8 @@ public class Board
             Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, from, to);
 
         if (promotion != Promotion.None) {
-            Map.Empty(pieceF, colorF, to);
-            Map.InsertPiece(to, (Piece)promotion, colorF);
+            Map.Empty<MoveType>(pieceF, colorF, to);
+            Map.InsertPiece<MoveType>((Piece)promotion, colorF, to);
             rv.Promotion = true;
 
             if (typeof(MoveType) == typeof(NNUpdate)) {
@@ -302,8 +302,8 @@ public class Board
 
         if (rv.Promotion) {
             (Piece piece, PieceColor color) = Map[rv.To];
-            Map.Empty(piece, color, rv.To);
-            Map.InsertPiece(rv.To, Piece.Pawn, color);
+            Map.Empty<MoveType>(piece, color, rv.To);
+            Map.InsertPiece<MoveType>(Piece.Pawn, color, rv.To);
         }
         
         (Piece pF, PieceColor cF) = Map[rv.To];
@@ -315,13 +315,13 @@ public class Board
         if (rv.EnPassant) {
             // If it was an EP attack, we must insert a pawn at the affected square.
             Square insertion = rv.CapturedColor == PieceColor.White ? rv.To + 8 : rv.To - 8;
-            Map.InsertPiece(insertion, Piece.Pawn, rv.CapturedColor);
+            Map.InsertPiece<MoveType>(Piece.Pawn, rv.CapturedColor, insertion);
             return;
         }
 
         if (rv.CapturedPiece != Piece.Empty) {
             // If a capture happened, we must insert the piece at the relevant square.
-            Map.InsertPiece(rv.To, rv.CapturedPiece, rv.CapturedColor);
+            Map.InsertPiece<MoveType>(rv.CapturedPiece, rv.CapturedColor, rv.To);
             return;
         }
 
@@ -335,10 +335,12 @@ public class Board
     #region Insert/Remove
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void InsertPiece(Square sq, Piece piece, PieceColor color) => Map.InsertPiece(sq, piece, color);
+    public void InsertPiece<UpdateType>(Piece piece, PieceColor color, Square sq) where UpdateType : MoveUpdateType => 
+        Map.InsertPiece<UpdateType>(piece, color, sq);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void RemovePiece(Piece piece, PieceColor color, Square sq) => Map.Empty(piece, color, sq);
+    public void RemovePiece<UpdateType>(Piece piece, PieceColor color, Square sq) where UpdateType : MoveUpdateType => 
+        Map.Empty<UpdateType>(piece, color, sq);
 
     #endregion
 

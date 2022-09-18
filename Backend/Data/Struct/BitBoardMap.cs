@@ -291,14 +291,14 @@ public struct BitBoardMap
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Empty(Square sq)
+    public void Empty<UpdateType>(Square sq) where UpdateType : MoveUpdateType
     {
         (Piece piece, PieceColor color) = this[sq];
-        Empty(piece, color, sq);
+        Empty<UpdateType>(piece, color, sq);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Empty(Piece piece, PieceColor color, Square sq)
+    public void Empty<UpdateType>(Piece piece, PieceColor color, Square sq) where UpdateType : MoveUpdateType
     {
         // Remove from square.
         Bb.DJAA((int)color, (int)piece)[sq] = false;
@@ -309,14 +309,18 @@ public struct BitBoardMap
         // Remove from color bitboards.
         if (color == PieceColor.White) {
             White[sq] = false;
-            
-            MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Early];
-            MaterialDevelopmentEvaluationLate -= Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Late];
+
+            if (typeof(UpdateType) == typeof(ClassicalUpdate)) {
+                MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Early];
+                MaterialDevelopmentEvaluationLate -= Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Late];
+            }
         } else {
             Black[sq] = false;
-            
-            MaterialDevelopmentEvaluationEarly += Evaluation.MDT[piece, sq, Phase.Early];
-            MaterialDevelopmentEvaluationLate += Evaluation.MDT[piece, sq, Phase.Late];
+
+            if (typeof(UpdateType) == typeof(ClassicalUpdate)) {
+                MaterialDevelopmentEvaluationEarly += Evaluation.MDT[piece, sq, Phase.Early];
+                MaterialDevelopmentEvaluationLate += Evaluation.MDT[piece, sq, Phase.Late];
+            }
         }
         
         // Update Zobrist.
@@ -324,7 +328,7 @@ public struct BitBoardMap
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void InsertPiece(Square sq, Piece piece, PieceColor color)
+    public void InsertPiece<UpdateType>(Piece piece, PieceColor color, Square sq) where UpdateType : MoveUpdateType
     {
         // Insert the piece at square.
         Bb.DJAA((int)color, (int)piece)[sq] = true;
@@ -332,14 +336,18 @@ public struct BitBoardMap
         // Insert into color bitboards.
         if (color == PieceColor.White) {
             White[sq] = true;
-            
-            MaterialDevelopmentEvaluationEarly += Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Early];
-            MaterialDevelopmentEvaluationLate += Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Late];
+
+            if (typeof(UpdateType) == typeof(ClassicalUpdate)) {
+                MaterialDevelopmentEvaluationEarly += Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Early];
+                MaterialDevelopmentEvaluationLate += Evaluation.MDT[piece, (Square)((int)sq ^ 56), Phase.Late];
+            }
         } else {
             Black[sq] = true;
-            
-            MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[piece, sq, Phase.Early];
-            MaterialDevelopmentEvaluationLate -= Evaluation.MDT[piece, sq, Phase.Late];
+
+            if (typeof(UpdateType) == typeof(ClassicalUpdate)) {
+                MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[piece, sq, Phase.Early];
+                MaterialDevelopmentEvaluationLate -= Evaluation.MDT[piece, sq, Phase.Late];
+            }
         }
             
         // Set piece in pieces and colors.

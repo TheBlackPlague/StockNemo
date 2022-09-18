@@ -65,7 +65,7 @@ public class BitBoardMap
     {
         Backend.Data.Struct.BitBoardMap useMap = Map.Copy();
             
-        useMap.Empty(Square.A2);
+        useMap.Empty<Normal>(Square.A2);
         Assert.AreEqual((Piece.Empty, PieceColor.None), useMap[Square.A2]);
     }
         
