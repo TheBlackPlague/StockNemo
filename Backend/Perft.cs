@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 
 namespace Backend;
 
@@ -144,7 +145,7 @@ public class Perft
                     while (moveListIterator.MoveNext()) {
                         // Make our move iteration for our square iteration. Save the revert move for reverting
                         // in future.
-                        RevertMove rv = board.Move(from, move);
+                        RevertMove rv = board.Move<Normal>(from, move);
                             
                         // If our king is safe, that move is legal and we can calculate moves at lesser
                         // depth recursively, but we shouldn't divide at lesser depth.
@@ -153,8 +154,8 @@ public class Perft
                             // Undo original pawn move without promotion.
                             int i = 1;
                             while (i < 5) {
-                                board.UndoMove(ref rv);
-                                rv = board.Move(from, move, (Promotion)i);
+                                board.UndoMove<Normal>(ref rv);
+                                rv = board.Move<Normal>(from, move, (Promotion)i);
                                 nextCount += MoveGeneration(board, nextDepth, false);
                                 i++;
                             }
@@ -169,7 +170,7 @@ public class Perft
                         if (divide) LogNodeCount(from, move, nextCount);
                             
                         // Revert the move to get back to original state.
-                        board.UndoMove(ref rv);
+                        board.UndoMove<Normal>(ref rv);
 
                         move = moveListIterator.Current;
                     }
@@ -205,7 +206,7 @@ public class Perft
                 while (iterator.MoveNext()) {
                     // Make our move iteration for our square iteration. Save the revert move for reverting
                     // in future.
-                    RevertMove rv = next.Move(from, move);
+                    RevertMove rv = next.Move<Normal>(from, move);
                     
                     ulong nextCount = 0;
                         
@@ -213,8 +214,8 @@ public class Perft
                         // Undo original pawn move without promotion.
                         int i = 1;
                         while (i < 5) {
-                            next.UndoMove(ref rv);
-                            rv = next.Move(from, move, (Promotion)i);
+                            next.UndoMove<Normal>(ref rv);
+                            rv = next.Move<Normal>(from, move, (Promotion)i);
                             nextCount += MoveGeneration(next, nextDepth, false);
                             i++;
                         }
@@ -231,7 +232,7 @@ public class Perft
                     if (divide) LogNodeCount(from, move, nextCount);
 
                     // Revert the move to get back to original state.
-                    next.UndoMove(ref rv);
+                    next.UndoMove<Normal>(ref rv);
 
                     move = iterator.Current;
                 }
@@ -317,7 +318,7 @@ public class Perft
                     while (moveListIterator.MoveNext()) {
                         // Make our move iteration for our square iteration. Save the revert move for reverting
                         // in future.
-                        RevertMove rv = board.Move(from, move);
+                        RevertMove rv = board.Move<Normal>(from, move);
                             
                         // If our king is safe, that move is legal and we can calculate moves at lesser
                         // depth recursively, but we shouldn't divide at lesser depth.
@@ -326,8 +327,8 @@ public class Perft
                             // Undo original pawn move without promotion.
                             int i = 1;
                             while (i < 5) {
-                                board.UndoMove(ref rv);
-                                rv = board.Move(from, move, (Promotion)i);
+                                board.UndoMove<Normal>(ref rv);
+                                rv = board.Move<Normal>(from, move, (Promotion)i);
                                 nextCount += MoveGeneration(board, nextDepth, transpositionTable, false);
                                 i++;
                             }
@@ -342,7 +343,7 @@ public class Perft
                         if (divide) LogNodeCount(from, move, nextCount);
                             
                         // Revert the move to get back to original state.
-                        board.UndoMove(ref rv);
+                        board.UndoMove<Normal>(ref rv);
 
                         move = moveListIterator.Current;
                     }
@@ -378,7 +379,7 @@ public class Perft
                 while (iterator.MoveNext()) {
                     // Make our move iteration for our square iteration. Save the revert move for reverting
                     // in future.
-                    RevertMove rv = next.Move(from, move);
+                    RevertMove rv = next.Move<Normal>(from, move);
                     
                     ulong nextCount = 0;
                         
@@ -386,8 +387,8 @@ public class Perft
                         // Undo original pawn move without promotion.
                         int i = 1;
                         while (i < 5) {
-                            next.UndoMove(ref rv);
-                            rv = next.Move(from, move, (Promotion)i);
+                            next.UndoMove<Normal>(ref rv);
+                            rv = next.Move<Normal>(from, move, (Promotion)i);
                             nextCount += MoveGeneration(next, nextDepth, transpositionTable, false);
                             i++;
                         }
@@ -404,7 +405,7 @@ public class Perft
                     if (divide) LogNodeCount(from, move, nextCount);
 
                     // Revert the move to get back to original state.
-                    next.UndoMove(ref rv);
+                    next.UndoMove<Normal>(ref rv);
 
                     move = iterator.Current;
                 }

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
+using Backend.Data.Template;
 using Backend.Engine;
 
 namespace Backend.Data.Struct;
@@ -213,15 +214,16 @@ public struct BitBoardMap
     public PieceColor ColorOnly(Square sq) => (PieceColor)(PiecesAndColors.AA((int)sq) >> 4);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Move(Square from, Square to)
+    public void Move<MoveType>(Square from, Square to) where MoveType : MoveUpdateType
     {
         (Piece pF, PieceColor cF) = this[from];
         (Piece pT, PieceColor cT) = this[to];
-        Move(pF, cF, pT, cT, from, to);
+        Move<MoveType>(pF, cF, pT, cT, from, to);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Move(Piece pF, PieceColor cF, Piece pT, PieceColor cT, Square from, Square to)
+    public void Move<MoveType>(Piece pF, PieceColor cF, Piece pT, PieceColor cT, Square from, Square to)
+        where MoveType : MoveUpdateType
     {
         if (pT != Piece.Empty) {
             // If moving to piece isn't empty, then we capture.
@@ -230,12 +232,16 @@ public struct BitBoardMap
             // Remove from color bitboards.
             if (cT == PieceColor.White) {
                 White[to] = false;
-                MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pT, (Square)((int)to ^ 56), Phase.Early];
-                MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pT, (Square)((int)to ^ 56), Phase.Late];
+                if (typeof(MoveType) == typeof(ClassicalUpdate)) {
+                    MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pT, (Square)((int)to ^ 56), Phase.Early];
+                    MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pT, (Square)((int)to ^ 56), Phase.Late];
+                }
             } else {
                 Black[to] = false;
-                MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pT, to, Phase.Early];
-                MaterialDevelopmentEvaluationLate += Evaluation.MDT[pT, to, Phase.Late];
+                if (typeof(MoveType) == typeof(ClassicalUpdate)) {
+                    MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pT, to, Phase.Early];
+                    MaterialDevelopmentEvaluationLate += Evaluation.MDT[pT, to, Phase.Late];
+                }
             }
             
             // Update Zobrist.
@@ -258,21 +264,25 @@ public struct BitBoardMap
         if (cF == PieceColor.White) {
             White[from] = false;
             White[to] = true;
-            
-            MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pF, (Square)((int)from ^ 56), Phase.Early];
-            MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pF, (Square)((int)from ^ 56), Phase.Late];
-            
-            MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pF, (Square)((int)to ^ 56), Phase.Early];
-            MaterialDevelopmentEvaluationLate += Evaluation.MDT[pF, (Square)((int)to ^ 56), Phase.Late];
+
+            if (typeof(MoveType) == typeof(ClassicalUpdate)) {
+                MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pF, (Square)((int)from ^ 56), Phase.Early];
+                MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pF, (Square)((int)from ^ 56), Phase.Late];
+
+                MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pF, (Square)((int)to ^ 56), Phase.Early];
+                MaterialDevelopmentEvaluationLate += Evaluation.MDT[pF, (Square)((int)to ^ 56), Phase.Late];
+            }
         } else {
             Black[from] = false;
             Black[to] = true;
-            
-            MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pF, from, Phase.Early];
-            MaterialDevelopmentEvaluationLate += Evaluation.MDT[pF, from, Phase.Late];
-            
-            MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pF, to, Phase.Early];
-            MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pF, to, Phase.Late];
+
+            if (typeof(MoveType) == typeof(ClassicalUpdate)) {
+                MaterialDevelopmentEvaluationEarly += Evaluation.MDT[pF, from, Phase.Early];
+                MaterialDevelopmentEvaluationLate += Evaluation.MDT[pF, from, Phase.Late];
+
+                MaterialDevelopmentEvaluationEarly -= Evaluation.MDT[pF, to, Phase.Early];
+                MaterialDevelopmentEvaluationLate -= Evaluation.MDT[pF, to, Phase.Late];
+            }
         }
         
         // Update Zobrist.

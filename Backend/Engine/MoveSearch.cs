@@ -502,7 +502,7 @@ public class MoveSearch
             #endregion
 
             // Make the move.
-            RevertMove rv = board.MoveNNUE(ref move);
+            RevertMove rv = board.Move<NNUpdate>(ref move);
             TotalNodeSearchCount++;
             
             int evaluation;
@@ -571,7 +571,7 @@ public class MoveSearch
             }
             
             // Undo the move.
-            board.UndoMove(ref rv);
+            board.UndoMove<NNUpdate>(ref rv);
 
             if (!HandleEvaluation(evaluation, ref move, quietMove)) {
                 if (quietMove && KillerMoveTable[0, plyFromRoot] != move) {
@@ -726,7 +726,7 @@ public class MoveSearch
             #endregion
             
             // Make the move.
-            RevertMove rv = board.MoveNNUE(ref move);
+            RevertMove rv = board.Move<NNUpdate>(ref move);
             TotalNodeSearchCount++;
         
             // Evaluate position by searching deeper and negating the result. An evaluation that's good for
@@ -734,7 +734,7 @@ public class MoveSearch
             int evaluation = -QSearch<Node>(board, nextPlyFromRoot, nextDepth, -beta, -alpha);
                 
             // Undo the move.
-            board.UndoMove(ref rv);
+            board.UndoMove<NNUpdate>(ref rv);
 
             if (!HandleEvaluation(evaluation)) break;
             

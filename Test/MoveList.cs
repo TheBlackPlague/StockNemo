@@ -2,6 +2,7 @@
 using Backend;
 using Backend.Data.Enum;
 using Backend.Data.Move;
+using Backend.Data.Template;
 using NUnit.Framework;
 
 namespace Test;
@@ -37,7 +38,7 @@ public class MoveList
     public void CountKnightMovesAtA3()
     {
         Board use = Board.Clone();
-        use.Move(Square.B1, Square.A3);
+        use.Move<Normal>(Square.B1, Square.A3);
         Backend.Data.Struct.MoveList moveList = Backend.Data.Struct.MoveList.WithoutProvidedPins(use, Square.A3);
         Console.WriteLine(moveList.Moves.ToString());
         Assert.AreEqual(3, moveList.Count);
@@ -47,7 +48,7 @@ public class MoveList
     public void CountRookMovesAtA3()
     {
         Board use = Board.Clone();
-        use.Move(Square.A1, Square.A3);
+        use.Move<Normal>(Square.A1, Square.A3);
         Backend.Data.Struct.MoveList moveList = Backend.Data.Struct.MoveList.WithoutProvidedPins(use, Square.A3);
         Console.WriteLine(moveList.Moves.ToString());
         Assert.AreEqual(11, moveList.Count);
@@ -66,7 +67,7 @@ public class MoveList
     public void CountBishopMovesAtC3()
     {
         Board use = Board.Clone();
-        use.Move(Square.C1, Square.C3);
+        use.Move<Normal>(Square.C1, Square.C3);
         Backend.Data.Struct.MoveList moveList = Backend.Data.Struct.MoveList.WithoutProvidedPins(use, Square.C3);
         Console.WriteLine(moveList.Moves.ToString());
         Assert.AreEqual(6, moveList.Count);
