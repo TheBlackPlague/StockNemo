@@ -354,12 +354,12 @@ public class MoveSearch
             #region Null Move Pruning
         
             if (notRootNode && depth > NULL_MOVE_DEPTH) {
-                // For null move pruning, we give the turn to the opponent and let them make the move.
-                RevertNullMove rv = board.NullMove();
-                
                 // Reduced depth for null move pruning.
                 int reducedDepth = depth - NULL_MOVE_REDUCTION - 
                                    (depth / NULL_MOVE_SCALING_FACTOR - NULL_MOVE_SCALING_CORRECTION);
+                
+                // For null move pruning, we give the turn to the opponent and let them make the move.
+                RevertNullMove rv = board.NullMove();
                 
                 // Then we evaluate position by searching at a reduced depth using same characteristics as normal
                 // search. The idea is that if there are cutoffs, most will be found using this reduced search and we
@@ -367,6 +367,7 @@ public class MoveSearch
                 // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
                 // QSearch).
                 int evaluation = -AbSearch<NonPvNode>(board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
+                
                 // Undo the null move so we can get back to original state of the board.
                 board.UndoNullMove(rv);
         
