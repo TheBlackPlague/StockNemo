@@ -353,7 +353,7 @@ public class MoveSearch
             
             #region Null Move Pruning
         
-            if (notRootNode && depth > NULL_MOVE_DEPTH) {
+            if (notRootNode && depth > NULL_MOVE_DEPTH && !MoveSearchStack[plyFromRoot - 1].NullMove) {
                 // For null move pruning, we give the turn to the opponent and let them make the move.
                 RevertNullMove rv = board.NullMove();
                 
@@ -366,7 +366,9 @@ public class MoveSearch
                 // can cutoff this branch earlier.
                 // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
                 // QSearch).
+                MoveSearchStack[plyFromRoot].NullMove = true;
                 int evaluation = -AbSearch<NonPvNode>(board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
+                MoveSearchStack[plyFromRoot].NullMove = false;
                 // Undo the null move so we can get back to original state of the board.
                 board.UndoNullMove(rv);
         
