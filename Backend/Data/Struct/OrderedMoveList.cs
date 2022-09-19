@@ -30,7 +30,7 @@ public readonly ref struct OrderedMoveList
     private readonly HistoryTable HistoryTable;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int ScoreMove(
+    private int ScoreMoveNormal(
         Piece pieceToMove,
         Board board, 
         ref OrderedMoveEntry move,
@@ -72,6 +72,36 @@ public readonly ref struct OrderedMoveList
 
         // Return the updated history score for the move.
         return HistoryTable[pieceToMove, board.ColorToMove, move.To];
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int ScoreMoveQSearch(
+        Board board, 
+        ref OrderedMoveEntry move,
+        SearchedMove tableMove
+        )
+    {
+        // Compare our move with the one found from transposition table. There's no guarantee the transposition move
+        // is even legal, so this acts as a sort of legal verification for it too.
+        // Regardless, if our move is equal to that (also proving that it is legal for this position), then give it
+        // highest priority, making it the first move we make.
+        if (move == tableMove) return PRIORITY - 1;
+        
+        // Score promotions based on the type of promotion it is. 
+        // Promotion | Score
+        // Queen     | PRIORITY - 4 (HIGHEST)
+        // Bishop    | PRIORITY - 5
+        // Knight    | PRIORITY - 6
+        // Rook      | PRIORITY - 7 (LOWEST)
+        if (move.Promotion != Promotion.None) return PRIORITY - 8 + (int)move.Promotion;
+
+        // Score captures based on the piece capturing and the piece being captured.
+        // The idea behind it is to give highest priority to captures that are capturing most valuable pieces
+        // with least valuable pieces.
+        Piece to = board.At(move.To).Item1;
+        if (to != Piece.Empty) return MvvLva(board.At(move.From).Item1, to) * 10000;
+
+        return 0;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -121,13 +151,13 @@ public readonly ref struct OrderedMoveList
                         int p = 1;
                         while (p < 5) {
                             Internal[i] = new OrderedMoveEntry(from, move, (Promotion)p);
-                            Internal[i].Score = ScoreMove(Piece.Pawn, board, ref Internal[i], transpositionMove);
+                            Internal[i].Score = ScoreMoveNormal(Piece.Pawn, board, ref Internal[i], transpositionMove);
                             i++;
                             p++;
                         }
                     } else {
                         Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                        Internal[i].Score = ScoreMove(Piece.Pawn, board, ref Internal[i], transpositionMove);
+                        Internal[i].Score = ScoreMoveNormal(Piece.Pawn, board, ref Internal[i], transpositionMove);
                         i++;
                     }
                     
@@ -152,7 +182,7 @@ public readonly ref struct OrderedMoveList
 
                     while (moves.MoveNext()) {
                         Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                        Internal[i].Score = ScoreMove((Piece)piece, board, ref Internal[i], transpositionMove);
+                        Internal[i].Score = ScoreMoveNormal((Piece)piece, board, ref Internal[i], transpositionMove);
                         i++;
                     
                         move = moves.Current;
@@ -178,7 +208,7 @@ public readonly ref struct OrderedMoveList
 
             while (moves.MoveNext()) {
                 Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                Internal[i].Score = ScoreMove(Piece.King, board, ref Internal[i], transpositionMove);
+                Internal[i].Score = ScoreMoveNormal(Piece.King, board, ref Internal[i], transpositionMove);
                 i++;
                     
                 move = moves.Current;
@@ -217,11 +247,6 @@ public readonly ref struct OrderedMoveList
                 MoveList moveList = new(board, from, ref hv, ref d, ref checks);
                 moveList.LegalPawnMoveSetCapture(board.ColorToMove);
                 BitBoardIterator moves = moveList.Moves.GetEnumerator();
-                // MoveList moveList = new(
-                //     board, from, Piece.Pawn, board.ColorToMove, 
-                //     ref hv, ref d, ref checks
-                // );
-                // BitBoardIterator moves = (moveList.Moves & opposite).GetEnumerator();
                 Square move = moves.Current;
                 
                 while (moves.MoveNext()) {
@@ -229,13 +254,13 @@ public readonly ref struct OrderedMoveList
                         int p = 1;
                         while (p < 5) {
                             Internal[i] = new OrderedMoveEntry(from, move, (Promotion)p);
-                            Internal[i].Score = ScoreMove(Piece.Pawn, board, ref Internal[i], transpositionMove);
+                            Internal[i].Score = ScoreMoveQSearch(board, ref Internal[i], transpositionMove);
                             i++;
                             p++;
                         }
                     } else {
                         Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                        Internal[i].Score = ScoreMove(Piece.Pawn, board, ref Internal[i], transpositionMove);
+                        Internal[i].Score = ScoreMoveQSearch(board, ref Internal[i], transpositionMove);
                         i++;
                     }
                     
@@ -260,7 +285,7 @@ public readonly ref struct OrderedMoveList
 
                     while (moves.MoveNext()) {
                         Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                        Internal[i].Score = ScoreMove((Piece)piece, board, ref Internal[i], transpositionMove);
+                        Internal[i].Score = ScoreMoveQSearch(board, ref Internal[i], transpositionMove);
                         i++;
                     
                         move = moves.Current;
@@ -286,7 +311,7 @@ public readonly ref struct OrderedMoveList
 
             while (moves.MoveNext()) {
                 Internal[i] = new OrderedMoveEntry(from, move, Promotion.None);
-                Internal[i].Score = ScoreMove(Piece.King, board, ref Internal[i], transpositionMove);
+                Internal[i].Score = ScoreMoveQSearch(board, ref Internal[i], transpositionMove);
                 i++;
                     
                 move = moves.Current;
