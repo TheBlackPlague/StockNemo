@@ -581,7 +581,7 @@ public class MoveSearch
                     }
                     
                     // Save a more generalized score of beta-cutoff moves in our history table.
-                    HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth;
+                    HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth * depth;
                 }
 
                 // We had a beta cutoff, hence it's a beta cutoff entry.
