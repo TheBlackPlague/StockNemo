@@ -60,8 +60,8 @@ public readonly ref struct OrderedMoveList
         // If the move is a quiet move (not capture / promotion), then we should check if it is a killer move or history
         // move.
         // Killer moves are moves that are very likely to cause a beta cutoff.
-        // History moves are moves that have been scored as most likely alpha changing moves, depending on how many
-        // times the move changed alpha (gave us a guaranteed best move).
+        // History moves are moves that have been scored as most likely beta cutoff moves, depending on how many
+        // times the move has caused a beta cutoff (gave us a guaranteed best move).
         
         // Check if move is a rank 1 killer move (extremely local, recently updated).
         if (move == KillerMoveOne) return 900000;
