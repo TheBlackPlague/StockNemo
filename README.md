@@ -206,3 +206,7 @@ an amazing framework that allows distributed testing of StockNemo.
 Pfannschmidt for being an amazing utility software to tune StockNemo.
 - [Runpod](https://www.runpod.io/) by Runpod Team for providing necessary hardware to
 test StockNemo.
+- [Marlinflow](https://github.com/dsekercioglu/marlinflow) by the Marlinflow Team
+for providing the bulk of what is StockNemo's current neural network trainer.
+- [Berserk](https://github.com/jhonnold/berserk) by Jay for providing an amazing
+engine that can be used to generate neural network training data for StockNemo.

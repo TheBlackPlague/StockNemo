@@ -448,10 +448,6 @@ public class MoveSearch
             // replace our alpha with our evaluation.
             alpha = evaluation;
             
-            // Update our history table with our alpha-changing quiet move in hopes we can find similar best
-            // moves faster.
-            if (quietMove) HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth;
-            
             // Our alpha changed, so it is no longer an unchanged alpha entry.
             transpositionTableEntryType = MoveTranspositionTableEntryType.Exact;
             
@@ -575,12 +571,17 @@ public class MoveSearch
             board.UndoMove<NNUpdate>(ref rv);
 
             if (!HandleEvaluation(evaluation, ref move, quietMove)) {
-                if (quietMove && KillerMoveTable[0, plyFromRoot] != move) {
-                    // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move) to
-                    // better sort quiet moves like these in the future, allowing us to achieve a cutoff faster. Also
-                    // make sure we are not saving same move in both of our caches.
-                    KillerMoveTable.ReOrder(plyFromRoot);
-                    KillerMoveTable[0, plyFromRoot] = move;
+                if (quietMove) {
+                    if (KillerMoveTable[0, plyFromRoot] != move) {
+                        // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)
+                        // to better sort quiet moves like these in the future, allowing us to achieve a cutoff faster.
+                        // Also make sure we are not saving same move in both of our caches.
+                        KillerMoveTable.ReOrder(plyFromRoot);
+                        KillerMoveTable[0, plyFromRoot] = move;
+                    }
+                    
+                    // Save a more generalized score of beta-cutoff moves in our history table.
+                    HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth * depth;
                 }
 
                 // We had a beta cutoff, hence it's a beta cutoff entry.
