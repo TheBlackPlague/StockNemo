@@ -45,7 +45,8 @@
 
     <ItemGroup>
       <None Remove="Engine\NNUE\Model\BasicNNUE-d604f288bd.nnue" />
-      <EmbeddedResource Include="Engine\NNUE\Model\BasicNNUE-d604f288bd.nnue">
+      <None Remove="Engine\NNUE\Model\BasicNNUE-a740c1c9db.nnue" />
+      <EmbeddedResource Include="Engine\NNUE\Model\BasicNNUE-a740c1c9db.nnue">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
     </ItemGroup>
