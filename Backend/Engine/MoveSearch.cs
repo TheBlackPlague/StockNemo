@@ -341,14 +341,17 @@ public class MoveSearch
             #endregion
             
             #region Razoring
-            
-            if (depth == 1 && positionalEvaluation + RAZORING_EVALUATION_THRESHOLD < alpha)
+
+            if (depth == 1 && positionalEvaluation + RAZORING_EVALUATION_THRESHOLD < alpha) {
                 // If after any move, the positional evaluation of the resulting position with some added threshold is
                 // less than alpha, then the opponent will be able to find at least one move that improves their
                 // position.
                 // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
-                return QSearch<NonPvNode>(board, plyFromRoot, 15, alpha - 1, alpha);
-            
+                int evaluation = QSearch<NonPvNode>(board, plyFromRoot, 15, alpha - 1, alpha);
+
+                if (evaluation < alpha) return evaluation;
+            }
+
             #endregion
             
             #region Null Move Pruning
