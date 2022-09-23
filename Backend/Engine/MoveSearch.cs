@@ -347,7 +347,7 @@ public class MoveSearch
                 // less than alpha, then the opponent will be able to find at least one move that improves their
                 // position.
                 // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
-                return QSearch<NonPvNode>(board, plyFromRoot, 15, alpha, beta);
+                return QSearch<NonPvNode>(board, plyFromRoot, 15, alpha - 1, alpha);
             
             #endregion
             
