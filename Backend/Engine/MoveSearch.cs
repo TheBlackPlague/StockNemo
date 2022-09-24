@@ -416,6 +416,7 @@ public class MoveSearch
         int bestEvaluation = NEG_INFINITY;
         OrderedMoveEntry bestMoveSoFar = new(Square.Na, Square.Na, Promotion.None);
         MoveTranspositionTableEntryType transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged;
+        int historyBonus = depth * depth;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool HandleEvaluation(int evaluation, ref OrderedMoveEntry move, bool quietMove)
@@ -442,7 +443,12 @@ public class MoveSearch
                 PvTable.UpdateLength(plyFromRoot);
             }
 
-            if (evaluation <= alpha) return true;
+            if (evaluation <= alpha) {
+                // Decrement history if move wasn't able to change alpha.
+                if (quietMove) HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] -= historyBonus;
+                
+                return true;
+            }
 
             // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
             // replace our alpha with our evaluation.
@@ -581,7 +587,7 @@ public class MoveSearch
                     }
                     
                     // Save a more generalized score of beta-cutoff moves in our history table.
-                    HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += depth * depth;
+                    HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += historyBonus;
                 }
 
                 // We had a beta cutoff, hence it's a beta cutoff entry.
