@@ -10,6 +10,9 @@ public readonly ref struct OrderedMoveList
     // Technically, there do exist positions where we'd have 218 legal moves.
     // However, they are so unlikely that 128 seems like an okay number.
     public const int SIZE = 128;
+
+    public const int MAX_QUIET_PRIORITY = 900000;
+    
     private const int PRIORITY = int.MaxValue;
 
     private static readonly int[][] MvvLvaTable =
@@ -64,11 +67,11 @@ public readonly ref struct OrderedMoveList
         // times the move has caused a beta cutoff (gave us a guaranteed best move).
         
         // Check if move is a rank 1 killer move (extremely local, recently updated).
-        if (move == KillerMoveOne) return 900000;
+        if (move == KillerMoveOne) return MAX_QUIET_PRIORITY;
         // ReSharper disable once ConvertIfStatementToReturnStatement
         
         // Check if move is a rank 2 killer move (less local, might've been updated long time ago).
-        if (move == KillerMoveTwo) return 800000;
+        if (move == KillerMoveTwo) return MAX_QUIET_PRIORITY - 100000;
 
         // Return the updated history score for the move.
         return HistoryTable[pieceToMove, board.ColorToMove, move.To];

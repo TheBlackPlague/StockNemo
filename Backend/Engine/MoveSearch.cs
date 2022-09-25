@@ -474,7 +474,7 @@ public class MoveSearch
             
             OrderedMoveEntry move = moveList[i];
 
-            bool quietMove = !board.All(oppositeColor)[move.To];
+            bool quietMove = move.Score <= OrderedMoveList.MAX_QUIET_PRIORITY;
             quietMoveCounter += quietMove.ToByte();
 
             #region Futility Pruning
