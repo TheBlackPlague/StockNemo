@@ -443,12 +443,7 @@ public class MoveSearch
                 PvTable.UpdateLength(plyFromRoot);
             }
 
-            if (evaluation <= alpha) {
-                // Decrement history if move wasn't able to change alpha.
-                if (quietMove) HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] -= historyBonus;
-                
-                return true;
-            }
+            if (evaluation <= alpha) return true;
 
             // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
             // replace our alpha with our evaluation.
@@ -586,7 +581,7 @@ public class MoveSearch
                         KillerMoveTable[0, plyFromRoot] = move;
                     }
                     
-                    // Save a more generalized score of beta-cutoff moves in our history table.
+                    // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
                     HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += historyBonus;
                 }
 
