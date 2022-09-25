@@ -588,8 +588,7 @@ public class MoveSearch
                     int j = 1;
                     while (j < quietMoveCounter) {
                         OrderedMoveEntry otherMove = moveList[i - j];
-                        HistoryTable[board.PieceOnly(otherMove.From), board.ColorToMove, otherMove.To] -= depth * 
-                            Math.Min(depth, 5);
+                        HistoryTable[board.PieceOnly(otherMove.From), board.ColorToMove, otherMove.To] -= depth;
                         j++;
                     }
                 }
