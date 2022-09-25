@@ -7,7 +7,7 @@
 </h1>
 
 <h3 align="center">
-	C# Chess Engine - Finding Good Moves like Stockfish
+	C# Neural Network Chess Engine - Finding Good Moves like Stockfish
 </h3>
 
 <p align="center">
