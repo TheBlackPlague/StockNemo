@@ -583,6 +583,14 @@ public class MoveSearch
                     
                     // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
                     HistoryTable[board.PieceOnly(move.From), board.ColorToMove, move.To] += historyBonus;
+                    
+                    // Decrement all other quiet moves to ensure a branch local history heuristic.
+                    int j = 1;
+                    while (j < quietMoveCounter) {
+                        OrderedMoveEntry otherMove = moveList[i - j];
+                        HistoryTable[board.PieceOnly(otherMove.From), board.ColorToMove, otherMove.To] -= historyBonus;
+                        j++;
+                    }
                 }
 
                 // We had a beta cutoff, hence it's a beta cutoff entry.
