@@ -188,12 +188,6 @@ public class MoveSearch
 
         #endregion
 
-        #region Transposition Table Prefetch
-
-        int transpositionKey = Table.Prefetch(board.ZobristHash);
-
-        #endregion
-
         #region Pv Table Length Initialization
 
         if (typeof(Node) == typeof(PvNode)) {
@@ -253,7 +247,7 @@ public class MoveSearch
 
         #region Transposition Table Lookup
 
-        ref MoveTranspositionTableEntry storedEntry = ref Table[transpositionKey];
+        ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
         bool valid = storedEntry.Type != MoveTranspositionTableEntryType.Invalid;
         SearchedMove transpositionMove = SearchedMove.Default;
         bool transpositionHit = false;
@@ -509,6 +503,12 @@ public class MoveSearch
             RevertMove rv = board.Move<NNUpdate>(ref move);
             TotalNodeSearchCount++;
             
+            #region Transposition Table Prefetch
+            
+            Table.Prefetch(board.ZobristHash);
+            
+            #endregion
+            
             int evaluation;
             
             if (i == 0)
@@ -634,12 +634,6 @@ public class MoveSearch
 
         #endregion
         
-        #region Transposition Table Prefetch
-
-        int transpositionKey = Table.Prefetch(board.ZobristHash);
-
-        #endregion
-        
         #region Selective Depth Change
 
         if (typeof(Node) == typeof(PvNode)) SelectiveDepth = Math.Max(SelectiveDepth, plyFromRoot);
@@ -649,7 +643,7 @@ public class MoveSearch
         #region Transposition Table Lookup
 
         if (typeof(Node) == typeof(NonPvNode)) {
-            ref MoveTranspositionTableEntry storedEntry = ref Table[transpositionKey];
+            ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
             if (storedEntry.ZobristHash == board.ZobristHash &&
                 (storedEntry.Type == MoveTranspositionTableEntryType.Exact ||
                 storedEntry.Type == MoveTranspositionTableEntryType.BetaCutoff &&
@@ -751,6 +745,12 @@ public class MoveSearch
             // Make the move.
             RevertMove rv = board.Move<NNUpdate>(ref move);
             TotalNodeSearchCount++;
+            
+            #region Transposition Table Prefetch
+            
+            Table.Prefetch(board.ZobristHash);
+            
+            #endregion
         
             // Evaluate position by searching deeper and negating the result. An evaluation that's good for
             // our opponent will obviously be bad for us.
