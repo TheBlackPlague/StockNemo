@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 
 namespace Backend.Data;
 
@@ -44,13 +45,19 @@ public unsafe class MoveTranspositionTable
     public ref MoveTranspositionTableEntry this[ulong zobristHash]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => ref Internal.AA((int)zobristHash & HashFilter);
+        get => ref this[(int)zobristHash & HashFilter];
+    }
+
+    public ref MoveTranspositionTableEntry this[int transpositionKey]
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => ref Internal.AA(transpositionKey);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void InsertEntry(ulong zobristHash, ref MoveTranspositionTableEntry entry)
+    public void InsertEntry(ref MoveTranspositionTableEntry entry)
     {
-        int index = (int)zobristHash & HashFilter;
+        int index = (int)entry.ZobristHash & HashFilter;
         ref MoveTranspositionTableEntry oldEntry = ref Internal.AA(index);
 
         // Replace Scheme:
@@ -63,6 +70,14 @@ public unsafe class MoveTranspositionTable
             entry.Type == MoveTranspositionTableEntryType.BetaCutoff ||
             entry.Depth > oldEntry.Depth - REPLACEMENT_DEPTH_THRESHOLD)
             Internal.AA(index) = entry;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int Prefetch(ulong zobristHash)
+    {
+        int index = (int)zobristHash & HashFilter;
+        Internal.Prefetch<MoveTranspositionTableEntry, L2>(index);
+        return index;
     }
 
     public void FreeMemory() => Internal = null;

@@ -3,8 +3,10 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 using System.Runtime.Serialization.Formatters.Binary;
 using Backend.Data.Enum;
+using Backend.Data.Template;
 
 namespace Backend;
 
@@ -16,6 +18,17 @@ public static class Util
     {
         foreach (Type type in Assembly.GetExecutingAssembly().GetTypes()) 
             RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe static void Prefetch<T, Cache>(this T[] array, int index) where T : unmanaged where Cache : CacheType
+    {
+        fixed (T* pointer = array) {
+            T* address = pointer + index * sizeof(T);
+            if (typeof(Cache) == typeof(L1)) Sse.Prefetch0(address);
+            if (typeof(Cache) == typeof(L2)) Sse.Prefetch1(address);
+            if (typeof(Cache) == typeof(L3)) Sse.Prefetch2(address);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -188,6 +188,12 @@ public class MoveSearch
 
         #endregion
 
+        #region Transposition Table Prefetch
+
+        int transpositionKey = Table.Prefetch(board.ZobristHash);
+
+        #endregion
+
         #region Pv Table Length Initialization
 
         if (typeof(Node) == typeof(PvNode)) {
@@ -247,7 +253,7 @@ public class MoveSearch
 
         #region Transposition Table Lookup
 
-        ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
+        ref MoveTranspositionTableEntry storedEntry = ref Table[transpositionKey];
         bool valid = storedEntry.Type != MoveTranspositionTableEntryType.Invalid;
         SearchedMove transpositionMove = SearchedMove.Default;
         bool transpositionHit = false;
@@ -609,7 +615,7 @@ public class MoveSearch
         
         SearchedMove bestMove = new(ref bestMoveSoFar, bestEvaluation);
         MoveTranspositionTableEntry entry = new(board.ZobristHash, transpositionTableEntryType, bestMove, depth);
-        Table.InsertEntry(board.ZobristHash, ref entry);
+        Table.InsertEntry(ref entry);
 
         #endregion
 
@@ -628,6 +634,12 @@ public class MoveSearch
 
         #endregion
         
+        #region Transposition Table Prefetch
+
+        int transpositionKey = Table.Prefetch(board.ZobristHash);
+
+        #endregion
+        
         #region Selective Depth Change
 
         if (typeof(Node) == typeof(PvNode)) SelectiveDepth = Math.Max(SelectiveDepth, plyFromRoot);
@@ -637,7 +649,7 @@ public class MoveSearch
         #region Transposition Table Lookup
 
         if (typeof(Node) == typeof(NonPvNode)) {
-            ref MoveTranspositionTableEntry storedEntry = ref Table[board.ZobristHash];
+            ref MoveTranspositionTableEntry storedEntry = ref Table[transpositionKey];
             if (storedEntry.ZobristHash == board.ZobristHash &&
                 (storedEntry.Type == MoveTranspositionTableEntryType.Exact ||
                 storedEntry.Type == MoveTranspositionTableEntryType.BetaCutoff &&
