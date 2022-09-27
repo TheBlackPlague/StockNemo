@@ -76,7 +76,7 @@ public unsafe class MoveTranspositionTable
     public int Prefetch(ulong zobristHash)
     {
         int index = (int)zobristHash & HashFilter;
-        Internal.Prefetch<MoveTranspositionTableEntry, L2>(index);
+        Internal.Prefetch<MoveTranspositionTableEntry, L1>(index);
         return index;
     }
 
