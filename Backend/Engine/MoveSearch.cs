@@ -34,9 +34,6 @@ public class MoveSearch
     private const int LMP_QUIET_THRESHOLD_BASE = 3;
     private const int LMP_DEPTH_THRESHOLD = 3;
 
-    private const int NODE_COUNTING_DEPTH = 8;
-    private const int NODE_COUNTING_REQUIRED_EFFORT = 95;
-
     private const int REVERSE_FUTILITY_D = 67;
     private const int REVERSE_FUTILITY_I = 76;
     private const int REVERSE_FUTILITY_DEPTH_THRESHOLD = 7;
@@ -59,7 +56,6 @@ public class MoveSearch
 
     private readonly HistoryTable HistoryTable = new();
     private readonly KillerMoveTable KillerMoveTable = new();
-    private readonly MoveSearchEffortTable SearchEffort = new();
     private readonly PrincipleVariationTable PvTable = new();
 
     private readonly MoveSearchStack MoveSearchStack = new();
@@ -67,8 +63,6 @@ public class MoveSearch
     private readonly EngineBoard Board;
     private readonly TimeControl TimeControl;
     private readonly MoveTranspositionTable Table;
-
-    private OrderedMoveEntry ReducedTimeMove = OrderedMoveEntry.Default;
 
     public MoveSearch(EngineBoard board, MoveTranspositionTable table, TimeControl timeControl)
     {
@@ -85,13 +79,9 @@ public class MoveSearch
         try {
             int depth = 1;
             Stopwatch stopwatch = Stopwatch.StartNew();
-            bool timePreviouslyUpdated = false;
             while (!TimeControl.Finished() && depth <= selectedDepth) {
                 evaluation = AspirationSearch(Board, depth, evaluation, ref bestMove);
                 bestMove = PvTable.Get(0);
-
-                // Try counting nodes to see if we can exit the search early.
-                timePreviouslyUpdated = NodeCounting(depth, bestMove, timePreviouslyUpdated);
                 
                 DepthSearchLog(depth, evaluation, stopwatch);
                 
@@ -419,7 +409,7 @@ public class MoveSearch
         int historyBonus = depth * depth;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool HandleEvaluation(int evaluation, ref OrderedMoveEntry move, bool quietMove)
+        bool HandleEvaluation(int evaluation, ref OrderedMoveEntry move)
         {
             if (evaluation <= bestEvaluation) return true;
             
@@ -471,8 +461,6 @@ public class MoveSearch
             // that we are searching through the likely best moves first, allowing us to return early.
             moveList.SortNext(i, moveCount);
 
-            int previousNodeCount = TotalNodeSearchCount;
-            
             OrderedMoveEntry move = moveList[i];
 
             bool quietMove = !board.All(oppositeColor)[move.To];
@@ -571,7 +559,7 @@ public class MoveSearch
             // Undo the move.
             board.UndoMove<NNUpdate>(ref rv);
 
-            if (!HandleEvaluation(evaluation, ref move, quietMove)) {
+            if (!HandleEvaluation(evaluation, ref move)) {
                 if (quietMove) {
                     if (KillerMoveTable[0, plyFromRoot] != move) {
                         // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)
@@ -597,8 +585,6 @@ public class MoveSearch
                 transpositionTableEntryType = MoveTranspositionTableEntryType.BetaCutoff;
                 break;
             }
-
-            if (rootNode) SearchEffort[move.From, move.To] = TotalNodeSearchCount - previousNodeCount;
             
             i++;
         }
@@ -765,31 +751,6 @@ public class MoveSearch
             TotalNodeSearchCount + " nps " + (int)(TotalNodeSearchCount / ((float)stopwatch.ElapsedMilliseconds / 1000)) 
             + " pv " + PvLine() + '\n'
         );
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool NodeCounting(int depth, OrderedMoveEntry bestMove, bool timePreviouslyUpdated)
-    {
-        // This idea is from the Koivisto Engine:
-        // The branch being searched the most is likely the best branch as we're having to evaluate it very deeply
-        // across depths. Thus it's reasonable to end the search earlier and make the move instantly.
-
-        // Check whether we're past the depth to start reducing our search time with node counting and make sure that
-        // we're past the required effort threshold to do this move quickly.
-        if (depth >= NODE_COUNTING_DEPTH && TimeControl.TimeLeft() != 0 && !timePreviouslyUpdated
-            && SearchEffort[bestMove.From, bestMove.To] * 100 / TotalNodeSearchCount >= NODE_COUNTING_REQUIRED_EFFORT) {
-            timePreviouslyUpdated = true;
-            TimeControl.ChangeTime(TimeControl.Time / 3);
-            ReducedTimeMove = bestMove;
-        }
-
-        if (timePreviouslyUpdated && bestMove != ReducedTimeMove) {
-            // In the rare case that our previous node count guess was incorrect, give us a little bit more time
-            // to see if we can find a better move.
-            TimeControl.ChangeTime(TimeControl.Time * 3);
-        }
-
-        return timePreviouslyUpdated;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
