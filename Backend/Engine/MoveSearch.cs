@@ -85,10 +85,6 @@ public class MoveSearch
                 
                 DepthSearchLog(depth, evaluation, stopwatch);
                 
-                // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
-                // finish the next depth in time. To save time, we should just exit the search early.
-                if (depth > 5 && TimeControl.TimeLeft() <= TimeControl.Time * TIME_TO_DEPTH_THRESHOLD) break;
-                
                 depth++;
             }
         } catch (OperationCanceledException) {}
