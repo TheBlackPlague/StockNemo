@@ -368,7 +368,7 @@ public ref struct MoveList
 
         if (D[From]) {
             // If pawn is pinned diagonally, we can only do attacks and EP on the pin.
-            Moves &= D;
+            Moves &= D & C;
             return;
         }
             
@@ -456,7 +456,7 @@ public ref struct MoveList
 
         if (D[From]) {
             // If pawn is pinned diagonally, we can only do attacks and EP on the pin.
-            Moves &= D;
+            Moves &= D & C;
             return;
         }
             
