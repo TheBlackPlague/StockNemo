@@ -364,7 +364,8 @@ public ref struct MoveList
 
         // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
         // our pieces).
-        Moves |= attack & opposite & C;
+        Moves |= attack & opposite;
+        Moves &= C;
 
         if (D[From]) {
             // If pawn is pinned diagonally, we can only do attacks and EP on the pin.
@@ -452,7 +453,8 @@ public ref struct MoveList
 
         // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
         // our pieces).
-        Moves |= attack & opposite & C;
+        Moves |= attack & opposite;
+        Moves &= C;
 
         if (D[From]) {
             // If pawn is pinned diagonally, we can only do attacks and EP on the pin.
