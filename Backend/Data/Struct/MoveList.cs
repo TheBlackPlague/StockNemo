@@ -354,7 +354,7 @@ public ref struct MoveList
                 
             if (epTargetPieceExists & reverseCorner[From]) {
                 // If both the enemy EP piece and our piece that can theoretically EP exist...
-                Moves |= Board.EnPassantTarget;
+                Moves |= Board.EnPassantTarget & C;
             }
         }
         
@@ -364,8 +364,7 @@ public ref struct MoveList
 
         // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
         // our pieces).
-        Moves |= attack & opposite;
-        Moves &= C;
+        Moves |= attack & opposite & C;
 
         if (D[From]) {
             // If pawn is pinned diagonally, we can only do attacks and EP on the pin.
@@ -443,7 +442,7 @@ public ref struct MoveList
                 
             if (epTargetPieceExists & reverseCorner[From]) {
                 // If both the enemy EP piece and our piece that can theoretically EP exist...
-                Moves |= Board.EnPassantTarget;
+                Moves |= Board.EnPassantTarget & C;
             }
         }
         
@@ -453,8 +452,7 @@ public ref struct MoveList
 
         // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
         // our pieces).
-        Moves |= attack & opposite;
-        Moves &= C;
+        Moves |= attack & opposite & C;
 
         if (D[From]) {
             // If pawn is pinned diagonally, we can only do attacks and EP on the pin.
