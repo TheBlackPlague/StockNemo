@@ -77,7 +77,7 @@ public class MoveSearch
         try {
             int depth = 1;
             Stopwatch stopwatch = Stopwatch.StartNew();
-            while (!TimeManager.OutOfTime && depth <= selectedDepth) {
+            while (!TimeManager.OutOfTime() && depth <= selectedDepth) {
                 evaluation = AspirationSearch(Board, depth, evaluation, ref bestMove);
                 bestMove = PvTable.Get(0);
                 
@@ -113,7 +113,7 @@ public class MoveSearch
             // If we're out of time, we should exit the search as fast as possible.
             // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
             // is not reverted. Thus, a cloned board must be provided.
-            if (TimeManager.OutOfTime) throw new OperationCanceledException();
+            if (TimeManager.OutOfTime()) throw new OperationCanceledException();
 
             #endregion
 
@@ -168,7 +168,7 @@ public class MoveSearch
         // If we're out of time, we should exit the search as fast as possible.
         // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         // is not reverted. Thus, a cloned board must be provided.
-        if (TimeManager.OutOfTime) throw new OperationCanceledException();
+        if (TimeManager.OutOfTime()) throw new OperationCanceledException();
 
         #endregion
 
@@ -604,7 +604,7 @@ public class MoveSearch
         // If we're out of time, we should exit the search as fast as possible.
         // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         // is not reverted. Thus, a cloned board must be provided.
-        if (TimeManager.OutOfTime) throw new OperationCanceledException();
+        if (TimeManager.OutOfTime()) throw new OperationCanceledException();
 
         #endregion
         

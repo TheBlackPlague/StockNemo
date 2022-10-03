@@ -10,9 +10,9 @@ public static class TimeManager
 
     private const int COMPLEXITY_THRESHOLD = 400;
     private const int BASE_TIME_FACTOR = 20;
+    private const int INCREMENT_TIME_FACTOR = 2;
     
     public static CancellationToken ThreadToken => Internal.Token;
-    public static bool OutOfTime => ThreadToken.IsCancellationRequested;
 
     private static CancellationTokenSource Internal = new();
     private static bool CurrentlySetup;
@@ -45,14 +45,15 @@ public static class TimeManager
             int nnEval = Evaluation.RelativeEvaluation<NeuralNetwork>(board);
             int hcEval = Evaluation.RelativeEvaluation<HandCrafted>(board);
             int complexity = Math.Abs(nnEval - hcEval);
-            if (complexity is > COMPLEXITY_THRESHOLD and < COMPLEXITY_THRESHOLD * 5) {
-                float marginedComplexity = Math.Min(500, complexity - COMPLEXITY_THRESHOLD);
-                float e = MathF.Pow(MathF.E, marginedComplexity / 1000);
-                time += (int)(time * e);
+
+            if (complexity > COMPLEXITY_THRESHOLD) {
+                float marginedComplexity = Math.Min(500, complexity - COMPLEXITY_THRESHOLD) / 1000;
+                float exponential = MathF.Pow(MathF.E, marginedComplexity);
+                time += (int)(time * exponential);
             }
         }
 
-        time += ourIncrement;
+        time += ourIncrement / INCREMENT_TIME_FACTOR;
 
         Internal.CancelAfter(time);
 
@@ -64,6 +65,9 @@ public static class TimeManager
     {
         Internal.CancelAfter(time);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool OutOfTime() => ThreadToken.IsCancellationRequested;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Reset()
