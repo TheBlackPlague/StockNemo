@@ -40,18 +40,8 @@ public static class TimeManager
         // int opponentIncrement = timeIncrement[(int)opponentColor];
 
         int time = ourTime / BASE_TIME_FACTOR;
+        
         if (movesToGo != -1) time = Math.Max(time, (ourTime + ourIncrement) / movesToGo);
-        else {
-            int nnEval = Evaluation.RelativeEvaluation<NeuralNetwork>(board);
-            int hcEval = Evaluation.RelativeEvaluation<HandCrafted>(board);
-            int complexity = Math.Abs(nnEval - hcEval);
-
-            if (complexity > COMPLEXITY_THRESHOLD) {
-                float marginedComplexity = Math.Min(500, complexity - COMPLEXITY_THRESHOLD) / 1000;
-                float exponential = MathF.Pow(MathF.E, marginedComplexity);
-                time += (int)(time * exponential);
-            }
-        }
 
         time += ourIncrement / INCREMENT_TIME_FACTOR;
 
