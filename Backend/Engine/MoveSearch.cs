@@ -61,14 +61,12 @@ public class MoveSearch
     private readonly MoveSearchStack MoveSearchStack = new();
 
     private readonly EngineBoard Board;
-    private readonly TimeControl TimeControl;
     private readonly MoveTranspositionTable Table;
 
-    public MoveSearch(EngineBoard board, MoveTranspositionTable table, TimeControl timeControl)
+    public MoveSearch(EngineBoard board, MoveTranspositionTable table)
     {
         Board = board;
         Table = table;
-        TimeControl = timeControl;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -79,7 +77,7 @@ public class MoveSearch
         try {
             int depth = 1;
             Stopwatch stopwatch = Stopwatch.StartNew();
-            while (!TimeControl.Finished() && depth <= selectedDepth) {
+            while (!TimeManager.OutOfTime && depth <= selectedDepth) {
                 evaluation = AspirationSearch(Board, depth, evaluation, ref bestMove);
                 bestMove = PvTable.Get(0);
                 
@@ -115,7 +113,7 @@ public class MoveSearch
             // If we're out of time, we should exit the search as fast as possible.
             // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
             // is not reverted. Thus, a cloned board must be provided.
-            if (TimeControl.Finished()) throw new OperationCanceledException();
+            if (TimeManager.OutOfTime) throw new OperationCanceledException();
 
             #endregion
 
@@ -170,7 +168,7 @@ public class MoveSearch
         // If we're out of time, we should exit the search as fast as possible.
         // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         // is not reverted. Thus, a cloned board must be provided.
-        if (TimeControl.Finished()) throw new OperationCanceledException();
+        if (TimeManager.OutOfTime) throw new OperationCanceledException();
 
         #endregion
 
@@ -299,7 +297,7 @@ public class MoveSearch
         // We should use the evaluation from our transposition table if we had a hit.
         // As that evaluation isn't truly static and may have been from a previous deep search.
         int positionalEvaluation = transpositionHit ? 
-            transpositionMove.Evaluation : Evaluation.RelativeEvaluation(board);
+            transpositionMove.Evaluation : Evaluation.RelativeEvaluation<NeuralNetwork>(board);
             
         // Also store the evaluation to later check if it improved.
         MoveSearchStack[plyFromRoot].PositionalEvaluation = positionalEvaluation;
@@ -606,7 +604,7 @@ public class MoveSearch
         // If we're out of time, we should exit the search as fast as possible.
         // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         // is not reverted. Thus, a cloned board must be provided.
-        if (TimeControl.Finished()) throw new OperationCanceledException();
+        if (TimeManager.OutOfTime) throw new OperationCanceledException();
 
         #endregion
         
@@ -639,7 +637,7 @@ public class MoveSearch
         
         #region Early Evaluation
         
-        int earlyEval = Evaluation.RelativeEvaluation(board);
+        int earlyEval = Evaluation.RelativeEvaluation<NeuralNetwork>(board);
         
         // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
         // as this position is overwhelmingly winning.

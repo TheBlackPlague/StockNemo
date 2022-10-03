@@ -20,8 +20,6 @@ public static class UniversalChessInterface
 
     private static DisplayBoard Board = DisplayBoard.Default();
     private static bool Busy;
-    private static TimeControl ActiveTimeControl;
-    private static int MoveCount;
 
     public static void Setup()
     {
@@ -120,7 +118,6 @@ public static class UniversalChessInterface
         
         // Once we've loaded the position, we can apply moves.
         if (args[argsParsed].ToLower().Equals("moves")) {
-            MoveCount = args.Length - (argsParsed + 1);
             for (int i = argsParsed + 1; i < args.Length; i++) {
                 Square from = Enum.Parse<Square>(args[i][..2], true);
                 Square to = Enum.Parse<Square>(args[i][2..4], true);
@@ -173,7 +170,7 @@ public static class UniversalChessInterface
         int movesToGo = -1;
 
         if (args.Length == 1) {
-            ActiveTimeControl = new TimeControl(time);
+            TimeManager.Setup();
             goto SkipParameter;
         }
 
@@ -216,10 +213,10 @@ public static class UniversalChessInterface
 
             argPosition++;
         }
-
-        if (time == maxTime || timeSpecified) ActiveTimeControl = new TimeControl(time);
-        else ActiveTimeControl = 
-            new TimeControl(movesToGo, timeForColor, timeIncForColor, Board.ColorToMove, MoveCount);
+        
+        if (time == maxTime) TimeManager.Setup();
+        else if (timeSpecified) TimeManager.Setup(time);
+        else TimeManager.Setup(Board, timeForColor, timeIncForColor, movesToGo);
 
         SkipParameter:
         TaskFactory factory = new();
@@ -228,7 +225,7 @@ public static class UniversalChessInterface
         factory.StartNew(() =>
         {
             // ReSharper disable once AccessToModifiedClosure
-            MoveSearch search = new(Board.Clone(), TranspositionTable, ActiveTimeControl);
+            MoveSearch search = new(Board.Clone(), TranspositionTable);
             Busy = true;
             bestMove = search.IterativeDeepening(depth);
             Busy = false;
@@ -239,15 +236,14 @@ public static class UniversalChessInterface
 #if DEBUG
             Console.WriteLine("TT Count: " + search.TableCutoffCount);
 #endif
-            MoveCount++;
-        }, ActiveTimeControl.Token);
+        }, TimeManager.ThreadToken);
     }
 
     private static void HandleStop(string input)
     {
         if (!input.ToLower().Equals("stop")) return;
         if (!Busy) return;
-        ActiveTimeControl.ChangeTime(0);
+        TimeManager.ChangeTime(0);
     }
 
 }

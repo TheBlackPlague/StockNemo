@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 using Backend.Engine;
 using BetterConsoles.Core;
 using BetterConsoles.Tables;
@@ -37,14 +38,19 @@ internal class DisplayBoard : EngineBoard
     
     public string ToString(bool flip = false)
     {
-        int evaluation = Evaluation.RelativeEvaluation(this);
-        if (ColorToMove == PieceColor.Black) evaluation = -evaluation;
+        int nnEvaluation = Evaluation.RelativeEvaluation<NeuralNetwork>(this);
+        int hcEvaluation = Evaluation.RelativeEvaluation<HandCrafted>(this);
+        if (ColorToMove == PieceColor.Black) {
+            nnEvaluation = -nnEvaluation;
+            hcEvaluation = -hcEvaluation;
+        }
         
         string board = DrawBoardCli(flip).ToString().Trim(' ');
-        string fen = "FEN: " + GenerateFen() + "\n";
+        string fen = "FEN: " + GenerateFen() + '\n';
         string hash = "Hash: " + $"{Map.ZobristHash:X}\n";
-        string eval = "Evaluation: " + evaluation;
-        return board + fen + hash + eval;
+        string nnEval = "NN Evaluation: " + nnEvaluation + '\n';
+        string hcEval = "HC Evaluation: " + hcEvaluation;
+        return board + fen + hash + nnEval + hcEval;
     }
     
     private Table DrawBoardCli(bool flip)

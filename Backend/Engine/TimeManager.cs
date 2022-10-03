@@ -1,0 +1,77 @@
+﻿using System;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using Backend.Data.Template;
+
+namespace Backend.Engine;
+
+public static class TimeManager
+{
+
+    private const int COMPLEXITY_THRESHOLD = 400;
+    private const int BASE_TIME_FACTOR = 20;
+    
+    public static CancellationToken ThreadToken => Internal.Token;
+    public static bool OutOfTime => ThreadToken.IsCancellationRequested;
+
+    private static CancellationTokenSource Internal = new();
+    private static bool CurrentlySetup;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Setup(int time = -1)
+    {
+        Reset();
+        
+        if (time != -1) Internal.CancelAfter(time);
+        
+        CurrentlySetup = true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Setup(EngineBoard board, ReadOnlySpan<int> timeLeft, ReadOnlySpan<int> timeIncrement, 
+        int movesToGo = -1)
+    {
+        Reset();
+
+        // PieceColor opponentColor = board.ColorToMove.OppositeColor();
+        int ourTime = timeLeft[(int)board.ColorToMove];
+        // int opponentTime = timeLeft[(int)opponentColor];
+        int ourIncrement = timeIncrement[(int)board.ColorToMove];
+        // int opponentIncrement = timeIncrement[(int)opponentColor];
+
+        int time = ourTime / BASE_TIME_FACTOR;
+        if (movesToGo != -1) time = Math.Max(time, (ourTime + ourIncrement) / movesToGo);
+        else {
+            int nnEval = Evaluation.RelativeEvaluation<NeuralNetwork>(board);
+            int hcEval = Evaluation.RelativeEvaluation<HandCrafted>(board);
+            int complexity = Math.Abs(nnEval - hcEval);
+            if (complexity is > COMPLEXITY_THRESHOLD and < COMPLEXITY_THRESHOLD * 5) {
+                float marginedComplexity = Math.Min(500, complexity - COMPLEXITY_THRESHOLD);
+                float e = MathF.Pow(MathF.E, marginedComplexity / 1000);
+                time += (int)(time * e);
+            }
+        }
+
+        time += ourIncrement;
+
+        Internal.CancelAfter(time);
+
+        CurrentlySetup = true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ChangeTime(int time)
+    {
+        Internal.CancelAfter(time);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void Reset()
+    {
+        if (CurrentlySetup) {
+            Internal = new CancellationTokenSource();
+            CurrentlySetup = false;
+        }
+    }
+    
+}

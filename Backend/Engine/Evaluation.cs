@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using Backend.Data;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
+using Backend.Data.Template;
 using Backend.Engine.NNUE.Architecture.Basic;
 
 namespace Backend.Engine;
@@ -33,9 +34,9 @@ public static class Evaluation
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int RelativeEvaluation(Board board)
+    public static int RelativeEvaluation<EvaluationT>(Board board) where EvaluationT : EvaluationType
     {
-        return NNEvaluation(board);
+        return typeof(EvaluationT) == typeof(NeuralNetwork) ? NNEvaluation(board) : HCEvaluation(board);
         // return NormalEvaluation(board) * (-2 * (int)board.ColorToMove + 1);
     }
 
@@ -47,13 +48,23 @@ public static class Evaluation
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int NormalEvaluation(Board board)
+    private static int HCEvaluation(Board board)
     {
-        int earlyGameEvaluation = board.MaterialDevelopmentEvaluationEarly;
-        int lateGameEvaluation = board.MaterialDevelopmentEvaluationLate;
-        
+        int earlyGameEvaluation = MaterialDevelopmentEvaluation(board, Phase.Early);
+        int lateGameEvaluation = MaterialDevelopmentEvaluation(board, Phase.Late);
+
+        #region Piece Counts
+
+        int whiteKnightCount = board.All(Piece.Knight, PieceColor.White).Count;
+        int blackKnightCount = board.All(Piece.Knight, PieceColor.Black).Count;
         int whiteBishopCount = board.All(Piece.Bishop, PieceColor.White).Count;
         int blackBishopCount = board.All(Piece.Bishop, PieceColor.Black).Count;
+        int whiteRookCount = board.All(Piece.Rook, PieceColor.White).Count;
+        int blackRookCount = board.All(Piece.Rook, PieceColor.Black).Count;
+        int whiteQueenCount = board.All(Piece.Queen, PieceColor.White).Count;
+        int blackQueenCount = board.All(Piece.Queen, PieceColor.Black).Count;
+
+        #endregion
 
         #region Bishop Pair Evaluation
 
@@ -63,30 +74,26 @@ public static class Evaluation
 
         #endregion
 
-        #region Phase Calculation
+        #region Tapered Evaluation
 
-        // Calculate the phase of the game.
-        // Currently supported solid phases:
-        // - Early
-        // - Late
-        
         int phase = 0;
-        phase += board.All(Piece.Knight, PieceColor.White).Count + board.All(Piece.Knight, PieceColor.Black).Count;
+        phase += whiteKnightCount + blackKnightCount;
         phase += whiteBishopCount + blackBishopCount;
-        phase += (board.All(Piece.Rook, PieceColor.White).Count + board.All(Piece.Rook, PieceColor.Black).Count) * 2;
-        phase += (board.All(Piece.Queen, PieceColor.White).Count + board.All(Piece.Queen, PieceColor.Black).Count) * 4;
+        phase += (whiteRookCount + blackRookCount) * 2;
+        phase += (whiteQueenCount + blackQueenCount) * 4;
 
         phase = 24 - phase;
         phase = (phase * 256 + 24 / 2) / 24;
 
         #endregion
-
+        
         // Return final evaluation based on interpolation between phases.
-        return (earlyGameEvaluation * (256 - phase) + lateGameEvaluation * phase) / 256;
+        return (earlyGameEvaluation * (256 - phase) + lateGameEvaluation * phase) / 256 * 
+               (-2 * (int)board.ColorToMove + 1);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public static int InitialMaterialDevelopmentEvaluation(ref BitBoardMap map, Phase phase)
+    private static int MaterialDevelopmentEvaluation(Board board, Phase phase)
     {
         int whiteScore = 0;
         int blackScore = 0;
@@ -95,7 +102,7 @@ public static class Evaluation
 
         Piece piece = Piece.Pawn;
         while (piece != Piece.Empty) {
-            BitBoardIterator pieceIterator = map[piece, PieceColor.White].GetEnumerator();
+            BitBoardIterator pieceIterator = board.All(piece, PieceColor.White).GetEnumerator();
             Square pieceSq = pieceIterator.Current;
             while (pieceIterator.MoveNext()) {
                 whiteScore += MDT[piece, (Square)((byte)pieceSq ^ 56), phase];
@@ -110,7 +117,7 @@ public static class Evaluation
 
         piece = Piece.Pawn;
         while (piece != Piece.Empty) {
-            BitBoardIterator pieceIterator = map[piece, PieceColor.Black].GetEnumerator();
+            BitBoardIterator pieceIterator = board.All(piece, PieceColor.Black).GetEnumerator();
             Square pieceSq = pieceIterator.Current;
             while (pieceIterator.MoveNext()) {
                 blackScore += MDT[piece, pieceSq, phase];
