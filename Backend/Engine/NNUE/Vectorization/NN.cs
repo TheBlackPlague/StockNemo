@@ -63,7 +63,7 @@ public static class NN
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void ClippedReLUFlattenAndForward(short[] inputA, short[] inputB, short[] bias, short[] weight, 
         int[] output, short min, short max, int separationIndex, int offset = 0)
     {
