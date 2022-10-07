@@ -41,7 +41,7 @@ public class MoveSearch
     private const int IIR_DEPTH_THRESHOLD = 3;
     private const int IIR_DEPTH_REDUCTION = 1;
 
-    private const int FUTILITY_DEPTH_FACTOR = 150;
+    private const int FUTILITY_DEPTH_FACTOR = 145;
 
     private const int CHECK_EXTENSION = 1;
 
