@@ -21,48 +21,6 @@ public static class NN
         };
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Forward(short[] input, short[] weight, short[] output, int offset = 0)
-    {
-        int inputSize = input.Length;
-        int loopSize = inputSize / VSize.Short / UNROLL;
-        int outputSize = output.Length;
-        int weightStride = 0;
-
-        ref short inputReference = ref MemoryMarshal.GetArrayDataReference(input);
-        ref short weightReference = ref MemoryMarshal.GetArrayDataReference(weight);
-
-        for (int i = 0; i < outputSize; i++) {
-            Vector<short> sum = Vector<short>.Zero;
-            int vectorIndex = 0;
-            for (int j = 0; j < loopSize; j++) {
-                int unrolledIndex = vectorIndex + VSize.Short;
-                int unrolledIndex2 = unrolledIndex + VSize.Short;
-                int unrolledIndex3 = unrolledIndex2 + VSize.Short;
-                
-                Vector<short> iVec = inputReference.LoadVector(vectorIndex);
-                Vector<short> wVec = weightReference.LoadVector(weightStride + vectorIndex);
-                sum += iVec * wVec;
-                
-                Vector<short> iVec2 = inputReference.LoadVector(unrolledIndex);
-                Vector<short> wVec2 = weightReference.LoadVector(weightStride + unrolledIndex);
-                sum += iVec2 * wVec2;
-                
-                Vector<short> iVec3 = inputReference.LoadVector(unrolledIndex2);
-                Vector<short> wVec3 = weightReference.LoadVector(weightStride + unrolledIndex2);
-                sum += iVec3 * wVec3;
-                
-                Vector<short> iVec4 = inputReference.LoadVector(unrolledIndex3);
-                Vector<short> wVec4 = weightReference.LoadVector(weightStride + unrolledIndex3);
-                sum += iVec4 * wVec4;
-                
-                vectorIndex = unrolledIndex3 + VSize.Short;
-            }
-            output.AA(offset + i) = Vector.Sum(sum);
-            weightStride += inputSize;
-        }
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void ClippedReLUFlattenAndForward(short[] inputA, short[] inputB, short[] bias, short[] weight, 
         int[] output, short min, short max, int separationIndex, int offset = 0)
