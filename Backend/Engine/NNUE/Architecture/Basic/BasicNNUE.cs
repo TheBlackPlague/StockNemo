@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using Backend.Data.Enum;
-using Backend.Data.Struct;
 using Backend.Data.Template;
 using Backend.Engine.NNUE.Vectorization;
 using Newtonsoft.Json;

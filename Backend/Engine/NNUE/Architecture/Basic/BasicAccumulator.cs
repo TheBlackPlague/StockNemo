@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Backend.Engine.NNUE.Vectorization;
 
 namespace Backend.Engine.NNUE.Architecture.Basic;
 
