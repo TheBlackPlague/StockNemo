@@ -39,6 +39,7 @@ public class BasicAccumulator<T> where T : struct
         );
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PreLoadBias(T[] bias)
     {
         ref T white = ref MemoryMarshal.GetArrayDataReference(White);
