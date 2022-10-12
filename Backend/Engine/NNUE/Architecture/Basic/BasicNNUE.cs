@@ -67,6 +67,7 @@ public class BasicNNUE
 
         BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
         accumulator.Zero();
+        accumulator.PreLoadBias(FeatureBias);
 
         for (Square sq = Square.A1; sq < Square.Na; sq++) {
             (Piece piece, PieceColor color) = board.At(sq);
@@ -137,11 +138,11 @@ public class BasicNNUE
         BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
 
         if (colorToMove == PieceColor.White) {
-            NN.ClippedReLUFlattenAndForward(accumulator.White, accumulator.Black, FeatureBias, OutWeight, 
-                Output, CR_MIN, CR_MAX, HIDDEN);
+            NN.ClippedReLUFlattenAndForward(accumulator.White, accumulator.Black, OutWeight, Output, 
+                CR_MIN, CR_MAX, HIDDEN);
         } else {
-            NN.ClippedReLUFlattenAndForward(accumulator.Black, accumulator.White, FeatureBias, OutWeight, 
-                Output, CR_MIN, CR_MAX, HIDDEN);
+            NN.ClippedReLUFlattenAndForward(accumulator.Black, accumulator.White, OutWeight, Output, 
+                CR_MIN, CR_MAX, HIDDEN);
         }
         
         return (Output.AA(0) + OutBias.AA(0)) * SCALE / QAB;

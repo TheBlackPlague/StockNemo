@@ -39,6 +39,26 @@ public class BasicAccumulator<T> where T : struct
         );
     }
 
+    public void PreLoadBias(T[] bias)
+    {
+        ref T white = ref MemoryMarshal.GetArrayDataReference(White);
+        ref T black = ref MemoryMarshal.GetArrayDataReference(Black);
+        ref T biasRef = ref MemoryMarshal.GetArrayDataReference(bias);
+
+        int size = White.Length * Unsafe.SizeOf<T>();
+        
+        Unsafe.CopyBlockUnaligned(
+            ref Unsafe.As<T, byte>(ref white), 
+            ref Unsafe.As<T, byte>(ref biasRef), 
+            (uint)size
+        );
+        Unsafe.CopyBlockUnaligned(
+            ref Unsafe.As<T, byte>(ref black), 
+            ref Unsafe.As<T, byte>(ref biasRef), 
+            (uint)size
+        );
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Zero()
     {
