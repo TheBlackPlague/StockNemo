@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using Backend.Data.Enum;
-using Backend.Data.Struct;
 using Backend.Data.Template;
 using Backend.Engine.NNUE.Vectorization;
 using Newtonsoft.Json;
@@ -27,7 +25,7 @@ public class BasicNNUE
     private const int QB = 64;
     private const int QAB = QA * QB;
 
-    private const int ACCUMULATOR_STACK_SIZE = 128;
+    private const int ACCUMULATOR_STACK_SIZE = 512;
 
     private readonly short[] FeatureWeight = new short[INPUT * HIDDEN];
     private readonly short[] FlippedFeatureWeight = new short[INPUT * HIDDEN];
@@ -64,41 +62,19 @@ public class BasicNNUE
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RefreshAccumulator(Board board)
     {
-        const int colorStride = 64 * 6;
-        const int pieceStride = 64;
-        
         Array.Clear(WhitePOV);
         Array.Clear(BlackPOV);
-        
-        for (PieceColor color = PieceColor.White; color < PieceColor.None; color++)
-        for (Piece piece = Piece.Pawn; piece < Piece.Empty; piece++) {
-            BitBoardIterator whiteIterator = board.All(piece, color).GetEnumerator();
-            BitBoardIterator blackIterator = board.All(piece, color).GetEnumerator();
-            Piece originalPiece = piece;
-            if (piece is Piece.Rook) piece += 2;
-            else if (piece is Piece.Knight or Piece.Bishop) piece--;
-
-            Square sq = whiteIterator.Current;
-            while (whiteIterator.MoveNext()) {
-                int index = (int)color * colorStride + (int)piece * pieceStride + (int)sq;
-                WhitePOV.AA(index) = 1;
-                sq = whiteIterator.Current;
-            }
-
-            sq = blackIterator.Current;
-            while (blackIterator.MoveNext()) {
-                int index = (int)color.OppositeColor() * colorStride + (int)piece * pieceStride + ((int)sq ^ 56);
-                BlackPOV.AA(index) = 1;
-                sq = blackIterator.Current;
-            }
-
-            piece = originalPiece;
-        }
 
         BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
+        accumulator.Zero();
+        accumulator.PreLoadBias(FeatureBias);
 
-        NN.Forward(WhitePOV, FeatureWeight, accumulator.A);
-        NN.Forward(BlackPOV, FeatureWeight, accumulator.B);
+        for (Square sq = Square.A1; sq < Square.Na; sq++) {
+            (Piece piece, PieceColor color) = board.At(sq);
+            if (piece == Piece.Empty || color == PieceColor.None) continue;
+            
+            EfficientlyUpdateAccumulator<Activate>(piece, color, sq);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -122,9 +98,9 @@ public class BasicNNUE
         WhitePOV.AA(whiteIndexTo) = 1;
         BlackPOV.AA(blackIndexTo) = 1;
         
-        NN.SubtractAndAddToAll(accumulator.A, FlippedFeatureWeight, 
+        NN.SubtractAndAddToAll(accumulator.White, FlippedFeatureWeight, 
             whiteIndexFrom * HIDDEN, whiteIndexTo * HIDDEN);
-        NN.SubtractAndAddToAll(accumulator.B, FlippedFeatureWeight, 
+        NN.SubtractAndAddToAll(accumulator.Black, FlippedFeatureWeight, 
             blackIndexFrom * HIDDEN, blackIndexTo * HIDDEN);
     }
 
@@ -146,12 +122,12 @@ public class BasicNNUE
         if (typeof(Operation) == typeof(Activate)) {
             WhitePOV.AA(whiteIndex) = 1;
             BlackPOV.AA(blackIndex) = 1;
-            NN.AddToAll(accumulator.A, accumulator.B, FlippedFeatureWeight, 
+            NN.AddToAll(accumulator.White, accumulator.Black, FlippedFeatureWeight, 
                 whiteIndex * HIDDEN, blackIndex * HIDDEN);
         } else {
             WhitePOV.AA(whiteIndex) = 0;
             BlackPOV.AA(blackIndex) = 0;
-            NN.SubtractFromAll(accumulator.A, accumulator.B, FlippedFeatureWeight, 
+            NN.SubtractFromAll(accumulator.White, accumulator.Black, FlippedFeatureWeight, 
                 whiteIndex * HIDDEN, blackIndex * HIDDEN);
         }
     }
@@ -162,10 +138,10 @@ public class BasicNNUE
         BasicAccumulator<short> accumulator = Accumulators.AA(CurrentAccumulator);
 
         if (colorToMove == PieceColor.White) {
-            NN.ClippedReLUFlattenAndForward(accumulator.A, accumulator.B, FeatureBias, OutWeight, Output, 
+            NN.ClippedReLUFlattenAndForward(accumulator.White, accumulator.Black, OutWeight, Output, 
                 CR_MIN, CR_MAX, HIDDEN);
         } else {
-            NN.ClippedReLUFlattenAndForward(accumulator.B, accumulator.A, FeatureBias, OutWeight, Output, 
+            NN.ClippedReLUFlattenAndForward(accumulator.Black, accumulator.White, OutWeight, Output, 
                 CR_MIN, CR_MAX, HIDDEN);
         }
         

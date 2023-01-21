@@ -21,50 +21,8 @@ public static class NN
         };
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Forward(short[] input, short[] weight, short[] output, int offset = 0)
-    {
-        int inputSize = input.Length;
-        int loopSize = inputSize / VSize.Short / UNROLL;
-        int outputSize = output.Length;
-        int weightStride = 0;
-
-        ref short inputReference = ref MemoryMarshal.GetArrayDataReference(input);
-        ref short weightReference = ref MemoryMarshal.GetArrayDataReference(weight);
-
-        for (int i = 0; i < outputSize; i++) {
-            Vector<short> sum = Vector<short>.Zero;
-            int vectorIndex = 0;
-            for (int j = 0; j < loopSize; j++) {
-                int unrolledIndex = vectorIndex + VSize.Short;
-                int unrolledIndex2 = unrolledIndex + VSize.Short;
-                int unrolledIndex3 = unrolledIndex2 + VSize.Short;
-                
-                Vector<short> iVec = inputReference.LoadVector(vectorIndex);
-                Vector<short> wVec = weightReference.LoadVector(weightStride + vectorIndex);
-                sum += iVec * wVec;
-                
-                Vector<short> iVec2 = inputReference.LoadVector(unrolledIndex);
-                Vector<short> wVec2 = weightReference.LoadVector(weightStride + unrolledIndex);
-                sum += iVec2 * wVec2;
-                
-                Vector<short> iVec3 = inputReference.LoadVector(unrolledIndex2);
-                Vector<short> wVec3 = weightReference.LoadVector(weightStride + unrolledIndex2);
-                sum += iVec3 * wVec3;
-                
-                Vector<short> iVec4 = inputReference.LoadVector(unrolledIndex3);
-                Vector<short> wVec4 = weightReference.LoadVector(weightStride + unrolledIndex3);
-                sum += iVec4 * wVec4;
-                
-                vectorIndex = unrolledIndex3 + VSize.Short;
-            }
-            output.AA(offset + i) = Vector.Sum(sum);
-            weightStride += inputSize;
-        }
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public static void ClippedReLUFlattenAndForward(short[] inputA, short[] inputB, short[] bias, short[] weight, 
+    public static void ClippedReLUFlattenAndForward(short[] inputA, short[] inputB, short[] weight, 
         int[] output, short min, short max, int separationIndex, int offset = 0)
     {
         int inputSize = inputA.Length + inputB.Length;
@@ -77,7 +35,6 @@ public static class NN
 
         ref short inputAReference = ref MemoryMarshal.GetArrayDataReference(inputA);
         ref short inputBReference = ref MemoryMarshal.GetArrayDataReference(inputB);
-        ref short biasReference = ref MemoryMarshal.GetArrayDataReference(bias);
         ref short weightReference = ref MemoryMarshal.GetArrayDataReference(weight);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -100,27 +57,23 @@ public static class NN
                 int unrolledRIndex3 = unrolledRIndex2 + VSize.Short;
 
                 Vector<short> iVec = inputReference.LoadVector(rIndex);
-                Vector<short> bVec = biasReference.LoadVector(rIndex);
                 Vector<short> wVec = weightReference.LoadVector(weightStride + vectorIndex);
-                Vector<short> clamped = (iVec + bVec).Clamp(ref minVec, ref maxVec);
+                Vector<short> clamped = iVec.Clamp(ref minVec, ref maxVec);
                 sum += VMethod.MultiplyAddAdjacent(clamped, wVec);
                 
                 Vector<short> iVec2 = inputReference.LoadVector(unrolledRIndex);
-                Vector<short> bVec2 = biasReference.LoadVector(unrolledRIndex);
                 Vector<short> wVec2 = weightReference.LoadVector(weightStride + unrolledIndex);
-                Vector<short> clamped2 = (iVec2 + bVec2).Clamp(ref minVec, ref maxVec);
+                Vector<short> clamped2 = iVec2.Clamp(ref minVec, ref maxVec);
                 sum += VMethod.MultiplyAddAdjacent(clamped2, wVec2);
                 
                 Vector<short> iVec3 = inputReference.LoadVector(unrolledRIndex2);
-                Vector<short> bVec3 = biasReference.LoadVector(unrolledRIndex2);
                 Vector<short> wVec3 = weightReference.LoadVector(weightStride + unrolledIndex2);
-                Vector<short> clamped3 = (iVec3 + bVec3).Clamp(ref minVec, ref maxVec);
+                Vector<short> clamped3 = iVec3.Clamp(ref minVec, ref maxVec);
                 sum += VMethod.MultiplyAddAdjacent(clamped3, wVec3);
                 
                 Vector<short> iVec4 = inputReference.LoadVector(unrolledRIndex3);
-                Vector<short> bVec4 = biasReference.LoadVector(unrolledRIndex3);
                 Vector<short> wVec4 = weightReference.LoadVector(weightStride + unrolledIndex3);
-                Vector<short> clamped4 = (iVec4 + bVec4).Clamp(ref minVec, ref maxVec);
+                Vector<short> clamped4 = iVec4.Clamp(ref minVec, ref maxVec);
                 sum += VMethod.MultiplyAddAdjacent(clamped4, wVec4);
                 
                 vectorIndex = unrolledIndex3 + VSize.Short;
