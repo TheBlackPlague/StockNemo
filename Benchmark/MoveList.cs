@@ -37,37 +37,37 @@ public class MoveList
     [Benchmark]
     public Backend.Data.Struct.MoveList MoveGenerationPawn() => 
         new(Board, Square.H3, Piece.Pawn, PieceColor.White, 
-            ref Hv, ref D, ref C, DoubleChecked
+            Hv, D, C, DoubleChecked
         );
 
     [Benchmark]
     public Backend.Data.Struct.MoveList MoveGenerationRook() => 
         new(Board, Square.E4, Piece.Rook, PieceColor.White, 
-            ref Hv, ref D, ref C, DoubleChecked
+            Hv, D, C, DoubleChecked
         );
         
     [Benchmark]
     public Backend.Data.Struct.MoveList MoveGenerationKnight() => 
         new(Board, Square.B4, Piece.Knight, PieceColor.White, 
-            ref Hv, ref D, ref C, DoubleChecked
+            Hv, D, C, DoubleChecked
         );
         
     [Benchmark]
     public Backend.Data.Struct.MoveList MoveGenerationBishop() => 
         new(Board, Square.F6, Piece.Bishop, PieceColor.White, 
-            ref Hv, ref D, ref C, DoubleChecked
+            Hv, D, C, DoubleChecked
         );
         
     [Benchmark]
     public Backend.Data.Struct.MoveList MoveGenerationQueen() => 
         new(Board, Square.C7, Piece.Queen, PieceColor.White, 
-            ref Hv, ref D, ref C, DoubleChecked
+            Hv, D, C, DoubleChecked
         );
         
     [Benchmark]
     public Backend.Data.Struct.MoveList MoveGenerationKing() => 
         new(Board, Square.D2, Piece.King, PieceColor.White, 
-            ref Hv, ref D, ref C, DoubleChecked
+            Hv, D, C, DoubleChecked
         );
 
     [Benchmark]

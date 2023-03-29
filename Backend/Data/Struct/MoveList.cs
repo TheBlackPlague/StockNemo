@@ -194,12 +194,12 @@ public ref struct MoveList
         Square kingSq = board.KingLoc(color);
         (BitBoard horizontalVertical, BitBoard diagonal) = PinBitBoards(board, kingSq, color, oppositeColor);
         (BitBoard checks, bool doubleChecked) = CheckBitBoard(board, kingSq, oppositeColor);
-        return new MoveList(board, from, piece, color, ref horizontalVertical, ref diagonal, ref checks, doubleChecked);
+        return new MoveList(board, from, piece, color, horizontalVertical, diagonal, checks, doubleChecked);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public MoveList(Board board, Square from, Piece piece, PieceColor color, ref BitBoard horizontalVertical, 
-        ref BitBoard diagonal, ref BitBoard checks, bool doubleChecked)
+    public MoveList(Board board, Square from, Piece piece, PieceColor color, BitBoard horizontalVertical, 
+        BitBoard diagonal, BitBoard checks, bool doubleChecked)
     {
         Board = board;
         From = from;
