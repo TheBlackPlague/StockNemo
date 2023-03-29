@@ -29,10 +29,10 @@ jobs:
         run: |
           cd Terminal
           dotnet publish -r ${{ matrix.configuration }} -c Release /p:PublishSingleFile=true --self-contained true
-          cd bin/Release/net6.0/${{ matrix.configuration }}/publish
+          cd bin/Release/net7.0/${{ matrix.configuration }}/publish
           mv StockNemo${{ matrix.file_extension }} StockNemo-${{ matrix.version }}${{ matrix.file_extension }}
       - name: Upload binary for ${{ matrix.configuration }}
         uses: actions/upload-artifact@v3
         with:
           name: stocknemo-${{ matrix.configuration }}
-          path: Terminal/bin/Release/net6.0/${{ matrix.configuration }}/publish/StockNemo-${{ matrix.version }}${{ matrix.file_extension }}
+          path: Terminal/bin/Release/net7.0/${{ matrix.configuration }}/publish/StockNemo-${{ matrix.version }}${{ matrix.file_extension }}
