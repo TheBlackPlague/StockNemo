@@ -28,7 +28,6 @@ public class BasicNNUE
     private const int ACCUMULATOR_STACK_SIZE = 512;
 
     private readonly short[] FeatureWeight = new short[INPUT * HIDDEN];
-    private readonly short[] FlippedFeatureWeight = new short[INPUT * HIDDEN];
     private readonly short[] FeatureBias = new short[HIDDEN];
     private readonly short[] OutWeight = new short[HIDDEN * 2 * OUTPUT];
     private readonly short[] OutBias = new short[OUTPUT];
@@ -98,9 +97,9 @@ public class BasicNNUE
         WhitePOV.AA(whiteIndexTo) = 1;
         BlackPOV.AA(blackIndexTo) = 1;
         
-        NN.SubtractAndAddToAll(accumulator.White, FlippedFeatureWeight, 
+        NN.SubtractAndAddToAll(accumulator.White, FeatureWeight, 
             whiteIndexFrom * HIDDEN, whiteIndexTo * HIDDEN);
-        NN.SubtractAndAddToAll(accumulator.Black, FlippedFeatureWeight, 
+        NN.SubtractAndAddToAll(accumulator.Black, FeatureWeight, 
             blackIndexFrom * HIDDEN, blackIndexTo * HIDDEN);
     }
 
@@ -122,12 +121,12 @@ public class BasicNNUE
         if (typeof(Operation) == typeof(Activate)) {
             WhitePOV.AA(whiteIndex) = 1;
             BlackPOV.AA(blackIndex) = 1;
-            NN.AddToAll(accumulator.White, accumulator.Black, FlippedFeatureWeight, 
+            NN.AddToAll(accumulator.White, accumulator.Black, FeatureWeight, 
                 whiteIndex * HIDDEN, blackIndex * HIDDEN);
         } else {
             WhitePOV.AA(whiteIndex) = 0;
             BlackPOV.AA(blackIndex) = 0;
-            NN.SubtractFromAll(accumulator.White, accumulator.Black, FlippedFeatureWeight, 
+            NN.SubtractFromAll(accumulator.White, accumulator.Black, FeatureWeight, 
                 whiteIndex * HIDDEN, blackIndex * HIDDEN);
         }
     }
@@ -158,8 +157,7 @@ public class BasicNNUE
         foreach (KeyValuePair<string, JToken> property in jsonObject) {
             switch (property.Key) {
                 case "ft.weight":
-                    Weight(property.Value, FeatureWeight, INPUT, QA);
-                    Weight(property.Value, FlippedFeatureWeight, HIDDEN, QA, true);
+                    Weight(property.Value, FeatureWeight, HIDDEN, QA, true);
                     Console.WriteLine("Feature weights loaded.");
                     break;
                 case "ft.bias":
