@@ -13,6 +13,8 @@
 <p align="center">
 	<strong>
 		<a href="https://github.com/TheBlackPlague/StockNemo/releases">Releases</a>
+        •
+        <a href="AUTHORS.md">Authors</a>
 	</strong>
 </p>
 
