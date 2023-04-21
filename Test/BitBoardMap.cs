@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Backend.Data.Enum;
 using Backend.Data.Struct;
 using Backend.Data.Template;
@@ -105,4 +106,16 @@ public class BitBoardMap
         Assert.IsTrue(evalChanged && evalReverted);
     }
 
+    [Test]
+    public void DoesRuntimeCrash()
+    {
+        ref var NullRef = ref Unsafe.NullRef<Backend.Data.Struct.BitBoardMap>();
+
+        for (int I = 0; I < 64; I++)
+        {
+            Console.WriteLine($"\nCurrent ID: {I}\n");
+            
+            Backend.BoardMoveExecutor.ExecuteMove(ref NullRef, I);
+        }
+    }
 }
