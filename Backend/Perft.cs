@@ -109,7 +109,7 @@ public class Perft
                     (Piece piece, PieceColor pieceColor) = board.At(from);
                     MoveList moveList = new(
                         board, from, piece, pieceColor, 
-                        ref hv, ref d, ref checks, doubleChecked
+                        hv, d, checks, doubleChecked
                     );
                     
                     count += moveList.Promotion ? (ulong)moveList.Count * 4UL : (ulong)moveList.Count;
@@ -137,7 +137,7 @@ public class Perft
                     (Piece piece, PieceColor pieceColor) = board.At(from);
                     MoveList moveList = new(
                         board, from, piece, pieceColor, 
-                        ref hv, ref d, ref checks, doubleChecked
+                        hv, d, checks, doubleChecked
                     );
                     BitBoardIterator moveListIterator = moveList.Moves.GetEnumerator();
                     Square move = moveListIterator.Current;
@@ -191,7 +191,7 @@ public class Perft
                 (Piece piece, PieceColor pieceColor) = next.At(from);
                 MoveList moveList = new(
                     next, from, piece, pieceColor, 
-                    ref hv, ref d, ref checks, doubleChecked
+                    hv, d, checks, doubleChecked
                 );
                 BitBoard moves = moveList.Moves;
                     
@@ -282,7 +282,7 @@ public class Perft
                     (Piece piece, PieceColor pieceColor) = board.At(from);
                     MoveList moveList = new(
                         board, from, piece, pieceColor, 
-                        ref hv, ref d, ref checks, doubleChecked
+                        hv, d, checks, doubleChecked
                     );
                     
                     count += moveList.Promotion ? (ulong)moveList.Count * 4UL : (ulong)moveList.Count;
@@ -310,7 +310,7 @@ public class Perft
                     (Piece piece, PieceColor pieceColor) = board.At(from);
                     MoveList moveList = new(
                         board, from, piece, pieceColor, 
-                        ref hv, ref d, ref checks, doubleChecked
+                        hv, d, checks, doubleChecked
                     );
                     BitBoardIterator moveListIterator = moveList.Moves.GetEnumerator();
                     Square move = moveListIterator.Current;
@@ -364,7 +364,7 @@ public class Perft
                 (Piece piece, PieceColor pieceColor) = next.At(from);
                 MoveList moveList = new(
                     next, from, piece, pieceColor, 
-                    ref hv, ref d, ref checks, doubleChecked
+                    hv, d, checks, doubleChecked
                 );
                 BitBoard moves = moveList.Moves;
                     
